@@ -8,6 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "react": "^19.2.4",
@@ -25,14 +27,7 @@
     "vite": "^8.0.1"
   },
   {
-  "homepage": "https:///Rizen-Software-Design-Project.github.io/QueueCare",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
-  }
+  "homepage": "https://Rizen.github.io/QueueCare",
 },
 "scripts": {
   "predeploy": "npm run build",
