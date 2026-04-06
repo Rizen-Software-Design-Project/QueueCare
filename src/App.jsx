@@ -1,13 +1,17 @@
-import { useState } from 'react'
-import Navigation_bar from './components/Navigation_bar'
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Welcome from "./components/Welcome.jsx";
+import Signup from "./components/Signup.jsx";
+import "./App.css";
 
 function App() {
   return (
-    <>
-      <Navigation_bar/>
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Welcome />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
