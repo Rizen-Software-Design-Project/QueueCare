@@ -1,1 +1,614 @@
+/* ============================================================
+   QueueCare — Welcome.css
+   ============================================================ */
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── NAVBAR ─────────────────────────────────────────────── */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 0.5px solid #e0e0e0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar_logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2E7D32;
+  letter-spacing: -0.5px;
+}
+
+.navbar_links .links {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+}
+
+.navbar_links .links a {
+  text-decoration: none;
+  font-size: 14px;
+  color: #555555;
+  transition: color 0.2s;
+}
+
+.navbar_links .links a:hover {
+  color: #2E7D32;
+}
+
+.navbar_auth {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.login_button {
+  text-decoration: none;
+  font-size: 14px;
+  color: #2E7D32;
+  border: 1px solid #2E7D32;
+  padding: 7px 18px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.login_button:hover {
+  background: #2E7D32;
+  color: #ffffff;
+}
+
+.signup_button {
+  text-decoration: none;
+  font-size: 14px;
+  color: #ffffff;
+  background: #2E7D32;
+  padding: 7px 18px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.signup_button:hover {
+  background: #1B5E20;
+}
+
+/* ── HOME / HERO ─────────────────────────────────────────── */
+.Home {
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.home_background {
+  position: absolute;
+  inset: 0;
+}
+
+.home_background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(0, 0, 0, 0.62) 40%, rgba(0, 0, 0, 0.22) 100%);
+}
+
+.home_background img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home_content {
+  position: relative;
+  z-index: 2;
+  padding: 4rem 3rem;
+  max-width: 640px;
+}
+
+.home_tag {
+  margin-bottom: 14px;
+}
+
+.home_tagline {
+  background: rgba(76, 175, 80, 0.18);
+  color: #A5D6A7;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border: 1px solid rgba(76, 175, 80, 0.35);
+}
+
+.home_header {
+  font-size: 42px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.15;
+  margin-bottom: 16px;
+}
+
+.home_header_colored {
+  color: #66BB6A;
+  display: block;
+}
+
+.home_paragraph {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.7;
+  margin-bottom: 28px;
+  max-width: 520px;
+}
+
+.home_buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.home_signup_button {
+  background: #43A047;
+  color: #ffffff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.home_signup_button:hover {
+  background: #2E7D32;
+}
+
+.home_services_button {
+  background: transparent;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.home_services_button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── ABOUT ───────────────────────────────────────────────── */
+.About {
+  background: #f9f9f9;
+  padding: 5rem 3rem;
+}
+
+.about_content {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.about_info {
+  flex: 1;
+}
+
+.about_header {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.2;
+  margin-bottom: 18px;
+}
+
+.about_header_colored {
+  color: #2E7D32;
+}
+
+.about_paragraph {
+  font-size: 14.5px;
+  color: #555555;
+  line-height: 1.75;
+  margin-bottom: 14px;
+}
+
+.about_paragraph_italic {
+  font-style: italic;
+  color: #2E7D32;
+}
+
+.about_badges {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.about_badge {
+  background: #ffffff;
+  border: 0.5px solid #dddddd;
+  border-radius: 10px;
+  padding: 16px 20px;
+  text-align: center;
+  min-width: 90px;
+  flex: 1;
+}
+
+.about_badge_header {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2E7D32;
+}
+
+.about_badge_paragraph {
+  font-size: 11px;
+  color: #777777;
+  margin-top: 4px;
+}
+
+.about_visual {
+  flex: 1;
+  position: relative;
+}
+
+.about_visual_image img {
+  width: 100%;
+  border-radius: 14px;
+  display: block;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.about_visual_badge {
+  position: absolute;
+  bottom: -18px;
+  left: -20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 0.5px solid #dddddd;
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  max-width: 280px;
+}
+
+.about_visual_badge_header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.about_visual_badge_paragraph {
+  font-size: 11px;
+  color: #777777;
+}
+
+/* ── SERVICES ────────────────────────────────────────────── */
+.Services {
+  padding: 5rem 3rem;
+  background: #ffffff;
+}
+
+.services_content {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.services_header {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  margin-bottom: 42px;
+}
+
+.services_header_colored {
+  color: #2E7D32;
+}
+
+.services_list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.service_item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #f9f9f9;
+  border: 0.5px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 20px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.service_item:hover {
+  border-color: #a5d6a7;
+  box-shadow: 0 4px 18px rgba(46, 125, 50, 0.09);
+}
+
+.service_icon {
+  background: #E8F5E9;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+}
+
+.service_header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.service_paragraph {
+  font-size: 13px;
+  color: #666666;
+  line-height: 1.6;
+}
+
+/* ── CONTACT ─────────────────────────────────────────────── */
+.Contact {
+  padding: 5rem 3rem;
+  background: #f4f8f4;
+}
+
+.contact_content {
+  display: flex;
+  gap: 3rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.contact_details {
+  flex: 1;
+  padding-top: 8px;
+}
+
+.contact_header {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.contact_header_colored {
+  color: #2E7D32;
+}
+
+.contact_paragraph {
+  font-size: 14px;
+  color: #666666;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.contact_info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.contact_company_email,
+.contact_company_phone,
+.contact_company_address {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #444444;
+}
+
+.contact_email_icon,
+.contact_phone_icon,
+.contact_address_icon {
+  color: #2E7D32;
+  width: 20px;
+  font-size: 16px;
+}
+
+.contact_form {
+  flex: 1.4;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 0.5px solid #dddddd;
+  padding: 28px;
+}
+
+.contact_name {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.contact_message {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.contact_field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.contact_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contact_input {
+  border: 0.5px solid #cccccc;
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.contact_input:focus {
+  border-color: #4CAF50;
+}
+
+.contact_textarea {
+  border: 0.5px solid #cccccc;
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+  min-height: 90px;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.contact_textarea:focus {
+  border-color: #4CAF50;
+}
+
+.contact_buttons {
+  margin-top: 18px;
+}
+
+.contact_submit_button {
+  background: #2E7D32;
+  color: #ffffff;
+  border: none;
+  padding: 11px 28px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.contact_submit_button:hover {
+  background: #1B5E20;
+}
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+.footer {
+  background: #1a1a1a;
+  color: #cccccc;
+  padding: 3rem;
+}
+
+.footer-content {
+  display: flex;
+  gap: 3rem;
+  max-width: 1000px;
+  margin: 0 auto 2rem;
+  flex-wrap: wrap;
+}
+
+.footer-section {
+  flex: 1;
+  min-width: 160px;
+}
+
+.footer-section h2 {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.footer-section h3 {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.footer-section p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #aaaaaa;
+}
+
+.footer-section ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-section ul a {
+  text-decoration: none;
+  font-size: 13px;
+  color: #aaaaaa;
+  transition: color 0.2s;
+}
+
+.footer-section ul a:hover {
+  color: #66BB6A;
+}
+
+.footer-bottom {
+  border-top: 0.5px solid #333333;
+  padding-top: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #666666;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .navbar_links { display: none; }
+
+  .home_content { padding: 3rem 1.5rem; }
+  .home_header { font-size: 30px; }
+
+  .about_content,
+  .contact_content {
+    flex-direction: column;
+  }
+
+  .about_visual_badge {
+    position: static;
+    margin-top: 16px;
+    max-width: 100%;
+  }
+
+  .contact_name { flex-direction: column; }
+
+  .footer-content { flex-direction: column; gap: 2rem; }
+
+  .About,
+  .Services,
+  .Contact { padding: 3rem 1.5rem; }
+}

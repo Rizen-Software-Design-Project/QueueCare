@@ -1,7 +1,11 @@
 import "./Welcome.css";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPeopleGroup, faEnvelope, faPhone, faLocationDot } from "@fortawesome/free-solid-svg-icons"; 
+
+import homeBg from "../assets/images/home_bg.jpg";
+import aboutImg from "../assets/images/about_img.jpg";
+
+import { faCalendarAlt, faClock , faShieldAlt , faPeopleGroup, faEnvelope, faPhone, faLocationDot } from "@fortawesome/free-solid-svg-icons"; 
 
 function Welcome() {
   return (
@@ -22,8 +26,8 @@ function Welcome() {
             </div>
 
             <div className="navbar_auth">
-                <a href="/login" className="login_button">Login</a>
-                <a href="/signup" className="signup_button">Sign Up</a>
+                <Link to="/login" className="login_button">Login</Link>
+                <Link to="/signup" className="signup_button">Sign Up</Link>
             </div>
 
         </nav>
@@ -32,7 +36,7 @@ function Welcome() {
         <section className="Home">
 
             <div className="home_background">
-                 <img src="src/assets/images/home_bg.jpg" alt="Home Background"></img>
+                 <img src={homeBg} alt="Home Background" />
             </div>
 
             <div className="home_content">
@@ -105,7 +109,7 @@ function Welcome() {
                 <div className="about_visual">
 
                     <div className="about_visual_image">
-                        <img src="src/assets/images/about_img.jpg" alt="About Visual"></img>
+                        <img src={aboutImg} alt="About Visual" />
                     </div>  
 
                     <div className="about_visual_badge">
@@ -133,7 +137,7 @@ function Welcome() {
 
                     <div className="service_item">
                         <div className="service_icon">
-                            <FontAwesomeIcon icon={faPeopleGroup} size="2x" color="#4CAF50" />
+                            <FontAwesomeIcon icon={faLocationDot} size="2x" color="#4CAF50" />
                         </div>
                         <div className="service_text">
                             <div className="service_header">Find Nearby Clinics</div>
@@ -143,7 +147,7 @@ function Welcome() {
 
                     <div className="service_item">
                         <div className="service_icon">
-                            <FontAwesomeIcon icon={faPeopleGroup} size="2x" color="#4CAF50" />
+                            <FontAwesomeIcon icon={faCalendarAlt} size="2x" color="#4CAF50" />
                         </div>
                         <div className="service_text">
                             <div className="service_header">Book Appointments</div>
@@ -153,7 +157,7 @@ function Welcome() {
 
                     <div className="service_item">
                         <div className="service_icon">
-                            <FontAwesomeIcon icon={faPeopleGroup} size="2x" color="#4CAF50" />
+                            <FontAwesomeIcon icon={faClock} size="2x" color="#4CAF50" />
                         </div>
                         <div className="service_text">
                             <div className="service_header">Virtual Queues</div>
@@ -163,7 +167,7 @@ function Welcome() {
 
                     <div className="service_item">
                         <div className="service_icon">
-                            <FontAwesomeIcon icon={faPeopleGroup} size="2x" color="#4CAF50" />
+                            <FontAwesomeIcon icon={faShieldAlt} size="2x" color="#4CAF50" />
                         </div>
                         <div className="service_text">
                             <div className="service_header">Secure Access</div>
