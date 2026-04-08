@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import homeBg from "../assets/images/home_bg.jpg";
 import aboutImg from "../assets/images/about_img.jpg";
 
-import { faCalendarAlt, faClock , faShieldAlt , faPeopleGroup, faEnvelope, faPhone, faLocationDot } from "@fortawesome/free-solid-svg-icons"; 
+import { faGroupArrowsRotate,faUserNurse,faChartLine,faCalendarAlt, faClock , faShieldAlt , faPeopleGroup, faEnvelope, faPhone, faLocationDot } from "@fortawesome/free-solid-svg-icons"; 
 
 function Welcome() {
   return (
@@ -18,10 +18,10 @@ function Welcome() {
 
             <div className="navbar_links">
                 <ul className="links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/services">Services</a></li>
-                    <li><a href="/contact">Contact</a></li>
+                    <li><Link to="/">Home</Link></li>
+                    <li><Link to="/about">About</Link></li>
+                    <li><Link to="/services">Services</Link></li>
+                    <li><Link to="/contact">Contact</Link></li>
                 </ul>
             </div>
 
@@ -114,7 +114,7 @@ function Welcome() {
 
                     <div className="about_visual_badge">
                         <div className="about_visual_badge_icon">
-                            <FontAwesomeIcon icon={faPeopleGroup} size="3x" color="#4CAF50" />
+                            <FontAwesomeIcon icon={faGroupArrowsRotate} size="3x" color="#4CAF50" />
                         </div>
 
                         <div className="about_visual_badge_text">
@@ -177,7 +177,7 @@ function Welcome() {
 
                     <div className="service_item">
                         <div className="service_icon">
-                            <FontAwesomeIcon icon={faPeopleGroup} size="2x" color="#4CAF50" />
+                            <FontAwesomeIcon icon={faUserNurse} size="2x" color="#4CAF50" />
                         </div>
                         <div className="service_text">
                             <div className="service_header">Staff Management</div>
@@ -187,7 +187,7 @@ function Welcome() {
 
                     <div className="service_item">
                         <div className="service_icon">
-                            <FontAwesomeIcon icon={faPeopleGroup} size="2x" color="#4CAF50" />
+                            <FontAwesomeIcon icon={faChartLine} size="2x" color="#4CAF50" />
                         </div>
                         <div className="service_text">
                             <div className="service_header">Reports & Analytics</div>

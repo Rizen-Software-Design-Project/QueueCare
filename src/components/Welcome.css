@@ -36,15 +36,39 @@
 }
 
 .navbar_links .links a {
+  position: relative;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 15px;
+  padding: 8px 14px;
+  border-radius: 10px;
   color: #555555;
   transition: color 0.2s;
+  letter-spacing: 0.01em;
+  transition: color 0.2s ease, background 0.2s ease;;
 }
 
 .navbar_links .links a:hover {
   color: #2E7D32;
 }
+
+.navbar_links .links a::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 100%;
+  height: 3px;
+  background: #2E7D32;
+  border-radius: 2px;
+  transition:  transform 0.25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.navbar_links .links a:hover::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+
 
 .navbar_auth {
   display: flex;
@@ -113,6 +137,7 @@
   z-index: 2;
   padding: 4rem 3rem;
   max-width: 640px;
+  transform: translateZ(0);
 }
 
 .home_tag {
@@ -587,6 +612,12 @@
 }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 950px) {
+  .navbar_links { display: none; }
+  
+}
+
+
 @media (max-width: 768px) {
   .navbar_links { display: none; }
 
@@ -611,4 +642,8 @@
   .About,
   .Services,
   .Contact { padding: 3rem 1.5rem; }
+}
+
+@media (max-width:500px){
+  .navbar_auth { display: none; }
 }
