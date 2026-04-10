@@ -76,7 +76,7 @@ useEffect(() => {
   // Check if auth exists to stop the crash
   if (auth) {
     window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'normal', // Use normal so you can see it!
+      'size': 'invisible', 
       'callback': (response) => {
         console.log("reCAPTCHA solved");
       }
@@ -108,14 +108,29 @@ async function signIn() {
 
 async function phone_login(e){
     e.preventDefault();
-    console.log("im here");
+    
+    //get the phonenumber
+let cellnumber;
+
+    if(phonenumber.includes(" ")){
+      set_phone_number(phonenumber.replace(/\s/g, ""));
+    }
+    if(phonenumber.length==10 &&  phonenumber[0]==0){
+       cellnumber="+27"+phonenumber.slice(1,phonenumber.length);
+      
+
+    }else if(phonenumber.length==9){
+         cellnumber="+27"+phonenumber;
+    }
+    else{
+      alert("Enter valid phone number");
+      set_phone_number("");
+      return;
+    }
+     
+console.log("im here");
     set_at_otp(true);
     console.log("im here");
-    //get the phonenumber
-
-   
-    const cellnumber="+27"+phonenumber;
-
     // do recaptcha first
    
 // this sends otp using the number given by the user
@@ -187,6 +202,8 @@ return (
           <input 
             type="tel" 
             value={phonenumber} 
+            min={9}
+            max={10}
             placeholder="821234567" 
             onChange={(e) => set_phone_number(e.target.value)} 
             required 
