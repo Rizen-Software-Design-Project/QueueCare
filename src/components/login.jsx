@@ -50,10 +50,11 @@ function react(e){
     /// from here we need to enter the results in database
 
 
-alert("Girl, you did it");
+localStorage.setItem('identity',phonenumber);
+navigate('/id_validation');
 
     ///
-    console.log("Logged in:", user);
+    
   })
   .catch((error) => {
     alert("Wrong code");
@@ -95,7 +96,11 @@ useEffect(() => {
 async function signIn() {
   try {
     const result = await signInWithPopup(auth, googleAuthProvider);
-    console.log(result.user);
+    
+    
+   // console.log(result.user);
+    localStorage.setItem('identity',result.user.email);
+    navigate('/id_validation');
   } catch (error) {
     console.error(error);
   }
@@ -127,6 +132,7 @@ let cellnumber;
       set_phone_number("");
       return;
     }
+    set_phone_number(cellnumber);
      
 console.log("im here");
     set_at_otp(true);
