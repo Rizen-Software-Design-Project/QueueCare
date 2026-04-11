@@ -1,0 +1,487 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+/* ── Reset & tokens ──────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --brand: #0F6E56;
+  --brand-light: #E1F5EE;
+  --brand-mid: #1D9E75;
+  --accent: #D85A30;
+  --accent-light: #FAECE7;
+  --text: #2C2C2A;
+  --text-muted: #888780;
+  --text-hint: #B4B2A9;
+  --surface: #fff;
+  --bg: #F1EFE8;
+  --border: rgba(0, 0, 0, 0.1);
+  --r: 14px;
+  --r-sm: 8px;
+  --ff-head: 'DM Serif Display', serif;
+  --ff-body: 'DM Sans', sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #D3D1C7;
+    --text-muted: #888780;
+    --text-hint: #5F5E5A;
+    --surface: #1a1a18;
+    --bg: #111110;
+    --border: rgba(255, 255, 255, 0.1);
+    --brand-light: #085041;
+    --accent-light: #4A1B0C;
+  }
+}
+
+/* ── Root layout ─────────────────────────────────────────────── */
+.sign-root {
+  font-family: var(--ff-body);
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* ── Logo ────────────────────────────────────────────────────── */
+.logo {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-mark {
+  width: 48px;
+  height: 48px;
+  background: var(--brand);
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.logo-mark svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logo h1 {
+  font-family: var(--ff-head);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.logo p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+  font-weight: 300;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-section {
+  display: block;
+}
+
+/* ── Card typography ─────────────────────────────────────────── */
+.card-title {
+  font-family: var(--ff-head);
+  font-size: 1.4rem;
+  font-weight: 400;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+.card-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 1.75rem;
+  font-weight: 300;
+}
+
+/* ── Step dots ───────────────────────────────────────────────── */
+.step-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1.75rem;
+}
+
+.dot {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  flex: 1;
+  transition: background 0.3s;
+}
+
+.dot.active { background: var(--brand); }
+.dot.done   { background: var(--brand-mid); }
+
+/* ── Form fields ─────────────────────────────────────────────── */
+label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font-family: var(--ff-body);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-sm);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(15, 110, 86, 0.12);
+}
+
+input::placeholder { color: var(--text-hint); }
+
+select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.field        { margin-bottom: 1.1rem; }
+.field-row    { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* ── Role grid ───────────────────────────────────────────────── */
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.role-btn {
+  border: 0.5px solid var(--border);
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  padding: 0.9rem 0.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: var(--ff-body);
+}
+
+.role-btn .role-icon  { font-size: 1.4rem; display: block; margin-bottom: 0.4rem; }
+.role-btn .role-label { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.role-btn.selected                  { border-color: var(--brand); background: var(--brand-light); }
+.role-btn.selected .role-label      { color: var(--brand); }
+
+/* ── Gender pills ────────────────────────────────────────────── */
+.gender-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1.1rem;
+}
+
+.gender-pill {
+  border: 0.5px solid var(--border);
+  background: var(--bg);
+  border-radius: 20px;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  font-family: var(--ff-body);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.gender-pill.selected {
+  border-color: var(--brand);
+  background: var(--brand-light);
+  color: var(--brand);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+  width: 100%;
+  padding: 0.78rem;
+  font-family: var(--ff-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--r-sm);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  margin-top: 0.25rem;
+}
+
+.btn:active         { transform: scale(0.98); }
+.btn:disabled       { cursor: not-allowed; }
+.btn-primary        { background: var(--brand); color: #fff; }
+.btn-primary:hover  { opacity: 0.92; }
+.btn-ghost          { background: transparent; color: var(--brand); border: 0.5px solid var(--brand); }
+.btn-ghost:hover    { background: var(--brand-light); }
+
+/* ── OTP ─────────────────────────────────────────────────────── */
+.otp-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.otp-box {
+  width: 100%;
+  aspect-ratio: 1;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 500;
+  border: 0.5px solid var(--border);
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: var(--ff-body);
+  outline: none;
+}
+
+.otp-box:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(15, 110, 86, 0.12);
+}
+
+/* ── Resend ──────────────────────────────────────────────────── */
+.resend {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.resend a {
+  color: var(--brand);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* ── Hint text ───────────────────────────────────────────────── */
+.hint {
+  font-size: 0.75rem;
+  color: var(--text-hint);
+  margin-top: -0.6rem;
+  margin-bottom: 0.9rem;
+  font-weight: 300;
+}
+
+/* ── Optional badge ──────────────────────────────────────────── */
+.optional-badge {
+  font-size: 0.68rem;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 400;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Success state ───────────────────────────────────────────── */
+.success-icon {
+  text-align: center;
+  margin: 1rem 0 1.5rem;
+}
+
+.success-circle {
+  width: 72px;
+  height: 72px;
+  background: var(--brand-light);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-circle svg {
+  width: 36px;
+  height: 36px;
+  stroke: var(--brand);
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Divider ─────────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.divider-line { flex: 1; height: 0.5px; background: var(--border); }
+.divider-text { font-size: 0.75rem; color: var(--text-hint); font-weight: 400; }
+
+/* ── Switch text ─────────────────────────────────────────────── */
+.switch-text {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 1.25rem;
+  font-weight: 300;
+}
+
+.switch-text a {
+  color: var(--brand);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* ── Back button ─────────────────────────────────────────────── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: 1.25rem;
+  font-family: var(--ff-body);
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 400;
+}
+
+.back-btn:hover { color: var(--brand); }
+
+.back-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Phone prefix ────────────────────────────────────────────── */
+.phone-prefix        { display: flex; gap: 0.5rem; }
+.phone-prefix select { width: 90px; flex-shrink: 0; }
+.phone-prefix input  { flex: 1; }
+
+/* ── Password wrap ───────────────────────────────────────────── */
+.pw-wrap       { position: relative; }
+.pw-wrap input { padding-right: 2.5rem; }
+
+.pw-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--text-hint);
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.pw-toggle svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Strength bars ───────────────────────────────────────────── */
+.strength {
+  display: flex;
+  gap: 4px;
+  margin-top: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.s-bar {
+  height: 3px;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+
+/* ── Role / status tags ──────────────────────────────────────── */
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tag-staff   { background: var(--brand-light); color: var(--brand); }
+.tag-admin   { background: #EAF3DE; color: #3B6D11; }
+.tag-patient { background: #E6F1FB; color: #185FA5; }
+
+@media (prefers-color-scheme: dark) {
+  .tag-admin   { background: #27500A; color: #C0DD97; }
+  .tag-patient { background: #0C447C; color: #B5D4F4; }
+}
+
+/* ── Form error ──────────────────────────────────────────────── */
+.form-error {
+  color: var(--accent);
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}

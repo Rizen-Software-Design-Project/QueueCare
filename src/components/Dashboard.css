@@ -1,0 +1,100 @@
+/* ── ROOT ───────────────────────────────────────────── */
+.dashboard {
+  min-height: 100vh;
+  background: #f6f8fb;
+  padding: 2rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+}
+
+/* ── HEADER ─────────────────────────────────────────── */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dash-header h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.dash-header button {
+  background: #e24b4a;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.dash-header button:hover {
+  background: #c0392b;
+}
+
+/* ── CARD BASE ─────────────────────────────────────── */
+.dash-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+  transition: 0.2s ease;
+}
+
+/* clickable cards */
+.dash-card.clickable {
+  cursor: pointer;
+}
+
+.dash-card.clickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* ── PROFILE CARD ───────────────────────────────────── */
+.dash-card h2 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.dash-card p {
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+/* ── GRID ───────────────────────────────────────────── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ── GRID CARD CONTENT ─────────────────────────────── */
+.dash-grid .dash-card h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.dash-grid .dash-card p {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* ── LOADING TEXT ──────────────────────────────────── */
+.dashboard p {
+  font-size: 1rem;
+}
+
+/* ── RESPONSIVE ───────────────────────────────────── */
+@media (max-width: 600px) {
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .dash-header h1 {
+    font-size: 1.4rem;
+  }
+}

@@ -26,8 +26,7 @@ function Welcome() {
             </section>
 
             <section className="navbar_auth">
-                <Link to="/login" className="login_button">Login</Link>
-                <Link to="/signup" className="signup_button">Sign Up</Link>
+                <Link to="/signin" className="signup_button">Sign In</Link>
             </section>
 
         </nav>
