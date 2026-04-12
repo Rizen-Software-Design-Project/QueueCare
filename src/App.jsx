@@ -3,7 +3,7 @@ import Welcome from "./components/Welcome.jsx";
 import Signin from "./components/Signin.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import "./App.css";
-<BrowserRouter basename="/QueueCare"></BrowserRouter>
+<BrowserRouter></BrowserRouter>
 
 function App() {
   return (
