@@ -90,7 +90,7 @@ export default function Login(){
         window.confirmationResult = confirmationResult;
         set_otp_sent(true);
       } catch (error) {
-        console.log("This part has been bugging me ", error);
+        alert(error.message);
       }
     }
 
@@ -131,11 +131,11 @@ export default function Login(){
               />
               <button type="submit">Continue</button>
             </form>
-            <section id="recaptcha-container"></section>
+            
           </>
         )}
 
-       
+       <section id="recaptcha-container"></section>
       </section>
     );
 }
