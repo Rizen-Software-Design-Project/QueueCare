@@ -3,6 +3,8 @@ import { auth, googleAuthProvider } from "../firebase";
 import { useState, useEffect } from "react";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import googleLogo from "../assets/google.svg"
+import "./login.css";
 
 export default function Login(){
 
@@ -94,48 +96,138 @@ export default function Login(){
       }
     }
 
+    
+
+
+
     return (
-      <section>
+      <section className="sign-root">
+
         {!otp_sent && at_otp && (
-          <h1>Loading...</h1>
+          <h1 className="card-title">Loading...</h1>
         )}
 
         {otp_sent && at_otp && (
           <>
-            <h1>Enter OTP:</h1>
-            <form onSubmit={react}>
-              <input
-                type="text"
-                value={otp}
-                onChange={e => set_otp(e.target.value)}
-              />
-              <button type="submit">Enter</button>
-            </form>
-            <a href="#" onClick={handle_resend}>Resend OTP?</a>
+            <header className="logo">
+              <figure className="logo-mark">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </figure>
+
+              <h1>MediAccess</h1>
+              <p>Integrated Healthcare Management</p>
+            </header>
+
+            <main className="card">
+              <h2 className="card-title">Verify it's you</h2>
+              <p className="card-sub">
+                    We sent a 6-digit OTP to your registered phone number
+                  </p>
+                <form onSubmit={react}>
+                  <fieldset className="field">
+                    <input 
+                      type="text" 
+                      value={otp} 
+                      onChange={e => set_otp(e.target.value)} 
+                    />
+                  </fieldset>
+
+                  <button className="btn btn-primary" type="submit">
+                        Enter
+                      </button>
+              </form>
+
+              <p className="question-before-link">
+                Didn't receive it ?
+                <button
+                  type="button"
+                  className="signup-resendOTP-link"
+                  onClick={handle_resend}>
+                    Resend OTP
+                </button>
+              </p>
+
+              <section id="recaptcha-container"></section>
+            </main>
           </>
         )}
 
         {!at_otp && (
           <>
-            <button onClick={signIn}>Continue with Google</button>
-            <form onSubmit={phone_login}>
-              <label>+27</label>
-              <input
-                type="tel"
-                value={phonenumber}
-                min={9}
-                max={10}
-                placeholder="821234567"
-                onChange={(e) => set_phone_number(e.target.value)}
-                required
-              />
-              <button type="submit">Continue</button>
-            </form>
-            <section id="recaptcha-container"></section>
+            <header className="logo">
+              <figure className="logo-mark">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </figure>
+
+              <h1>MediAccess</h1>
+              <p>Integrated Healthcare Management</p>
+            </header>
+
+
+            <main className="card">
+              <header>
+                <h2 className="card-title">Welcome back</h2>
+                <p className="card-sub">Sign in to your account to continue</p>
+              </header>
+
+              <form onSubmit={phone_login}>
+                <fieldset className="field">
+
+                  <label htmlFor="phone">Use Phone number</label>
+                  <section className="phone-input-wrapper">
+                    <span className="phone-code">+27</span>
+                    <input
+                      id="phone"
+                      type="tel"
+                      placeholder="72 000 0000"
+                      value={phonenumber}
+                      onChange={(e) => set_phone_number(e.target.value)}
+                      required
+                    />
+                  </section>
+                </fieldset>
+
+                <button className="btn btn-primary" type="submit">
+                  Continue
+                </button>
+              </form>
+
+              <p className="question-before-link">
+                Don't have an account?
+                <button
+                  type="button"
+                  className="signup-resendOTP-link"
+                  onClick={() => navigate('/signup')}>
+                    Sign Up
+                </button>
+              </p>
+
+              <hr className="divider" />
+
+              <button onClick={signIn} className="continue-with-google-button">
+                <img
+                  src={googleLogo}
+                  alt=""
+                  width="20"
+                  height="20"
+                />
+                Continue with Google
+              </button>
+
+              <section id="recaptcha-container"></section>
+
+            </main>
           </>
         )}
 
-       
       </section>
     );
 }
