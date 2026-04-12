@@ -6,7 +6,22 @@ import { useNavigate } from "react-router-dom";
 export default function Login(){
 
 
+<<<<<<< HEAD
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+=======
+    useEffect(() => {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result?.user) {
+            localStorage.setItem('identity', result.user.email);
+            navigate('/id_validation');
+          }
+        })
+        .catch((error) => {
+          console.error("Redirect error:", error);
+        });
+    }, []);
+>>>>>>> 1571fdf (commit)
 
     let navigate= useNavigate();
     const[phonenumber, set_phone_number]=useState("");
@@ -15,7 +30,44 @@ export default function Login(){
     const [at_otp, set_at_otp]=useState(false);
 
 
+<<<<<<< HEAD
 
+=======
+    // ✅ fully converted to async/await
+    async function react(e) {
+      e.preventDefault();
+      try {
+        const result = await window.confirmationResult.confirm(otp);
+        const user = result.user;
+        localStorage.setItem('identity', phonenumber);
+        const res = await fetch(`http://localhost:3000/isnewuser?identity=${phonenumber}`);
+        const data = await res.json();
+        if (data.exists) {
+          navigate('/dashboard');
+        } else {
+          navigate('/id_validation');
+        }
+      } catch (error) {
+        alert("Wrong code");
+      }
+    }
+
+    async function signIn() {
+      try {
+        const result = await signInWithPopup(auth, googleAuthProvider);
+        localStorage.setItem('identity', result.user.email);
+        const res = await fetch(`http://localhost:3000/isnewuser?identity=${result.user.email}`);
+        const data = await res.json();
+        if (data.exists) {
+          navigate('/dashboard');
+        } else {
+          navigate('/id_validation');
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+>>>>>>> 1571fdf (commit)
 
 
      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
