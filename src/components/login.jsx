@@ -34,7 +34,7 @@ export default function Login(){
       try {
         const result = await window.confirmationResult.confirm(otp);
         localStorage.setItem('identity', phonenumber);
-        const res = await fetch(`http://localhost:3000/isnewuser?identity=${phonenumber}`);
+        const res = await fetch(`https://api-treupobaqq-uc.a.run.app/isnewuser?identity=${phonenumber}`);
         const data = await res.json();
         if (data.exists) {
           navigate('/dashboard');
@@ -42,7 +42,7 @@ export default function Login(){
           navigate('/id_validation');
         }
       } catch (error) {
-        alert("Wrong code");
+        alert("Wrong code",error);
       }
     }
 
@@ -131,10 +131,11 @@ export default function Login(){
               />
               <button type="submit">Continue</button>
             </form>
+            <section id="recaptcha-container"></section>
           </>
         )}
 
-        <section id="recaptcha-container"></section>
+       
       </section>
     );
 }

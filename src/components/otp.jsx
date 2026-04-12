@@ -35,7 +35,7 @@ const email=localStorage.getItem('identity');
       try {
         const result = await window.confirmationResult.confirm(otp);
 
-        const response = await fetch("http://localhost:3000/otp", {
+        const response = await fetch("https://api-treupobaqq-uc.a.run.app/otp", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
