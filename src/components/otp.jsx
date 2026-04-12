@@ -91,6 +91,21 @@ const email=localStorage.getItem('identity');
           <h1>Loading...</h1>
         )}
 
+        {otp_sent && at_otp && (
+      <>
+        <h1>Enter OTP:</h1>
+        <form onSubmit={react}>
+          <input 
+            type="text" 
+            value={otp} 
+            onChange={e => set_otp(e.target.value)} 
+          />
+          <button type="submit">Enter</button>
+        </form>
+        <a href="#" onClick={handle_resend}>Resend OTP?</a>
+      </>
+    )}
+
         {!at_otp && (
           <>
             
