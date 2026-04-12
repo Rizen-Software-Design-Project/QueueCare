@@ -178,6 +178,8 @@ export default function Signin() {
   async function handleSendOtp() {
     setError(""); setLoading(true);
 
+    
+
     if (!firstName || !surname) {
       setError("Please enter your first name and surname."); setLoading(false); return;
     }
@@ -238,7 +240,7 @@ export default function Signin() {
     }
 
     const { error: profileErr } = await supabase.from("profiles").insert({
-      id:      idNumber,
+      id_number: idNumber,
       name:    firstName,
       surname: surname,
       email:   email,

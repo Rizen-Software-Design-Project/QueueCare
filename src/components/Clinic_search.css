@@ -1,0 +1,284 @@
+/* ===== RESET & BASE ===== */
+* {
+  box-sizing: border-box;
+}
+
+.cs-wrapper {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 1400px;
+  margin: 20px auto;
+  padding: 0 20px;
+  color: #1a1a2e;
+}
+
+.cs-wrapper h2 {
+  margin-bottom: 24px;
+  color: #0a2472;
+  border-left: 5px solid #007bff;
+  padding-left: 16px;
+}
+
+/* ===== FILTER ROW ===== */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 180px;
+}
+
+.filter-group label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #2c3e66;
+}
+
+/* Nearby row */
+.nearby-row {
+  background: white;
+  padding: 12px 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.filter-group-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-group-inline button,
+.filter-group-inline select {
+  margin: 0;
+}
+
+.cs-wrapper input,
+.cs-wrapper select,
+.cs-wrapper button {
+  padding: 10px 14px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: 1px solid #ccd7e6;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.cs-wrapper input:focus,
+.cs-wrapper select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.cs-wrapper button {
+  cursor: pointer;
+  background: #007bff;
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+
+.cs-wrapper button:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+#nearMeBtn {
+  background: #28a745 !important;
+}
+
+#nearMeBtn:hover {
+  background: #1e7e34 !important;
+}
+
+/* Map */
+#map {
+  height: 350px;
+  width: 100%;
+  margin-top: 24px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e7ef;
+}
+
+@media (min-width: 992px) {
+  #map {
+    height: 450px;
+  }
+}
+
+/* Clinic cards */
+.clinic-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border: 1px solid #e0e7ef;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+
+.clinic-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: scale(1.01);
+}
+
+.clinic-info {
+  flex: 1;
+}
+
+.clinic-name {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #0a2472;
+  margin-bottom: 4px;
+}
+
+.clinic-distance {
+  color: #2c7a4d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.clinic-district {
+  font-size: 0.85rem;
+  color: #5a6874;
+  margin-top: 4px;
+}
+
+.book-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.book-btn:hover {
+  background: #1e7e34;
+  transform: translateY(-2px);
+}
+
+/* Status messages */
+.error,
+.loading,
+.count {
+  padding: 14px 20px;
+  border-radius: 16px;
+  margin: 16px 0;
+  font-weight: 500;
+}
+
+.error {
+  background: #ffe6e5;
+  color: #b91c1c;
+  border-left: 5px solid #b91c1c;
+}
+
+.loading {
+  background: #e6f3ff;
+  color: #0056b3;
+  border-left: 5px solid #007bff;
+}
+
+.count {
+  background: #e9f7ef;
+  color: #1e7e34;
+  border-left: 5px solid #28a745;
+}
+
+/* ===== SMALL SCREEN OVERRIDES ===== */
+@media (max-width: 700px) {
+  .cs-wrapper {
+    padding: 0 12px;
+    margin: 10px auto;
+  }
+
+  .cs-wrapper h2 {
+    margin-bottom: 12px;
+    font-size: 1.3rem;
+    padding-left: 12px;
+  }
+
+  .filter-row {
+    padding: 10px;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .filter-group {
+    gap: 4px;
+  }
+
+  .filter-group label {
+    font-size: 0.7rem;
+  }
+
+  .cs-wrapper input,
+  .cs-wrapper select,
+  .cs-wrapper button {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .nearby-row {
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+
+  .filter-group-inline {
+    gap: 6px;
+  }
+
+  .clinic-card {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+  }
+
+  .clinic-name {
+    font-size: 1rem;
+  }
+
+  .book-btn {
+    padding: 5px 12px;
+    font-size: 0.75rem;
+  }
+
+  #map {
+    height: 250px;
+    margin-top: 12px;
+  }
+
+  .error,
+  .loading,
+  .count {
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 0.85rem;
+  }
+}

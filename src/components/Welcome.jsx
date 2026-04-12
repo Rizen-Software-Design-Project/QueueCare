@@ -48,7 +48,7 @@ function Welcome() {
                 <p className="home_paragraph">From Limpopo to Cape Town, and everywhere in between, find clinics, book appointments, and join virtual queues with QueueCare - Healthcare made easy for South Africans </p>
 
                 <section className="home_buttons">
-                    <Link to="/signup">
+                    <Link to="/signin">
                         <button className="home_signup_button">Get Started</button>
                     </Link>
 
