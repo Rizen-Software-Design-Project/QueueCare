@@ -199,11 +199,11 @@ export default function Signin() {
       setError("Passwords do not match."); setLoading(false); return;
     }
 
-    // Check SA ID uniqueness upfront
+    // FIX 1: Check id_number uniqueness against the correct column
     const { data: existing } = await supabase
       .from("profiles")
       .select("id")
-      .eq("id", idNumber)
+      .eq("id_number", idNumber)
       .maybeSingle();
 
     if (existing) {
@@ -211,15 +211,28 @@ export default function Signin() {
       setLoading(false); return;
     }
 
-    // Create auth user — Supabase sends a 6-digit OTP to the email
-    const { error: signUpErr } = await supabase.auth.signUp({ email, password });
+    // FIX 2: Pass correct variable names in metadata (firstName not name, sex not gender)
+    const { error: signUpErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name:      firstName,  // was: name (undefined)
+          surname,
+          sex,                   // was: gender (undefined)
+          id_number: idNumber,
+          dob:       dobFromSAId(idNumber),
+        }
+      }
+    });
+
     setLoading(false);
     if (signUpErr) { setError(signUpErr.message || "Could not register. Try again."); return; }
 
     go("otp");
   }
 
-  // ── REGISTRATION step 2: verify OTP → insert profile ──────
+  // ── REGISTRATION step 2: verify OTP ───────────────────────
   async function handleVerifyOtp() {
     setError(""); setLoading(true);
 
@@ -233,6 +246,8 @@ export default function Signin() {
       token,
       type: "signup",
     });
+
+    setLoading(false);
 
     if (verifyErr) {
       setError("Invalid or expired code. Please try again.");
@@ -257,6 +272,11 @@ export default function Signin() {
       );
       return;
     }
+
+    // FIX 3: Removed manual profile insert entirely.
+    // The handle_new_user trigger fires on auth.users insert and
+    // creates the profile row from raw_user_meta_data automatically.
+    // A manual insert here was causing the uuid/id_number type mismatch error.
 
     go("done");
   }
