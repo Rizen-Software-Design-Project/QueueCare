@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom";
-
+import "./login.css";
 export default function Validate(){
     let navigate = useNavigate(); 
     const [id, set_id] = useState("");
@@ -71,28 +71,92 @@ console.log("I'm here.2");
         }
     }
 
-    return(
-        <section style={{display:"flex", flexDirection:"column"}}>
-            <p>Are you South African or foreign. (Change this. I just want to make sure this functions)</p>
+   return (
+  <section className="sign-root">
 
-            <label><input type="checkbox" checked={citizen} onChange={() => { set_citizen(true); set_foreign(false); }}/> South African</label>
-            <label><input type="checkbox" checked={foreign} onChange={() => { set_foreign(true); set_citizen(false); }}/> Foreign national</label>
-            <p>Just going to assume user is citizen for now</p>
-            <form onSubmit={validate}>
-                <label>Name:</label>
-                <input type="text" value={name} onChange={(e) => set_name(e.target.value)} required/> {/* ✅ was bound to id */}
-                <label>Surname:</label>
-                <input type="text" value={surname} onChange={(e) => set_surname(e.target.value)} required/> {/* ✅ was bound to id */}
-                <label>id:</label>
-                <input type="text" value={id} onChange={(e) => set_id(e.target.value)} required/>
-                <label>sex:</label>
-                <input type="text" value={sex} onChange={(e) => set_sex(e.target.value)} required/>
-                <label>Date of birth:</label>
-                <input type="text" value={dob} onChange={(e) => set_dob(e.target.value)} required/>
-                <label>Email:</label>
-                <input type="text" value={email} onChange={(e) => set_email(e.target.value)} required/>
-                <button type="submit">continue</button>
-            </form>
-        </section>
-    )
+    <div className="card">
+
+      <h1 className="card-title">Complete Profile</h1>
+      <p className="card-sub">Please fill in your details</p>
+
+      <div style={{ marginBottom: "15px" }}>
+        <label>
+          <input
+            type="checkbox"
+            checked={citizen}
+            onChange={() => { set_citizen(true); set_foreign(false); }}
+          />
+          South African
+        </label>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={foreign}
+            onChange={() => { set_foreign(true); set_citizen(false); }}
+          />
+          Foreign national
+        </label>
+      </div>
+
+      <form onSubmit={validate}>
+
+        <label>Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => set_name(e.target.value)}
+          required
+        />
+
+        <label>Surname</label>
+        <input
+          type="text"
+          value={surname}
+          onChange={(e) => set_surname(e.target.value)}
+          required
+        />
+
+        <label>ID Number</label>
+        <input
+          type="text"
+          value={id}
+          onChange={(e) => set_id(e.target.value)}
+          required
+        />
+
+        <label>Sex</label>
+        <input
+          type="text"
+          value={sex}
+          onChange={(e) => set_sex(e.target.value)}
+          required
+        />
+
+        <label>Date of Birth</label>
+        <input
+          type="text"
+          value={dob}
+          onChange={(e) => set_dob(e.target.value)}
+          required
+        />
+
+        <label>Email</label>
+        <input
+          type="text"
+          value={email}
+          onChange={(e) => set_email(e.target.value)}
+          required
+        />
+
+        <button className="btn btn-primary" type="submit">
+          Continue
+        </button>
+
+      </form>
+
+    </div>
+
+  </section>
+);
 }
