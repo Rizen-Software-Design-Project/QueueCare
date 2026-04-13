@@ -1,0 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+
+
+:root {
+  --brand: #0F6E56;
+  --brand-light: #E1F5EE;
+  --brand-mid: #1D9E75;
+  --accent: #D85A30;
+  --accent-light: #FAECE7;
+  --text: #2C2C2A;
+  --text-muted: #888780;
+  --text-hint: #B4B2A9;
+  --surface: #fff;
+  --bg: #F1EFE8;
+  --border: rgba(0, 0, 0, 0.1);
+  --r: 14px;
+  --r-sm: 8px;
+  --ff-head: 'DM Serif Display', serif;
+  --ff-body: 'DM Sans', sans-serif;
+}
+
+
+
+/* ── Root layout ─────────────────────────────────────────────── */
+.sign-root {
+  font-family: var(--ff-body);
+  color: var(--text);
+  background: rgb(245, 253, 247);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* ── Logo ────────────────────────────────────────────────────── */
+.logo {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-mark {
+  width: 48px;
+  height: 48px;
+  background: var(--brand);
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.logo-mark svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.logo h1 {
+  font-family: var(--ff-head);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--brand);
+  letter-spacing: -0.01em;
+}
+
+.logo p {
+  font-size: 0.8rem;
+  color: black;
+  margin-top: 0.15rem;
+  font-weight: 500;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: white;
+  border: 0.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-section {
+  display: block;
+}
+
+/* ── Card typography ─────────────────────────────────────────── */
+.card-title {
+  font-family: var(--ff-head);
+  font-size: 1.4rem;
+  font-weight: 400;
+  margin-bottom: 0.25rem;
+  color: var(--brand);
+  text-align: center;
+  font-weight: 1000;
+}
+
+.card-sub {
+  font-size: 0.82rem;
+  color: rgba(0, 0, 0, 0.753);
+  margin-bottom: 1.75rem;
+  font-weight: 100;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* ── Form fields ─────────────────────────────────────────────── */
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 1000;
+  color: rgba(0, 0, 0, 0.705);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font-family: var(--ff-body);
+  font-size: 0.9rem;
+  color: black;
+  background: white;
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-sm);
+  border-color: var(--brand);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+
+input:focus,
+select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(15, 110, 86, 0.12);
+}
+
+input::placeholder { color: var(--text-hint); }
+
+select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.field        { margin-bottom: 1.1rem; border: none;}
+.field-row    { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+  width: 100%;
+  padding: 0.78rem;
+  font-family: var(--ff-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--r-sm);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  margin-top: 0.25rem;
+}
+
+.btn:active         { transform: scale(0.98); }
+.btn:disabled       { cursor: not-allowed; }
+.btn-primary        { background: var(--brand); color: #fff; }
+.btn-primary:hover  { opacity: 0.92; }
+.btn-ghost          { background: transparent; color: var(--brand); border: 0.5px solid var(--brand); }
+.btn-ghost:hover    { background: var(--brand-light); }
+
+
+.continue-with-google-button {
+    width: 100%;
+    padding: 0.78rem;
+    font-family: var(--ff-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: var(--r-sm);
+    border-color: var(--brand);
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 0.5rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 3rem;
+}
+
+/* ── Divider ─────────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.divider-line { flex: 1; height: 0.5px; background: var(--brand); }
+.divider-text { font-size: 0.75rem; color: var(--text-hint); font-weight: 400; }
+
+
+/* -- Don't have an account ------------------------------------- */
+.question-before-link {
+    opacity: 0.6;
+    font-style: italic;
+    font-size: 15px;
+    font-weight: 600;
+    color: #111110;
+    text-align: center;
+}
+
+.signup-resendOTP-link {
+  color: var(--brand);
+  cursor: pointer;
+  font-weight: 1000;
+  margin-left: 0.25rem;
+  border: none;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  background-color: white;
+}
+
+/* -- Phone number input ---------------------------------------- */
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.phone-input-wrapper input {
+    border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+
+.phone-code {
+  background: var(--bg);
+  border: 0px solid var(--border);
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-sm) 0 0 var(--r-sm);
+  padding: 0.7rem 0.9rem;
+  font-family: var(--ff-body);
+  font-size: 0.9rem;
+  font-weight:800;
+  color: white;
+  background-color: var(--brand);
+}

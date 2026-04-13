@@ -3,7 +3,7 @@ import { auth, googleAuthProvider } from "../firebase";
 import { useState, useEffect } from "react";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-
+import "./login.css";
 export default function Login(){
 
     let navigate = useNavigate();
@@ -95,47 +95,74 @@ export default function Login(){
     }
 
     return (
-      <section>
-        {!otp_sent && at_otp && (
-          <h1>Loading...</h1>
-        )}
+  <section className="sign-root">
 
-        {otp_sent && at_otp && (
-          <>
-            <h1>Enter OTP:</h1>
-            <form onSubmit={react}>
-              <input
-                type="text"
-                value={otp}
-                onChange={e => set_otp(e.target.value)}
-              />
-              <button type="submit">Enter</button>
-            </form>
-            <a href="#" onClick={handle_resend}>Resend OTP?</a>
-          </>
-        )}
+    <div className="card">
 
-        {!at_otp && (
-          <>
-            <button onClick={signIn}>Continue with Google</button>
-            <form onSubmit={phone_login}>
-              <label>+27</label>
+      {!otp_sent && at_otp && (
+        <h1>Loading...</h1>
+      )}
+
+      {otp_sent && at_otp && (
+        <>
+          <h1 className="card-title">Enter OTP</h1>
+
+          <form onSubmit={react}>
+            <input
+              type="text"
+              value={otp}
+              onChange={e => set_otp(e.target.value)}
+              placeholder="Enter OTP"
+            />
+            <button className="btn btn-primary" type="submit">
+              Verify
+            </button>
+          </form>
+
+          <a href="#" onClick={handle_resend}>
+            Resend OTP?
+          </a>
+        </>
+      )}
+
+      {!at_otp && (
+        <>
+          <h1 className="card-title">Welcome</h1>
+
+          <button className="btn btn-primary" onClick={signIn}>
+            Continue with Google
+          </button>
+
+          <div className="divider">
+            <div className="divider-line"></div>
+            <span className="divider-text">OR</span>
+            <div className="divider-line"></div>
+          </div>
+
+          <form onSubmit={phone_login}>
+            <div className="phone-input-wrapper">
+              <span className="phone-code">+27</span>
+
               <input
                 type="tel"
                 value={phonenumber}
-                min={9}
-                max={10}
                 placeholder="821234567"
                 onChange={(e) => set_phone_number(e.target.value)}
                 required
               />
-              <button type="submit">Continue</button>
-            </form>
-            
-          </>
-        )}
+            </div>
 
-       <section id="recaptcha-container"></section>
-      </section>
-    );
+            <button className="btn btn-primary" type="submit">
+              Continue
+            </button>
+          </form>
+        </>
+      )}
+
+    </div>
+
+    <section id="recaptcha-container"></section>
+
+  </section>
+);
 }
