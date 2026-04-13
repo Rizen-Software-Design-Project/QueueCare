@@ -5,7 +5,7 @@ import "./Dashboard.css";
 
 const supabase = createClient(
   "https://vktjtxljwzyakobkkhol.supabase.co",
-  "YOUR_ANON_KEY"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA"
 );
 
 const NAV_ITEMS = [
@@ -59,92 +59,79 @@ export default function Dashboard() {
   const [savingProfile, setSavingProfile] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // MOCK DATA
-    const mockProfile = {
-      id: "12345",
-      name: "John",
-      surname: "Doe",
-      email: "john@example.com",
-      phone_number: "0812345678",
-      dob: "2000-05-15",
-      sex: "Male",
-      role: "patient",
-    };
+ useEffect(() => {
+    async function loadAll() {
+      const { data: authData, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !authData.user) {
+        navigate("/signin", { replace: true });
+        return;
+      }
 
-    const mockAppointments = [
-      {
-        id: 1,
-        status: "booked",
-        appointment_type: "General Checkup",
-        reason: "Routine visit",
-        appointment_slots: { slot_date: "2026-04-20", slot_time: "09:30" },
-        facilities: { name: "City Clinic", district: "Johannesburg", province: "Gauteng" },
-      },
-      {
-        id: 2,
-        status: "completed",
-        appointment_type: "Dental",
-        appointment_slots: { slot_date: "2026-03-10", slot_time: "11:00" },
-        facilities: { name: "Smile Dental", district: "Sandton", province: "Gauteng" },
-      },
-    ];
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authData.user.id)
+        .maybeSingle();
 
-    const mockQueue = [
-      {
-        id: 1,
-        queue_position: 3,
-        status: "waiting",
-        entry_type: "Walk-in",
-        joined_at: new Date(),
-        facilities: { name: "City Clinic", district: "Johannesburg" },
-      },
-    ];
+      let resolvedProfile = prof;
+      if (!resolvedProfile) {
+        // If trigger-created profile is delayed/missing, keep user in dashboard using auth metadata.
+        resolvedProfile = {
+          id: authData.user.id,
+          email: authData.user.email || "",
+          name: authData.user.user_metadata?.name || "",
+          surname: authData.user.user_metadata?.surname || "",
+          phone_number: authData.user.phone || "",
+          dob: authData.user.user_metadata?.dob || null,
+          sex: authData.user.user_metadata?.sex || "",
+          role: authData.user.user_metadata?.role || "patient",
+        };
+      }
 
-    const mockNotifications = [
-      {
-        id: 1,
-        message: "Your appointment is confirmed.",
-        sent_at: new Date(),
-        channel: "email",
-        is_read: false,
-      },
-      {
-        id: 2,
-        message: "You are next in queue.",
-        sent_at: new Date(),
-        channel: "sms",
-        is_read: false,
-      },
-    ];
+      setProfile(resolvedProfile);
+      setEditForm({
+        name: resolvedProfile.name || "",
+        surname: resolvedProfile.surname || "",
+        phone_number: resolvedProfile.phone_number || "",
+        dob: resolvedProfile.dob || "",
+      });
 
-    setProfile(mockProfile);
-    setEditForm({
-      name: mockProfile.name,
-      surname: mockProfile.surname,
-      phone_number: mockProfile.phone_number,
-      dob: mockProfile.dob,
-    });
+      const [apptRes, queueRes, notifRes] = await Promise.all([
+        supabase.from("appointments")
+          .select("*, appointment_slots(slot_date, slot_time, duration_minutes), facilities(name, district, province)")
+          .eq("patient_id", resolvedProfile.id).order("booked_at", { ascending: false }).limit(20),
+        supabase.from("queue_entries")
+          .select("*, facilities(name, district)")
+          .eq("patient_id", resolvedProfile.id).order("joined_at", { ascending: false }).limit(10),
+        supabase.from("notifications")
+          .select("*").eq("profile_id", resolvedProfile.id).order("sent_at", { ascending: false }).limit(30),
+      ]);
 
-    setAppointments(mockAppointments);
-    setQueue(mockQueue);
-    setNotifications(mockNotifications);
-    setUnreadCount(mockNotifications.filter(n => !n.is_read).length);
-
-    setLoading(false);
-  }, []);
+      setAppointments(apptRes.data || []);
+      setQueue(queueRes.data || []);
+      setNotifications(notifRes.data || []);
+      setUnreadCount((notifRes.data || []).filter(n => !n.is_read).length);
+      setLoading(false);
+    }
+    loadAll();
+  }, [navigate]);
+// <-- FIXED dependency array placement
 
   async function handleLogout() {
-    console.log("Logout disabled in preview mode");
+    await supabase.auth.signOut();
+    navigate("/signin");
   }
 
   async function markAllRead() {
+    if (!profile) return;
+    await supabase.from("notifications").update({ is_read: true }).eq("profile_id", profile.id);
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     setUnreadCount(0);
   }
 
   async function saveProfile() {
     setSavingProfile(true);
+    await supabase.from("profiles").update(editForm).eq("id", profile.id);
     setProfile(prev => ({ ...prev, ...editForm }));
     setEditProfile(false);
     setSavingProfile(false);
