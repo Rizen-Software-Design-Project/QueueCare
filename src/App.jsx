@@ -4,7 +4,6 @@ import Signin from "./components/Signin.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import ClinicSearch from "./components/Clinic_search";
 import "./App.css";
-<BrowserRouter basename="/QueueCare"></BrowserRouter>
 
 function App() {
   return (
