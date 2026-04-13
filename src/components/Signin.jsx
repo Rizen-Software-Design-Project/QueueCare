@@ -28,6 +28,14 @@ function strengthScore(val) {
   return s;
 }
 
+async function sha256Hex(value) {
+  const encoder = new TextEncoder();
+  const input = encoder.encode(value);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", input);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 const STRENGTH_COLORS = ["#E24B4A", "#EF9F27", "#1D9E75", "#0F6E56"];
 
 // ── Sub-components ────────────────────────────────────────────
@@ -199,11 +207,19 @@ export default function Signin() {
       setError("Passwords do not match."); setLoading(false); return;
     }
 
+    let hashedIdNumber = "";
+    try {
+      hashedIdNumber = await sha256Hex(idNumber);
+    } catch {
+      setError("Could not securely process your ID number. Please try again.");
+      setLoading(false); return;
+    }
+
     // FIX 1: Check id_number uniqueness against the correct column
     const { data: existing } = await supabase
       .from("profiles")
       .select("id")
-      .eq("id_number", idNumber)
+      .eq("id_number", hashedIdNumber)
       .maybeSingle();
 
     if (existing) {
@@ -214,13 +230,14 @@ export default function Signin() {
     // FIX 2: Pass correct variable names in metadata (firstName not name, sex not gender)
     const { error: signUpErr } = await supabase.auth.signUp({
       email,
+      // Supabase Auth hashes passwords securely on the server.
       password,
       options: {
         data: {
           name:      firstName,  // was: name (undefined)
           surname,
           sex,                   // was: gender (undefined)
-          id_number: idNumber,
+          id_number: hashedIdNumber,
           dob:       dobFromSAId(idNumber),
         }
       }
