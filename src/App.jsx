@@ -2,9 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Welcome from "./components/Welcome.jsx";
 import Signin from "./components/Signin.jsx";
 import Dashboard from "./components/Dashboard.jsx";
-import ClinicSearch from "./components/Clinic_search";
+import ClinicSearch from "./components/Clinic_search.jsx";
 import "./App.css";
-<BrowserRouter basename="/QueueCare"></BrowserRouter>
 
 function App() {
   return (
