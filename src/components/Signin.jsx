@@ -251,25 +251,6 @@ export default function Signin() {
 
     if (verifyErr) {
       setError("Invalid or expired code. Please try again.");
-      setLoading(false); return;
-    }
-
-    const { error: profileErr } = await supabase.from("profiles").insert({
-      id_number: idNumber,
-      name:    firstName,
-      surname: surname,
-      email:   email,
-      sex:     sex,
-      role:    "patient"
-    });
-
-    setLoading(false);
-    if (profileErr) {
-      setError(
-        profileErr.code === "23505"
-          ? "An account with this ID number already exists."
-          : profileErr.message
-      );
       return;
     }
 
@@ -358,7 +339,7 @@ export default function Signin() {
             <p className="card-sub" style={{ textAlign: "center", marginBottom: "1.5rem" }}>
               You've been successfully authenticated.
             </p>
-            <button className="btn btn-primary" onClick={() => window.location.href = "/dashboard"}>
+            <button className="btn btn-primary" onClick={() => navigate("/dashboard")}>
               Go to Dashboard
             </button>
             <p className="switch-text">
@@ -500,7 +481,7 @@ export default function Signin() {
             <p style={{ textAlign: "center", fontSize: ".8rem", color: "var(--text-muted)", marginBottom: "1.5rem", fontWeight: 300 }}>
               You're verified and can now access the platform.
             </p>
-            <button className="btn btn-primary" onClick={() => navigate("/QueueCare/dashboard")}>
+            <button className="btn btn-primary" onClick={() => navigate("/dashboard")}>
               Go to Dashboard
             </button>
             <p className="switch-text"><a onClick={() => go("login")}>Back to login</a></p>

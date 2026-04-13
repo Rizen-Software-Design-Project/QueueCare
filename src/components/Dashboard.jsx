@@ -61,25 +61,50 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadAll() {
-      const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) { navigate("/signin"); return; }
+      const { data: authData, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !authData.user) {
+        navigate("/signin", { replace: true });
+        return;
+      }
 
       const { data: prof } = await supabase
-        .from("profiles").select("*").eq("email", authData.user.email).single();
-      if (!prof) { navigate("/signin"); return; }
+        .from("profiles")
+        .select("*")
+        .eq("id", authData.user.id)
+        .maybeSingle();
 
-      setProfile(prof);
-      setEditForm({ name: prof.name || "", surname: prof.surname || "", phone_number: prof.phone_number || "", dob: prof.dob || "" });
+      let resolvedProfile = prof;
+      if (!resolvedProfile) {
+        // If trigger-created profile is delayed/missing, keep user in dashboard using auth metadata.
+        resolvedProfile = {
+          id: authData.user.id,
+          email: authData.user.email || "",
+          name: authData.user.user_metadata?.name || "",
+          surname: authData.user.user_metadata?.surname || "",
+          phone_number: authData.user.phone || "",
+          dob: authData.user.user_metadata?.dob || null,
+          sex: authData.user.user_metadata?.sex || "",
+          role: authData.user.user_metadata?.role || "patient",
+        };
+      }
+
+      setProfile(resolvedProfile);
+      setEditForm({
+        name: resolvedProfile.name || "",
+        surname: resolvedProfile.surname || "",
+        phone_number: resolvedProfile.phone_number || "",
+        dob: resolvedProfile.dob || "",
+      });
 
       const [apptRes, queueRes, notifRes] = await Promise.all([
         supabase.from("appointments")
           .select("*, appointment_slots(slot_date, slot_time, duration_minutes), facilities(name, district, province)")
-          .eq("patient_id", prof.id).order("booked_at", { ascending: false }).limit(20),
+          .eq("patient_id", resolvedProfile.id).order("booked_at", { ascending: false }).limit(20),
         supabase.from("queue_entries")
           .select("*, facilities(name, district)")
-          .eq("patient_id", prof.id).order("joined_at", { ascending: false }).limit(10),
+          .eq("patient_id", resolvedProfile.id).order("joined_at", { ascending: false }).limit(10),
         supabase.from("notifications")
-          .select("*").eq("profile_id", prof.id).order("sent_at", { ascending: false }).limit(30),
+          .select("*").eq("profile_id", resolvedProfile.id).order("sent_at", { ascending: false }).limit(30),
       ]);
 
       setAppointments(apptRes.data || []);
