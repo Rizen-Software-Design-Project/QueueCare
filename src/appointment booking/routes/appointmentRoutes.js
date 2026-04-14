@@ -293,6 +293,7 @@ router.get('/appointments/:id', getAppointmentById);
 router.post('/clinics/available', getAvailableClinics);
 router.post('/slots/available', getAvailableSlots);
 router.post('/appointment-slots/available', getAvailableSlots);
+router.post('/clinic-availability', getAvailableSlots);
 router.post('/appointments/book', bookAppointment);
 router.post('/staff/slots', makeSlot);
 router.post('/signup', signUp);
