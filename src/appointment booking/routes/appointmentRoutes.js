@@ -296,6 +296,63 @@ router.post('/slots/available', getAvailableSlots);
 router.post('/appointment-slots/available', getAvailableSlots);
 router.post('/clinic-availability', getAvailableSlots);
 router.post('/appointments/book', bookAppointment);
+router.post('/appointments/send-confirmation', async (req, res) => {
+    try {
+        const { patient_id, facility_id, slot_id, reason } = req.body;
+        if (!patient_id || !slot_id) {
+            return res.status(400).json({ error: 'patient_id and slot_id required' });
+        }
+
+        const [profileRes, slotRes, facilityRes] = await Promise.all([
+            supabase.from('profiles').select('email, name, surname').eq('id', patient_id).single(),
+            supabase.from('appointment_slots').select('slot_date, slot_time, duration_minutes').eq('id', slot_id).single(),
+            supabase.from('facilities').select('name').eq('id', facility_id).single(),
+        ]);
+
+        let patientEmail = profileRes.data?.email;
+        if (!patientEmail) {
+            const { data: authUser } = await supabase.auth.admin.getUserById(patient_id);
+            patientEmail = authUser?.user?.email;
+        }
+
+        if (!patientEmail) {
+            return res.status(200).json({ message: 'No email found, skipped' });
+        }
+
+        const patientName = profileRes.data?.name || 'Patient';
+        const slotDate = slotRes.data?.slot_date || 'TBD';
+        const slotTime = slotRes.data?.slot_time ? slotRes.data.slot_time.slice(0, 5) : 'TBD';
+        const duration = slotRes.data?.duration_minutes || '';
+        const facilityName = facilityRes.data?.name || 'the clinic';
+
+        const info = await transporter.sendMail({
+            from: `"QueueCare" <${process.env.SMTP_USER}>`,
+            to: patientEmail,
+            subject: `Appointment Confirmed – ${facilityName}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+                    <h2 style="color: #1976d2;">Appointment Confirmed ✅</h2>
+                    <p>Hi ${patientName},</p>
+                    <p>Your appointment has been booked successfully.</p>
+                    <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+                        <tr><td style="padding: 8px; font-weight: bold;">Clinic</td><td style="padding: 8px;">${facilityName}</td></tr>
+                        <tr><td style="padding: 8px; font-weight: bold;">Date</td><td style="padding: 8px;">${slotDate}</td></tr>
+                        <tr><td style="padding: 8px; font-weight: bold;">Time</td><td style="padding: 8px;">${slotTime}</td></tr>
+                        ${duration ? `<tr><td style="padding: 8px; font-weight: bold;">Duration</td><td style="padding: 8px;">${duration} minutes</td></tr>` : ''}
+                        <tr><td style="padding: 8px; font-weight: bold;">Reason</td><td style="padding: 8px;">${(reason || '').trim()}</td></tr>
+                    </table>
+                    <p>Please arrive a few minutes early.</p>
+                    <p style="color: #888; font-size: 12px;">— QueueCare Team</p>
+                </div>
+            `,
+        });
+
+        return res.status(200).json({ message: 'Email sent', messageId: info.messageId });
+    } catch (error) {
+        console.error('Send confirmation error:', error.message);
+        return res.status(500).json({ error: error.message });
+    }
+});
 router.post('/staff/slots', makeSlot);
 router.post('/signup', signUp);
 
