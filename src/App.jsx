@@ -10,7 +10,7 @@ import "./App.css";
 
 function App() {
   return (
-    <BrowserRouter basename="/QueueCare"> //remove basename if you want to deploy to azure
+    <BrowserRouter basename="/QueueCare"> {/* remove basename if you want to deploy to azure */}
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/signin" element={<Login />} />
