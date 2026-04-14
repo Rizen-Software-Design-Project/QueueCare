@@ -25,7 +25,7 @@ app.use('/', appointmentRoutes);
 
 // Serve the built React frontend
 app.use(express.static(distPath));
-app.get('*', (req, res, next) => {
+app.get('{*path}', (req, res, next) => {
   res.sendFile(path.join(distPath, 'index.html'), (err) => {
     if (err) {
       next();
