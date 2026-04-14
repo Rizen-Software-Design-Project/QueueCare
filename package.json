@@ -8,6 +8,7 @@
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "vite",
     "dev:backend": "cd \"src/appointment booking\" && node servers/server.js",
+    "start": "cd \"src/appointment booking\" && node servers/server.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
