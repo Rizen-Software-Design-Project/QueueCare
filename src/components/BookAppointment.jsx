@@ -58,8 +58,29 @@ export default function BookAppointment() {
           return;
         }
 
-        setSlots(data);
-        setStatus({ type: "count", message: `${data.length} slot(s) available` });
+        // Filter out slots that are fully booked
+        let available = data.filter(s => (s.booked_count || 0) < (s.total_capacity || 1));
+
+        // If signed in, also filter out slots the patient already booked
+        if (patientId) {
+          const { data: existing } = await supabase
+            .from('appointments')
+            .select('slot_id')
+            .eq('patient_id', patientId)
+            .eq('status', 'booked');
+          if (existing && existing.length > 0) {
+            const bookedSlotIds = new Set(existing.map(a => a.slot_id));
+            available = available.filter(s => !bookedSlotIds.has(s.id));
+          }
+        }
+
+        if (available.length === 0) {
+          setStatus({ type: "error", message: "No available slots for this clinic." });
+          return;
+        }
+
+        setSlots(available);
+        setStatus({ type: "count", message: `${available.length} slot(s) available` });
       } catch (err) {
         console.error(err);
         setStatus({ type: "error", message: err.message });
@@ -67,7 +88,7 @@ export default function BookAppointment() {
     };
 
     fetchSlots();
-  }, [clinicId]);
+  }, [clinicId, patientId]);
 
   const handleSelectSlot = (slotId) => {
     setSelectedSlotId(slotId);
@@ -92,6 +113,34 @@ export default function BookAppointment() {
     setStatus({ type: "loading", message: "Booking appointment..." });
 
     try {
+      // Check for duplicate booking
+      const { data: duplicate } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('patient_id', patientId)
+        .eq('slot_id', selectedSlotId)
+        .eq('status', 'booked')
+        .maybeSingle();
+
+      if (duplicate) {
+        setStatus({ type: "error", message: "You have already booked this slot." });
+        return;
+      }
+
+      // Check capacity before booking
+      const { data: slotData } = await supabase
+        .from('appointment_slots')
+        .select('booked_count, total_capacity')
+        .eq('id', selectedSlotId)
+        .single();
+
+      if (slotData && (slotData.booked_count || 0) >= (slotData.total_capacity || 1)) {
+        setStatus({ type: "error", message: "This slot is fully booked. Please select another." });
+        setSlots(prev => prev.filter(s => s.id !== selectedSlotId));
+        setSelectedSlotId(null);
+        return;
+      }
+
       const facilityUuid = '00000000-0000-0000-0000-' + String(clinicId).padStart(12, '0');
 
       const { data: appointment, error } = await supabase
@@ -110,6 +159,12 @@ export default function BookAppointment() {
       if (error) {
         throw new Error(error.message);
       }
+
+      // Increment booked_count on the slot
+      await supabase
+        .from('appointment_slots')
+        .update({ booked_count: (slotData.booked_count || 0) + 1 })
+        .eq('id', selectedSlotId);
 
       setBooking(appointment);
       setStatus({ type: "success", message: "Appointment booked successfully" });
@@ -184,7 +239,7 @@ export default function BookAppointment() {
                   <div className="ba-slot-time">🕐 {formatTime(slot.slot_time)}</div>
                   <div className="ba-slot-meta">
                     {slot.duration_minutes ? `${slot.duration_minutes} min` : ""}
-                    {slot.total_capacity ? ` · Capacity: ${slot.total_capacity}` : ""}
+                    {slot.total_capacity ? ` · ${slot.total_capacity - (slot.booked_count || 0)} spot${slot.total_capacity - (slot.booked_count || 0) !== 1 ? "s" : ""} left` : ""}
                   </div>
                   {isSelected && <div className="ba-slot-check">✔ Selected</div>}
                 </div>

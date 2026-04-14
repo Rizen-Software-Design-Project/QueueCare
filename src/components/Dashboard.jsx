@@ -183,6 +183,35 @@ export default function Dashboard() {
                 <span className="db-stat-label">Unread Notifications</span>
               </div>
             </div>
+
+            {/* Upcoming Appointments */}
+            {upcomingAppts.length > 0 && (
+              <div className="db-overview-appts">
+                <h3 className="db-subsection-title">Upcoming Appointments</h3>
+                <div className="db-appt-list">
+                  {upcomingAppts.map(appt => (
+                    <div key={appt.id} className="db-appt-card">
+                      <div className="db-appt-clinic">{appt.facilities?.name || "Clinic"}</div>
+                      <div className="db-appt-details">
+                        <span>📅 {formatDate(appt.appointment_slots?.slot_date)}</span>
+                        <span>🕐 {formatTime(appt.appointment_slots?.slot_time)}</span>
+                        {appt.appointment_slots?.duration_minutes && (
+                          <span>⏱ {appt.appointment_slots.duration_minutes} min</span>
+                        )}
+                      </div>
+                      <div className="db-appt-reason">{appt.reason}</div>
+                      <Badge status={appt.status} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {upcomingAppts.length === 0 && (
+              <div className="db-overview-appts">
+                <h3 className="db-subsection-title">Upcoming Appointments</h3>
+                <p className="db-empty">No upcoming appointments. <span className="db-link" onClick={() => navigate("/clinic-search")}>Book one now</span></p>
+              </div>
+            )}
           </div>
         );
 
