@@ -7,7 +7,6 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: QueueCare
-  AZURE_WEBAPP_PACKAGE_PATH: '.'
   NODE_VERSION: '20.x'
 
 permissions:
@@ -26,19 +25,30 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+      - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build project
-        working-directory: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+      - name: Build frontend
         run: npm run build
 
-      - name: Upload build artifact
+      - name: Install backend dependencies
+        working-directory: src/appointment booking
+        run: npm ci --omit=dev
+
+      - name: Prepare deployment package
+        run: |
+          mkdir deploy
+          cp -r dist deploy/dist
+          cp -r "src/appointment booking" deploy/server
+          cp package.json deploy/
+          echo "cd server && node servers/server.js" > deploy/start.sh
+          chmod +x deploy/start.sh
+
+      - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: dist
+          name: app
+          path: deploy/
 
   deploy:
     runs-on: ubuntu-latest
@@ -48,8 +58,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: dist
-          path: dist
+          name: app
 
       - name: Azure Login
         uses: azure/login@v2
@@ -60,4 +69,4 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: QueueCare
-          package: dist
+          startup-command: 'node server/servers/server.js'

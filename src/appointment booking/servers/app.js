@@ -3,12 +3,19 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import fs from 'fs';
+
 import appointmentRoutes from '../routes/appointmentRoutes.js';
 import notFound from '../middleware/notFound.js';
 import errorHandler from '../middleware/errorHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distPath = path.join(__dirname, '../../../dist');
+
+// Support both local dev (../../../dist) and Azure deployment (../../dist)
+let distPath = path.join(__dirname, '../../../dist');
+if (!fs.existsSync(distPath)) {
+  distPath = path.join(__dirname, '../../dist');
+}
 
 const app = express();
 
