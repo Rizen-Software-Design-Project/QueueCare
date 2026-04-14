@@ -62,109 +62,136 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
 useEffect(() => {
-  let unsubscribe;
+  let unsub = null;
+  let cancelled = false;
 
   async function loadAll() {
-    const {
-      data: { user: supabaseUser },
-      error: supabaseErr,
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user: supabaseUser },
+      } = await supabase.auth.getUser();
 
-    unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      const authProvider = supabaseUser ? "supabase" : firebaseUser ? "firebase" : null;
-      const providerUserId = supabaseUser?.id || firebaseUser?.uid || null;
+      unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (cancelled) return;
 
-      if (!authProvider || !providerUserId) {
-        navigate("/signin", { replace: true });
-        return;
-      }
+        // Prefer live Firebase state, but also fall back to currentUser
+        const resolvedFirebaseUser = firebaseUser || auth.currentUser || null;
 
-      const { data: prof, error: profErr } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("auth_provider", authProvider)
-        .eq("provider_user_id", providerUserId)
-        .maybeSingle();
+        const authProvider = supabaseUser
+          ? "supabase"
+          : resolvedFirebaseUser
+          ? "firebase"
+          : null;
 
-      if (profErr) {
-        console.error("Profile fetch error:", profErr);
-      }
+        const providerUserId = supabaseUser?.id || resolvedFirebaseUser?.uid || null;
 
-      let resolvedProfile = prof;
+        // Don't redirect until auth state has actually resolved
+        if (!authProvider || !providerUserId) {
+          setLoading(false);
+          navigate("/signin", { replace: true });
+          return;
+        }
 
-      if (!resolvedProfile) {
-        resolvedProfile = {
-          id: null,
-          auth_provider: authProvider,
-          provider_user_id: providerUserId,
-          email: supabaseUser?.email || firebaseUser?.email || "",
-          name:
-            supabaseUser?.user_metadata?.name ||
-            firebaseUser?.displayName?.split(" ")[0] ||
-            "",
-          surname:
-            supabaseUser?.user_metadata?.surname ||
-            firebaseUser?.displayName?.split(" ").slice(1).join(" ") ||
-            "",
-          phone_number: supabaseUser?.phone || firebaseUser?.phoneNumber || "",
-          dob: supabaseUser?.user_metadata?.dob || null,
-          sex: supabaseUser?.user_metadata?.sex || "",
-          role: supabaseUser?.user_metadata?.role || "patient",
-        };
-      }
-
-      setProfile(resolvedProfile);
-      setEditForm({
-        name: resolvedProfile.name || "",
-        surname: resolvedProfile.surname || "",
-        phone_number: resolvedProfile.phone_number || "",
-        dob: resolvedProfile.dob || "",
-      });
-
-      if (!resolvedProfile.id) {
-        setAppointments([]);
-        setQueue([]);
-        setNotifications([]);
-        setUnreadCount(0);
-        setLoading(false);
-        return;
-      }
-
-      const [apptRes, queueRes, notifRes] = await Promise.all([
-        supabase
-          .from("appointments")
-          .select("*, appointment_slots(slot_date, slot_time, duration_minutes), facilities(name, district, province)")
-          .eq("patient_id", resolvedProfile.id)
-          .order("booked_at", { ascending: false })
-          .limit(20),
-
-        supabase
-          .from("queue_entries")
-          .select("*, facilities(name, district)")
-          .eq("patient_id", resolvedProfile.id)
-          .order("joined_at", { ascending: false })
-          .limit(10),
-
-        supabase
-          .from("notifications")
+        const { data: prof, error: profErr } = await supabase
+          .from("profiles")
           .select("*")
-          .eq("profile_id", resolvedProfile.id)
-          .order("sent_at", { ascending: false })
-          .limit(30),
-      ]);
+          .eq("auth_provider", authProvider)
+          .eq("provider_user_id", providerUserId)
+          .maybeSingle();
 
-      setAppointments(apptRes.data || []);
-      setQueue(queueRes.data || []);
-      setNotifications(notifRes.data || []);
-      setUnreadCount((notifRes.data || []).filter((n) => !n.is_read).length);
-      setLoading(false);
-    });
+        if (cancelled) return;
+
+        if (profErr) {
+          console.error("Profile fetch error:", profErr);
+        }
+
+        let resolvedProfile = prof;
+
+        if (!resolvedProfile) {
+          resolvedProfile = {
+            id: null,
+            auth_provider: authProvider,
+            provider_user_id: providerUserId,
+            email: supabaseUser?.email || resolvedFirebaseUser?.email || "",
+            name:
+              supabaseUser?.user_metadata?.name ||
+              resolvedFirebaseUser?.displayName?.split(" ")[0] ||
+              "",
+            surname:
+              supabaseUser?.user_metadata?.surname ||
+              resolvedFirebaseUser?.displayName?.split(" ").slice(1).join(" ") ||
+              "",
+            phone_number: supabaseUser?.phone || resolvedFirebaseUser?.phoneNumber || "",
+            dob: supabaseUser?.user_metadata?.dob || null,
+            sex: supabaseUser?.user_metadata?.sex || "",
+            role: supabaseUser?.user_metadata?.role || "patient",
+          };
+        }
+
+        setProfile(resolvedProfile);
+        setEditForm({
+          name: resolvedProfile.name || "",
+          surname: resolvedProfile.surname || "",
+          phone_number: resolvedProfile.phone_number || "",
+          dob: resolvedProfile.dob || "",
+        });
+
+        if (!resolvedProfile.id) {
+          setAppointments([]);
+          setQueue([]);
+          setNotifications([]);
+          setUnreadCount(0);
+          setLoading(false);
+          return;
+        }
+
+        const [apptRes, queueRes, notifRes] = await Promise.all([
+          supabase
+            .from("appointments")
+            .select(
+              "*, appointment_slots(slot_date, slot_time, duration_minutes), facilities(name, district, province)"
+            )
+            .eq("patient_id", resolvedProfile.id)
+            .order("booked_at", { ascending: false })
+            .limit(20),
+
+          supabase
+            .from("queue_entries")
+            .select("*, facilities(name, district)")
+            .eq("patient_id", resolvedProfile.id)
+            .order("joined_at", { ascending: false })
+            .limit(10),
+
+          supabase
+            .from("notifications")
+            .select("*")
+            .eq("profile_id", resolvedProfile.id)
+            .order("sent_at", { ascending: false })
+            .limit(30),
+        ]);
+
+        if (cancelled) return;
+
+        setAppointments(apptRes.data || []);
+        setQueue(queueRes.data || []);
+        setNotifications(notifRes.data || []);
+        setUnreadCount((notifRes.data || []).filter((n) => !n.is_read).length);
+        setLoading(false);
+      });
+    } catch (err) {
+      console.error("Dashboard auth load error:", err);
+      if (!cancelled) {
+        setLoading(false);
+        navigate("/signin", { replace: true });
+      }
+    }
   }
 
   loadAll();
 
   return () => {
-    if (unsubscribe) unsubscribe();
+    cancelled = true;
+    if (unsub) unsub();
   };
 }, [navigate]);
 // <-- FIXED dependency array placement

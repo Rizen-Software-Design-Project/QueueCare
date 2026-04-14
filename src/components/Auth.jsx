@@ -713,7 +713,7 @@ export default function AuthPage() {
       const result = await window.confirmationResult.confirm(code);
       const firebaseUser = result.user;
       const normalised = normaliseSAPhone(phone);
-
+      console.log("Phone OTP verified Firebase user:", firebaseUser.uid, firebaseUser.phoneNumber);
       setLoading(false);
 
       await routeAfterLogin({
