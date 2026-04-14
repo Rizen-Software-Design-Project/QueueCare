@@ -8,7 +8,7 @@ import "./App.css";
 
 function App() {
   return (
-    <BrowserRouter basename="/QueueCare">
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/signin" element={<Signin />} />
