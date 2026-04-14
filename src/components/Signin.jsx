@@ -186,8 +186,6 @@ export default function Signin() {
   async function handleSendOtp() {
     setError(""); setLoading(true);
 
-    
-
     if (!firstName || !surname) {
       setError("Please enter your first name and surname."); setLoading(false); return;
     }
@@ -271,10 +269,7 @@ export default function Signin() {
       return;
     }
 
-    // FIX 3: Removed manual profile insert entirely.
-    // The handle_new_user trigger fires on auth.users insert and
-    // creates the profile row from raw_user_meta_data automatically.
-    // A manual insert here was causing the uuid/id_number type mismatch error.
+
 
     go("done");
   }
