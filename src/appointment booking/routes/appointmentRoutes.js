@@ -291,6 +291,7 @@ const makeSlot = async (req, res) => {
 router.get('/appointments', getAppointments);
 router.get('/appointments/:id', getAppointmentById);
 router.post('/clinics/available', getAvailableClinics);
+router.post('/clinics/openslots', getAvailableSlots);
 router.post('/slots/available', getAvailableSlots);
 router.post('/appointment-slots/available', getAvailableSlots);
 router.post('/clinic-availability', getAvailableSlots);
