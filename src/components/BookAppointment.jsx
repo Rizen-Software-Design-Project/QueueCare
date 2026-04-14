@@ -45,18 +45,20 @@ export default function BookAppointment() {
 
     const fetchSlots = async () => {
       try {
-        const response = await fetch(`${API_URL}/clinics/openslots`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ facility_id: Number(clinicId) }),
-        });
+        const { data, error } = await supabase
+          .from('appointment_slots')
+          .select('*')
+          .eq('facility_id', Number(clinicId));
 
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error || `HTTP ${response.status}`);
+        if (error) {
+          throw new Error(error.message);
         }
 
-        const data = await response.json();
+        if (!data || data.length === 0) {
+          setStatus({ type: "error", message: "No available slots for this clinic." });
+          return;
+        }
+
         setSlots(data);
         setStatus({ type: "count", message: `${data.length} slot(s) available` });
       } catch (err) {
