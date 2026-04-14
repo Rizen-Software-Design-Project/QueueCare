@@ -28,6 +28,14 @@ function strengthScore(val) {
   return s;
 }
 
+async function sha256Hex(value) {
+  const encoder = new TextEncoder();
+  const input = encoder.encode(value);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", input);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 const STRENGTH_COLORS = ["#E24B4A", "#EF9F27", "#1D9E75", "#0F6E56"];
 
 // ── Sub-components ────────────────────────────────────────────
@@ -178,8 +186,6 @@ export default function Signin() {
   async function handleSendOtp() {
     setError(""); setLoading(true);
 
-    
-
     if (!firstName || !surname) {
       setError("Please enter your first name and surname."); setLoading(false); return;
     }
@@ -199,11 +205,19 @@ export default function Signin() {
       setError("Passwords do not match."); setLoading(false); return;
     }
 
+    let hashedIdNumber = "";
+    try {
+      hashedIdNumber = await sha256Hex(idNumber);
+    } catch {
+      setError("Could not securely process your ID number. Please try again.");
+      setLoading(false); return;
+    }
+
     // FIX 1: Check id_number uniqueness against the correct column
     const { data: existing } = await supabase
       .from("profiles")
       .select("id")
-      .eq("id_number", idNumber)
+      .eq("id_number", hashedIdNumber)
       .maybeSingle();
 
     if (existing) {
@@ -214,13 +228,14 @@ export default function Signin() {
     // FIX 2: Pass correct variable names in metadata (firstName not name, sex not gender)
     const { error: signUpErr } = await supabase.auth.signUp({
       email,
+      // Supabase Auth hashes passwords securely on the server.
       password,
       options: {
         data: {
           name:      firstName,  // was: name (undefined)
           surname,
           sex,                   // was: gender (undefined)
-          id_number: idNumber,
+          id_number: hashedIdNumber,
           dob:       dobFromSAId(idNumber),
         }
       }
@@ -251,32 +266,10 @@ export default function Signin() {
 
     if (verifyErr) {
       setError("Invalid or expired code. Please try again.");
-      setLoading(false); return;
-    }
-
-    const { error: profileErr } = await supabase.from("profiles").insert({
-      id_number: idNumber,
-      name:    firstName,
-      surname: surname,
-      email:   email,
-      sex:     sex,
-      role:    "patient"
-    });
-
-    setLoading(false);
-    if (profileErr) {
-      setError(
-        profileErr.code === "23505"
-          ? "An account with this ID number already exists."
-          : profileErr.message
-      );
       return;
     }
 
-    // FIX 3: Removed manual profile insert entirely.
-    // The handle_new_user trigger fires on auth.users insert and
-    // creates the profile row from raw_user_meta_data automatically.
-    // A manual insert here was causing the uuid/id_number type mismatch error.
+
 
     go("done");
   }
@@ -358,7 +351,7 @@ export default function Signin() {
             <p className="card-sub" style={{ textAlign: "center", marginBottom: "1.5rem" }}>
               You've been successfully authenticated.
             </p>
-            <button className="btn btn-primary" onClick={() => window.location.href = "/dashboard"}>
+            <button className="btn btn-primary" onClick={() => navigate("/dashboard")}>
               Go to Dashboard
             </button>
             <p className="switch-text">
@@ -500,7 +493,7 @@ export default function Signin() {
             <p style={{ textAlign: "center", fontSize: ".8rem", color: "var(--text-muted)", marginBottom: "1.5rem", fontWeight: 300 }}>
               You're verified and can now access the platform.
             </p>
-            <button className="btn btn-primary" onClick={() => navigate("/QueueCare/dashboard")}>
+            <button className="btn btn-primary" onClick={() => navigate("/dashboard")}>
               Go to Dashboard
             </button>
             <p className="switch-text"><a onClick={() => go("login")}>Back to login</a></p>
