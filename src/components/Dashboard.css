@@ -683,3 +683,77 @@
   .db-appt-right { flex-direction: row; align-items: center; gap: 8px; }
   .db-profile-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ===== Overview Appointments Section ===== */
+.db-overview-appts {
+  margin-top: 28px;
+}
+.db-subsection-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.db-appt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.db-appt-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s;
+}
+.db-appt-card:hover {
+  box-shadow: var(--shadow-md);
+}
+.db-appt-clinic {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--green-dark);
+  min-width: 140px;
+}
+.db-appt-details {
+  display: flex;
+  gap: 16px;
+  font-size: 0.92rem;
+  color: #555;
+}
+.db-appt-reason {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.db-empty {
+  color: #888;
+  font-size: 0.95rem;
+}
+.db-link {
+  color: var(--green);
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 500;
+}
+.db-link:hover {
+  color: var(--green-dark);
+}
+@media (max-width: 600px) {
+  .db-appt-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .db-appt-details {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
