@@ -45,7 +45,7 @@ export default function BookAppointment() {
 
     const fetchSlots = async () => {
       try {
-        const response = await fetch(`${API_URL}/appointment-slots/available`, {
+        const response = await fetch(`${API_URL}/clinic-availability`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ facility_id: Number(clinicId) }),
