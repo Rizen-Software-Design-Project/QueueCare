@@ -42,6 +42,7 @@ jobs:
           cp -r "src/appointment booking" deploy/server
           cp package.json deploy/
           cp deploy-web.config deploy/web.config
+          cp deploy-entry.js deploy/server.js
 
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
