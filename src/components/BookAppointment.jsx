@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import "./BookAppointment.css";
 
-const API_URL = import.meta.env.DEV ? "http://localhost:3000" : "";
 const supabase = createClient(
   "https://vktjtxljwzyakobkkhol.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA"
@@ -114,6 +113,20 @@ export default function BookAppointment() {
 
       setBooking(appointment);
       setStatus({ type: "success", message: "Appointment booked successfully" });
+
+      // Best-effort: send confirmation email via Supabase Edge Function
+      try {
+        await supabase.functions.invoke("send-confirmation-email", {
+          body: {
+            patient_id: patientId,
+            facility_id: Number(clinicId),
+            slot_id: selectedSlotId,
+            reason: reason.trim(),
+          },
+        });
+      } catch (_) {
+        // Email is best-effort; booking already saved
+      }
     } catch (err) {
       console.error(err);
       setStatus({ type: "error", message: `Booking failed: ${err.message}` });
