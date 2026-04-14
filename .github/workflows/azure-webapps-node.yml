@@ -41,8 +41,7 @@ jobs:
           cp -r dist deploy/dist
           cp -r "src/appointment booking" deploy/server
           cp package.json deploy/
-          echo "cd server && node servers/server.js" > deploy/start.sh
-          chmod +x deploy/start.sh
+          cp deploy-web.config deploy/web.config
 
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
@@ -69,4 +68,3 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: QueueCare
-          startup-command: 'node server/servers/server.js'
