@@ -93,25 +93,27 @@ export default function BookAppointment() {
     setStatus({ type: "loading", message: "Booking appointment..." });
 
     try {
-      const response = await fetch(`${API_URL}/appointments/book`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patient_id: patientId,
-          facility_id: Number(clinicId),
-          slot_id: selectedSlotId,
-          reason: reason.trim(),
-        }),
-      });
+      const facilityUuid = '00000000-0000-0000-0000-' + String(clinicId).padStart(12, '0');
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || `HTTP ${response.status}`);
+      const { data: appointment, error } = await supabase
+        .from('appointments')
+        .insert({
+          patient_id: patientId,
+          facility_id: facilityUuid,
+          slot_id: selectedSlotId,
+          status: 'booked',
+          appointment_type: 'scheduled',
+          reason: reason.trim(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data = await response.json();
-      setBooking(data.appointment);
-      setStatus({ type: "success", message: data.message });
+      setBooking(appointment);
+      setStatus({ type: "success", message: "Appointment booked successfully" });
     } catch (err) {
       console.error(err);
       setStatus({ type: "error", message: `Booking failed: ${err.message}` });
