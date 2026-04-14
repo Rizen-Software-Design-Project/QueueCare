@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Clinic_search.css";
 
 // ================= CONFIG =================
@@ -34,6 +35,7 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 export default function ClinicSearch() {
+  const navigate = useNavigate();
   const [nameSearch, setNameSearch] = useState("");
   const [province, setProvince] = useState("");
   const [district, setDistrict] = useState("");
@@ -343,7 +345,7 @@ export default function ClinicSearch() {
                 {clinic.province ? `, ${clinic.province}` : ""}
               </div>
             </div>
-            <button className="book-btn" onClick={() => window.open(bookUrl, "_blank")}>
+            <button className="book-btn" onClick={() => navigate(bookUrl)}>
               📅 Book now
             </button>
           </div>
