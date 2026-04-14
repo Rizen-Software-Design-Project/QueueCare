@@ -6,14 +6,15 @@ import Welcome from "./components/Welcome.jsx";
 import Signin from "./components/Signin.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import ClinicSearch from "./components/Clinic_search.jsx";
+import Auth from "./components/Auth.jsx";
 import "./App.css";
 
 function App() {
   return (
-    <BrowserRouter basename="/QueueCare"> {/* remove basename if you want to deploy to azure */}
+    <BrowserRouter basename="/QueueCare">  {/* remove basename if you want to deploy to azure */}
       <Routes>
         <Route path="/" element={<Welcome />} />
-        <Route path="/signin" element={<Login />} />
+        <Route path="/signin" element={<Auth />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/clinic-search" element={<ClinicSearch />} />
