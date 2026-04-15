@@ -7,6 +7,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: QueueCare
+  AZURE_RESOURCE_GROUP: YOUR_RESOURCE_GROUP_NAME
   NODE_VERSION: '20.x'
 
 permissions:
@@ -32,7 +33,7 @@ jobs:
         run: npm run build
 
       - name: Install backend dependencies
-        working-directory: src/appointment booking
+        working-directory: "src/appointment booking"
         run: npm ci --omit=dev
 
       - name: Prepare deployment package
@@ -60,6 +61,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app
+          path: .
 
       - name: Azure Login
         uses: azure/login@v2
@@ -69,7 +71,8 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: QueueCare
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: .
 
       - name: Restart App Service
-        run: az webapp restart --name QueueCare --resource-group $(az webapp show --name QueueCare --query resourceGroup -o tsv)
+        run: az webapp restart --name $AZURE_WEBAPP_NAME --resource-group $AZURE_RESOURCE_GROUP
