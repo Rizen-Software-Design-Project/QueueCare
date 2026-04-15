@@ -37,8 +37,10 @@ export default function BookAppointment() {
 
   // Fetch available slots for this clinic on mount
   useEffect(() => {
-    if (!clinicId) {
-      setStatus({ type: "error", message: "No clinic ID provided." });
+    if (!clinicId || !patientId) {
+      if (!clinicId) {
+        setStatus({ type: "error", message: "No clinic ID provided." });
+      }
       return;
     }
 
@@ -54,6 +56,7 @@ export default function BookAppointment() {
         }
 
         if (!data || data.length === 0) {
+          setSlots([]);
           setStatus({ type: "error", message: "No available slots for this clinic." });
           return;
         }
@@ -61,20 +64,19 @@ export default function BookAppointment() {
         // Filter out slots that are fully booked
         let available = data.filter(s => (s.booked_count || 0) < (s.total_capacity || 1));
 
-        // If signed in, also filter out slots the patient already booked
-        if (patientId) {
-          const { data: existing } = await supabase
-            .from('appointments')
-            .select('slot_id')
-            .eq('patient_id', patientId)
-            .eq('status', 'booked');
-          if (existing && existing.length > 0) {
-            const bookedSlotIds = new Set(existing.map(a => a.slot_id));
-            available = available.filter(s => !bookedSlotIds.has(s.id));
-          }
+        // Filter out slots the patient already booked
+        const { data: existing } = await supabase
+          .from('appointments')
+          .select('slot_id')
+          .eq('patient_id', patientId)
+          .eq('status', 'booked');
+        if (existing && existing.length > 0) {
+          const bookedSlotIds = new Set(existing.map(a => a.slot_id));
+          available = available.filter(s => !bookedSlotIds.has(s.id));
         }
 
         if (available.length === 0) {
+          setSlots([]);
           setStatus({ type: "error", message: "No available slots for this clinic." });
           return;
         }
