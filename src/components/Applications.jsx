@@ -299,16 +299,41 @@ export default function Application({ profile, onRoleUpdated }) {
   const staffRole =
     application.requested_role === "admin" ? "admin" : "nurse";
 
-  const { error: assignmentError } = await supabase
+  const { data: existingAssignment, error: existingAssignmentError } = await supabase
     .from("staff_assignments")
-    .upsert(
-      {
+    .select("id")
+    .eq("profile_id", application.profile_id)
+    .eq("facility_id", application.clinic_id)
+    .maybeSingle();
+
+  if (existingAssignmentError) {
+    alert(existingAssignmentError.message || "Could not check staff assignment.");
+    setReviewingId(null);
+    return;
+  }
+
+  let assignmentError = null;
+
+  if (existingAssignment) {
+    const { error } = await supabase
+      .from("staff_assignments")
+      .update({
+        role: staffRole,
+      })
+      .eq("id", existingAssignment.id);
+
+    assignmentError = error;
+  } else {
+    const { error } = await supabase
+      .from("staff_assignments")
+      .insert({
         profile_id: application.profile_id,
         facility_id: application.clinic_id,
         role: staffRole,
-      },
-      { onConflict: "profile_id,facility_id" }
-    );
+      });
+
+    assignmentError = error;
+  }
 
   if (assignmentError) {
     alert(assignmentError.message || "Staff assignment failed.");
@@ -319,9 +344,11 @@ export default function Application({ profile, onRoleUpdated }) {
   setReviewingId(null);
 
   alert("Application approved.");
+
   if (onRoleUpdated) {
-  onRoleUpdated(application.profile_id, profileRole);
-}
+    onRoleUpdated(application.profile_id, profileRole);
+  }
+
   await loadData();
 }
 

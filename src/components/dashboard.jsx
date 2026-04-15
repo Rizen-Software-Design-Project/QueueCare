@@ -550,90 +550,105 @@ export default function Dashboard() {
   }
 
   function renderProfile() {
-    return (
-      <div className="db-section">
-        <h2 className="db-section-title">Profile</h2>
+  return (
+    <div className="db-section">
+      <h2 className="db-section-title">Profile</h2>
 
-        {!editProfile ? (
-          <div className="db-card">
-            <p>
-              <strong>Name:</strong> {profile?.name || "—"} {profile?.surname || ""}
-            </p>
-            <p>
-              <strong>Email:</strong> {profile?.email || "—"}
-            </p>
-            <p>
-              <strong>Phone:</strong> {profile?.phone_number || "—"}
-            </p>
-            <p>
-              <strong>Date of Birth:</strong> {formatDate(profile?.dob)}
-            </p>
-            <p>
-              <strong>Role:</strong> {profile?.role || "patient"}
-            </p>
+      {!editProfile ? (
+        <div className="db-card">
+          <p>
+            <strong>Name:</strong> {profile?.name || "—"} {profile?.surname || ""}
+          </p>
+          <p>
+            <strong>Email:</strong> {profile?.email || "—"}
+          </p>
+          <p>
+            <strong>Phone:</strong> {profile?.phone_number || "—"}
+          </p>
+          <p>
+            <strong>Date of Birth:</strong> {formatDate(profile?.dob)}
+          </p>
+          <p>
+            <strong>Role:</strong> {profile?.role || "patient"}
+          </p>
 
+          <button
+            className="db-sidebar-logout"
+            style={{ marginTop: 16 }}
+            onClick={() => setEditProfile(true)}
+          >
+            Edit Profile
+          </button>
+        </div>
+      ) : (
+        <div className="db-card">
+          <div style={{ display: "grid", gap: 12 }}>
+            <input
+              className="db-input"
+              placeholder="First name"
+              value={editForm.name || ""}
+              onChange={(e) =>
+                setEditForm((prev) => ({ ...prev, name: e.target.value }))
+              }
+            />
+            <input
+              className="db-input"
+              placeholder="Surname"
+              value={editForm.surname || ""}
+              onChange={(e) =>
+                setEditForm((prev) => ({ ...prev, surname: e.target.value }))
+              }
+            />
+            <input
+              className="db-input"
+              placeholder="Phone number"
+              value={editForm.phone_number || ""}
+              onChange={(e) =>
+                setEditForm((prev) => ({
+                  ...prev,
+                  phone_number: e.target.value,
+                }))
+              }
+            />
+            <input
+              className="db-input"
+              type="date"
+              value={editForm.dob || ""}
+              onChange={(e) =>
+                setEditForm((prev) => ({ ...prev, dob: e.target.value }))
+              }
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
             <button
               className="db-sidebar-logout"
-              style={{ marginTop: 16 }}
-              onClick={() => setEditProfile(true)}
+              onClick={() => setEditProfile(false)}
             >
-              Edit Profile
+              Cancel
+            </button>
+            <button className="db-sidebar-logout" onClick={saveProfile}>
+              {savingProfile ? "Saving..." : "Save"}
             </button>
           </div>
-        ) : (
-          <div className="db-card">
-            <div style={{ display: "grid", gap: 12 }}>
-              <input
-                className="db-input"
-                placeholder="First name"
-                value={editForm.name || ""}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, name: e.target.value }))
-                }
-              />
-              <input
-                className="db-input"
-                placeholder="Surname"
-                value={editForm.surname || ""}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, surname: e.target.value }))
-                }
-              />
-              <input
-                className="db-input"
-                placeholder="Phone number"
-                value={editForm.phone_number || ""}
-                onChange={(e) =>
-                  setEditForm((prev) => ({
-                    ...prev,
-                    phone_number: e.target.value,
-                  }))
-                }
-              />
-              <input
-                className="db-input"
-                type="date"
-                value={editForm.dob || ""}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, dob: e.target.value }))
-                }
-              />
-            </div>
+        </div>
+      )}
 
-            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-              <button className="db-sidebar-logout" onClick={() => setEditProfile(false)}>
-                Cancel
-              </button>
-              <button className="db-sidebar-logout" onClick={saveProfile}>
-                {savingProfile ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
+      {(profile?.role === "patient" || profile?.role === "staff") && (
+        <div style={{ marginTop: 24 }}>
+          <Applications
+            profile={profile}
+            onRoleUpdated={(profileId, newRole) => {
+              if (profile?.id === profileId) {
+                setProfile((prev) => ({ ...prev, role: newRole }));
+              }
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
   function renderContent() {
     switch (activeTab) {
       case "overview":
