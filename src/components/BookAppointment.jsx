@@ -1,0 +1,270 @@
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { createClient } from "@supabase/supabase-js";
+import "./BookAppointment.css";
+
+const supabase = createClient(
+  "https://vktjtxljwzyakobkkhol.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA"
+);
+
+export default function BookAppointment() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const clinicId = searchParams.get("id");
+  const clinicName = searchParams.get("name");
+
+  const [slots, setSlots] = useState([]);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
+  const [reason, setReason] = useState("");
+  const [status, setStatus] = useState({ type: "loading", message: "Loading available slots..." });
+  const [booking, setBooking] = useState(null);
+  const [patientId, setPatientId] = useState(null);
+
+  // Get the signed-in user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) {
+        setStatus({ type: "error", message: "You must be signed in to book an appointment." });
+        return;
+      }
+      setPatientId(data.user.id);
+    };
+    getUser();
+  }, []);
+
+  // Fetch available slots for this clinic on mount
+  useEffect(() => {
+    if (!clinicId || !patientId) {
+      if (!clinicId) {
+        setStatus({ type: "error", message: "No clinic ID provided." });
+      }
+      return;
+    }
+
+    const fetchSlots = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('appointment_slots')
+          .select('*')
+          .eq('facility_id', Number(clinicId));
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        if (!data || data.length === 0) {
+          setSlots([]);
+          setStatus({ type: "error", message: "No available slots for this clinic." });
+          return;
+        }
+
+        // Filter out slots that are fully booked
+        let available = data.filter(s => (s.booked_count || 0) < (s.total_capacity || 1));
+
+        // Filter out slots the patient already booked
+        const { data: existing } = await supabase
+          .from('appointments')
+          .select('slot_id')
+          .eq('patient_id', patientId)
+          .eq('status', 'booked');
+        if (existing && existing.length > 0) {
+          const bookedSlotIds = new Set(existing.map(a => a.slot_id));
+          available = available.filter(s => !bookedSlotIds.has(s.id));
+        }
+
+        if (available.length === 0) {
+          setSlots([]);
+          setStatus({ type: "error", message: "No available slots for this clinic." });
+          return;
+        }
+
+        setSlots(available);
+        setStatus({ type: "count", message: `${available.length} slot(s) available` });
+      } catch (err) {
+        console.error(err);
+        setStatus({ type: "error", message: err.message });
+      }
+    };
+
+    fetchSlots();
+  }, [clinicId, patientId]);
+
+  const handleSelectSlot = (slotId) => {
+    setSelectedSlotId(slotId);
+  };
+
+  const handleBook = async () => {
+    if (!patientId) {
+      setStatus({ type: "error", message: "You must be signed in to book an appointment." });
+      return;
+    }
+
+    if (!selectedSlotId) {
+      setStatus({ type: "error", message: "Please select a time slot first." });
+      return;
+    }
+
+    if (!reason.trim()) {
+      setStatus({ type: "error", message: "Please enter a reason for the appointment." });
+      return;
+    }
+
+    setStatus({ type: "loading", message: "Booking appointment..." });
+
+    try {
+      // Check for duplicate booking
+      const { data: duplicate } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('patient_id', patientId)
+        .eq('slot_id', selectedSlotId)
+        .eq('status', 'booked')
+        .maybeSingle();
+
+      if (duplicate) {
+        setStatus({ type: "error", message: "You have already booked this slot." });
+        return;
+      }
+
+      // Check capacity before booking
+      const { data: slotData } = await supabase
+        .from('appointment_slots')
+        .select('booked_count, total_capacity')
+        .eq('id', selectedSlotId)
+        .single();
+
+      if (slotData && (slotData.booked_count || 0) >= (slotData.total_capacity || 1)) {
+        setStatus({ type: "error", message: "This slot is fully booked. Please select another." });
+        setSlots(prev => prev.filter(s => s.id !== selectedSlotId));
+        setSelectedSlotId(null);
+        return;
+      }
+
+      const facilityUuid = '00000000-0000-0000-0000-' + String(clinicId).padStart(12, '0');
+
+      const { data: appointment, error } = await supabase
+        .from('appointments')
+        .insert({
+          patient_id: patientId,
+          facility_id: facilityUuid,
+          slot_id: selectedSlotId,
+          status: 'booked',
+          appointment_type: 'scheduled',
+          reason: reason.trim(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Increment booked_count on the slot
+      await supabase
+        .from('appointment_slots')
+        .update({ booked_count: (slotData.booked_count || 0) + 1 })
+        .eq('id', selectedSlotId);
+
+      setBooking(appointment);
+      setStatus({ type: "success", message: "Appointment booked successfully" });
+
+      // Best-effort: send confirmation email via Supabase Edge Function
+      try {
+        await supabase.functions.invoke("send-confirmation-email", {
+          body: {
+            patient_id: patientId,
+            facility_id: Number(clinicId),
+            slot_id: selectedSlotId,
+            reason: reason.trim(),
+          },
+        });
+      } catch (_) {
+        // Email is best-effort; booking already saved
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus({ type: "error", message: `Booking failed: ${err.message}` });
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) {
+      return "N/A";
+    }
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-ZA", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  };
+
+  const formatTime = (timeStr) => {
+    if (!timeStr) {
+      return "N/A";
+    }
+    return timeStr.slice(0, 5);
+  };
+
+  return (
+    <div className="ba-wrapper">
+      <button className="ba-back" onClick={() => navigate(-1)}>← Back to search</button>
+
+      <h2>📅 Book Appointment</h2>
+      <h3>{clinicName || "Unknown Clinic"}</h3>
+
+      <div className={`ba-status ${status.type}`}>{status.message}</div>
+
+      {/* Booking confirmation */}
+      {booking && (
+        <div className="ba-confirmation">
+          <h3>✅ Appointment Confirmed</h3>
+          <p><strong>Status:</strong> {booking.status}</p>
+          <p><strong>Reason:</strong> {booking.reason}</p>
+          <button onClick={() => navigate("/clinic-search")}>Back to Clinic Search</button>
+        </div>
+      )}
+
+      {/* Slot selection */}
+      {!booking && slots.length > 0 && (
+        <>
+          <div className="ba-slots">
+            <h4>Available Time Slots</h4>
+            {slots.map((slot) => {
+              const isSelected = String(selectedSlotId) === String(slot.id);
+              return (
+                <div
+                  key={slot.id}
+                  className={`ba-slot-card ${isSelected ? "selected" : ""}`}
+                  onClick={() => handleSelectSlot(slot.id)}
+                >
+                  <div className="ba-slot-date">{formatDate(slot.slot_date)}</div>
+                  <div className="ba-slot-time">🕐 {formatTime(slot.slot_time)}</div>
+                  <div className="ba-slot-meta">
+                    {slot.duration_minutes ? `${slot.duration_minutes} min` : ""}
+                    {slot.total_capacity ? ` · ${slot.total_capacity - (slot.booked_count || 0)} spot${slot.total_capacity - (slot.booked_count || 0) !== 1 ? "s" : ""} left` : ""}
+                  </div>
+                  {isSelected && <div className="ba-slot-check">✔ Selected</div>}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="ba-reason">
+            <label htmlFor="reason">Reason for visit</label>
+            <textarea
+              id="reason"
+              placeholder="e.g. General checkup, Flu symptoms, Follow-up..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <button className="ba-book-btn" onClick={handleBook} disabled={!selectedSlotId || !reason.trim()}>
+            Confirm Booking
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
