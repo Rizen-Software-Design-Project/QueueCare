@@ -958,10 +958,6 @@ export default function Dashboard() {
         );
 
       default:
-          </div>
-        );
-
-      default:
         return (
           <div className="db-section">
             <h2>{activeTab}</h2>
