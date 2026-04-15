@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { createClient } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
@@ -198,7 +199,7 @@ useEffect(() => {
 
   async function handleLogout() {
   await supabase.auth.signOut();
-  await auth.signOut();
+  await signOut(auth);
   navigate("/signin");
 }
 

@@ -17,7 +17,8 @@ const SUPABASE_ANON =
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const facebookAuthProvider = new FacebookAuthProvider();
-const appleAuthProvider = new OAuthProvider("apple.com");
+facebookAuthProvider.addScope("email");
+
 
 // ── Utilities ───────────────────────────────────────────────────────────────
 async function sha256Hex(value) {
@@ -813,12 +814,7 @@ export default function AuthPage() {
               disabled={loading}
               onClick={() => handleSocialLogin(facebookAuthProvider)}
             />
-            <SocialBtn
-              icon={<AppleIcon />}
-              label="Continue with Apple"
-              disabled={loading}
-              onClick={() => handleSocialLogin(appleAuthProvider)}
-            />
+           
 
             <Divider />
 
