@@ -368,7 +368,35 @@ function ProfileStep({ identity, onComplete }) {
       setLoading(false);
       return;
     }
+        const normalizedEmail = (email || authenticatedIdentity.email || "")
+      .trim()
+      .toLowerCase();
 
+    if (normalizedEmail) {
+      const { data: existingEmailRow, error: existingEmailErr } = await supabase
+        .from("profiles")
+        .select("id, auth_provider, provider_user_id, email")
+        .ilike("email", normalizedEmail)
+        .maybeSingle();
+
+      if (existingEmailErr) {
+        setError(existingEmailErr.message || "Could not validate email address.");
+        setLoading(false);
+        return;
+      }
+
+      if (
+        existingEmailRow &&
+        !(
+          existingEmailRow.auth_provider === authenticatedIdentity.auth_provider &&
+          existingEmailRow.provider_user_id === authenticatedIdentity.provider_user_id
+        )
+      ) {
+        setError("An account with this email already exists.");
+        setLoading(false);
+        return;
+      }
+    }
     const { error: err } = await supabase.from("profiles").upsert(
       {
         auth_provider: authenticatedIdentity.auth_provider,
@@ -378,7 +406,7 @@ function ProfileStep({ identity, onComplete }) {
         sex,
         id_number: hashed,
         dob: dobFromSAId(idNumber),
-        email: email || authenticatedIdentity.email || null,
+        email: normalizedEmail || null,
         phone_number: phone || authenticatedIdentity.phone || null,
       },
       { onConflict: "auth_provider,provider_user_id" }
