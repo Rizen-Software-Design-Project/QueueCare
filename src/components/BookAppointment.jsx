@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 import "./BookAppointment.css";
 
 const supabase = createClient(
@@ -18,24 +20,67 @@ export default function BookAppointment() {
   const [slots, setSlots] = useState([]);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [reason, setReason] = useState("");
-  const [status, setStatus] = useState({ type: "loading", message: "Loading available slots..." });
+  const [status, setStatus] = useState({
+    type: "loading",
+    message: "Loading available slots...",
+  });
   const [booking, setBooking] = useState(null);
   const [patientId, setPatientId] = useState(null);
 
-  // Get the signed-in user
   useEffect(() => {
-    const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        setStatus({ type: "error", message: "You must be signed in to book an appointment." });
-        return;
-      }
-      setPatientId(data.user.id);
+    let unsub = null;
+
+    async function resolveProfile() {
+      const {
+        data: { user: supabaseUser },
+      } = await supabase.auth.getUser();
+
+      unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+        const resolvedFirebaseUser = firebaseUser || auth.currentUser || null;
+
+        const authProvider = supabaseUser
+          ? "supabase"
+          : resolvedFirebaseUser
+          ? "firebase"
+          : null;
+
+        const providerUserId =
+          supabaseUser?.id || resolvedFirebaseUser?.uid || null;
+
+        if (!authProvider || !providerUserId) {
+          setStatus({
+            type: "error",
+            message: "You must be signed in to book an appointment.",
+          });
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("auth_provider", authProvider)
+          .eq("provider_user_id", providerUserId)
+          .maybeSingle();
+
+        if (profileError || !profile) {
+          setStatus({
+            type: "error",
+            message: "Patient profile not found.",
+          });
+          return;
+        }
+
+        setPatientId(profile.id);
+      });
+    }
+
+    resolveProfile();
+
+    return () => {
+      if (unsub) unsub();
     };
-    getUser();
   }, []);
 
-  // Fetch available slots for this clinic on mount
   useEffect(() => {
     if (!clinicId || !patientId) {
       if (!clinicId) {
@@ -47,149 +92,129 @@ export default function BookAppointment() {
     const fetchSlots = async () => {
       try {
         const { data, error } = await supabase
-          .from('appointment_slots')
-          .select('*')
-          .eq('facility_id', Number(clinicId));
+          .from("appointment_slots")
+          .select("*")
+          .eq("facility_id", Number(clinicId));
 
-        if (error) {
-          throw new Error(error.message);
-        }
+        if (error) throw new Error(error.message);
 
         if (!data || data.length === 0) {
           setSlots([]);
-          setStatus({ type: "error", message: "No available slots for this clinic." });
+          setStatus({
+            type: "error",
+            message: "No available slots for this clinic.",
+          });
           return;
         }
 
-        // Filter out slots that are fully booked
-        let available = data.filter(s => (s.booked_count || 0) < (s.total_capacity || 1));
+        let available = data.filter(
+          (s) => (s.booked_count || 0) < (s.total_capacity || 1)
+        );
 
-        // Filter out slots the patient already booked
         const { data: existing } = await supabase
-          .from('appointments')
-          .select('slot_id')
-          .eq('patient_id', patientId)
-          .eq('status', 'booked');
-        if (existing && existing.length > 0) {
-          const bookedSlotIds = new Set(existing.map(a => a.slot_id));
-          available = available.filter(s => !bookedSlotIds.has(s.id));
+          .from("appointments")
+          .select("slot_id")
+          .eq("patient_id", patientId)
+          .eq("status", "booked");
+
+        if (existing?.length) {
+          const bookedSlotIds = new Set(existing.map((a) => a.slot_id));
+          available = available.filter((s) => !bookedSlotIds.has(s.id));
         }
 
         if (available.length === 0) {
           setSlots([]);
-          setStatus({ type: "error", message: "No available slots for this clinic." });
+          setStatus({
+            type: "error",
+            message: "No available slots for this clinic.",
+          });
           return;
         }
 
         setSlots(available);
-        setStatus({ type: "count", message: `${available.length} slot(s) available` });
+        setStatus({
+          type: "count",
+          message: `${available.length} slot(s) available`,
+        });
       } catch (err) {
-        console.error(err);
         setStatus({ type: "error", message: err.message });
       }
     };
 
     fetchSlots();
   }, [clinicId, patientId]);
+const handleSelectSlot = (slotId) => {
+  setSelectedSlotId(slotId);
+};
 
-  const handleSelectSlot = (slotId) => {
-    setSelectedSlotId(slotId);
-  };
+const handleBook = async () => {
+  if (!selectedSlotId) {
+    setStatus({
+      type: "error",
+      message: "Please select a time slot first.",
+    });
+    return;
+  }
 
-  const handleBook = async () => {
-    if (!patientId) {
-      setStatus({ type: "error", message: "You must be signed in to book an appointment." });
-      return;
+  if (!reason.trim()) {
+    setStatus({
+      type: "error",
+      message: "Please enter a reason for the appointment.",
+    });
+    return;
+  }
+
+  setStatus({ type: "loading", message: "Booking appointment..." });
+
+  try {
+    const {
+      data: { user: supabaseUser },
+    } = await supabase.auth.getUser();
+
+    const firebaseUser = auth.currentUser || null;
+
+    const authProvider = supabaseUser
+      ? "supabase"
+      : firebaseUser
+      ? "firebase"
+      : null;
+
+    const providerUserId = supabaseUser?.id || firebaseUser?.uid || null;
+
+    if (!authProvider || !providerUserId) {
+      throw new Error("You must be signed in to book an appointment.");
     }
 
-    if (!selectedSlotId) {
-      setStatus({ type: "error", message: "Please select a time slot first." });
-      return;
+    const { data, error } = await supabase.functions.invoke("book-appointment", {
+      body: {
+        clinicId: Number(clinicId),
+        slotId: selectedSlotId,
+        reason: reason.trim(),
+        authProvider,
+        providerUserId,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message || "Function invocation failed.");
     }
 
-    if (!reason.trim()) {
-      setStatus({ type: "error", message: "Please enter a reason for the appointment." });
-      return;
+    if (data?.error) {
+      throw new Error(data.error);
     }
 
-    setStatus({ type: "loading", message: "Booking appointment..." });
-
-    try {
-      // Check for duplicate booking
-      const { data: duplicate } = await supabase
-        .from('appointments')
-        .select('id')
-        .eq('patient_id', patientId)
-        .eq('slot_id', selectedSlotId)
-        .eq('status', 'booked')
-        .maybeSingle();
-
-      if (duplicate) {
-        setStatus({ type: "error", message: "You have already booked this slot." });
-        return;
-      }
-
-      // Check capacity before booking
-      const { data: slotData } = await supabase
-        .from('appointment_slots')
-        .select('booked_count, total_capacity')
-        .eq('id', selectedSlotId)
-        .single();
-
-      if (slotData && (slotData.booked_count || 0) >= (slotData.total_capacity || 1)) {
-        setStatus({ type: "error", message: "This slot is fully booked. Please select another." });
-        setSlots(prev => prev.filter(s => s.id !== selectedSlotId));
-        setSelectedSlotId(null);
-        return;
-      }
-
-      const facilityUuid = '00000000-0000-0000-0000-' + String(clinicId).padStart(12, '0');
-
-      const { data: appointment, error } = await supabase
-        .from('appointments')
-        .insert({
-          patient_id: patientId,
-          facility_id: facilityUuid,
-          slot_id: selectedSlotId,
-          status: 'booked',
-          appointment_type: 'scheduled',
-          reason: reason.trim(),
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Increment booked_count on the slot
-      await supabase
-        .from('appointment_slots')
-        .update({ booked_count: (slotData.booked_count || 0) + 1 })
-        .eq('id', selectedSlotId);
-
-      setBooking(appointment);
-      setStatus({ type: "success", message: "Appointment booked successfully" });
-
-      // Best-effort: send confirmation email via Supabase Edge Function
-      try {
-        await supabase.functions.invoke("send-confirmation-email", {
-          body: {
-            patient_id: patientId,
-            facility_id: Number(clinicId),
-            slot_id: selectedSlotId,
-            reason: reason.trim(),
-          },
-        });
-      } catch (_) {
-        // Email is best-effort; booking already saved
-      }
-    } catch (err) {
-      console.error(err);
-      setStatus({ type: "error", message: `Booking failed: ${err.message}` });
-    }
-  };
-
+    setBooking(data.appointment);
+    setStatus({
+      type: "success",
+      message: "Appointment booked successfully",
+    });
+  } catch (err) {
+    setStatus({
+      type: "error",
+      message: `Booking failed: ${err.message}`,
+    });
+  }
+};
   const formatDate = (dateStr) => {
     if (!dateStr) {
       return "N/A";
