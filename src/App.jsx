@@ -3,7 +3,7 @@ import Welcome from "./components/Welcome.jsx";
 import Signin from "./components/Signin.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import ClinicSearch from "./components/Clinic_search.jsx";
-import Auth from "./components/Auth.jsx";
+import Applications from "./components/Applications.jsx";
 import "./App.css";
 
 function App() {
@@ -14,6 +14,8 @@ function App() {
         <Route path="/signin" element={<Signin />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/clinic-search" element={<ClinicSearch />} />
+        <Route path="/applications" element={<Applications />} />
+
 
       </Routes>
     </BrowserRouter>
