@@ -7,7 +7,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: QueueCare
-  AZURE_RESOURCE_GROUP: YOUR_RESOURCE_GROUP_NAME
+  AZURE_RESOURCE_GROUP: QueueCare-rg
   NODE_VERSION: '20.x'
 
 permissions:
