@@ -98,7 +98,7 @@ export default function Dashboard() {
 
       const [apptRes, queueRes, notifRes] = await Promise.all([
         supabase.from("appointments")
-          .select("*, appointment_slots(slot_date, slot_time, duration_minutes), facilities(name, district, province)")
+          .select("*, appointment_slots(slot_date, slot_time, duration_minutes, facility_id, facilities(name, district, province))")
           .eq("patient_id", resolvedProfile.id).order("booked_at", { ascending: false }).limit(20),
         supabase.from("queue_entries")
           .select("*, facilities(name, district)")
@@ -107,7 +107,40 @@ export default function Dashboard() {
           .select("*").eq("profile_id", resolvedProfile.id).order("sent_at", { ascending: false }).limit(30),
       ]);
 
-      setAppointments(apptRes.data || []);
+      const appts = apptRes.data || [];
+
+      // For each booked appointment, compute queue position (order among bookings for that slot)
+      const bookedAppts = appts.filter(a => a.status === "booked");
+      if (bookedAppts.length > 0) {
+        const slotIds = [...new Set(bookedAppts.map(a => a.slot_id))];
+        const { data: allSlotBookings } = await supabase
+          .from("appointments")
+          .select("id, slot_id, booked_at")
+          .in("slot_id", slotIds)
+          .eq("status", "booked")
+          .order("booked_at", { ascending: true });
+
+        if (allSlotBookings) {
+          const positionMap = {};
+          const slotGroups = {};
+          for (const b of allSlotBookings) {
+            if (!slotGroups[b.slot_id]) {
+              slotGroups[b.slot_id] = [];
+            }
+            slotGroups[b.slot_id].push(b.id);
+          }
+          for (const [slotId, ids] of Object.entries(slotGroups)) {
+            for (let i = 0; i < ids.length; i++) {
+              positionMap[ids[i]] = i + 1;
+            }
+          }
+          for (const appt of appts) {
+            appt.queuePosition = positionMap[appt.id] || null;
+          }
+        }
+      }
+
+      setAppointments(appts);
       setQueue(queueRes.data || []);
       setNotifications(notifRes.data || []);
       setUnreadCount((notifRes.data || []).filter(n => !n.is_read).length);
@@ -156,7 +189,7 @@ export default function Dashboard() {
   }
 
   const upcomingAppts = appointments.filter(a => a.status === "booked");
-  const activeQueue = queue.filter(q => q.status === "waiting" || q.status === "called");
+  const queuedAppts = upcomingAppts.filter(a => a.queuePosition);
 
   function renderContent() {
     switch (activeTab) {
@@ -171,7 +204,7 @@ export default function Dashboard() {
                 <span className="db-stat-label">Upcoming Appointments</span>
               </div>
               <div className="db-stat-card db-stat-orange">
-                <span className="db-stat-num">{activeQueue.length}</span>
+                <span className="db-stat-num">{queuedAppts.length}</span>
                 <span className="db-stat-label">Active Queue Entries</span>
               </div>
               <div className="db-stat-card db-stat-blue">
@@ -191,12 +224,15 @@ export default function Dashboard() {
                 <div className="db-appt-list">
                   {upcomingAppts.map(appt => (
                     <div key={appt.id} className="db-appt-card">
-                      <div className="db-appt-clinic">{appt.facilities?.name || "Clinic"}</div>
+                      <div className="db-appt-clinic">{appt.appointment_slots?.facilities?.name || "Clinic"}</div>
                       <div className="db-appt-details">
                         <span>📅 {formatDate(appt.appointment_slots?.slot_date)}</span>
                         <span>🕐 {formatTime(appt.appointment_slots?.slot_time)}</span>
                         {appt.appointment_slots?.duration_minutes && (
                           <span>⏱ {appt.appointment_slots.duration_minutes} min</span>
+                        )}
+                        {appt.queuePosition && (
+                          <span>🔢 Position #{appt.queuePosition}</span>
                         )}
                       </div>
                       <div className="db-appt-reason">{appt.reason}</div>
