@@ -146,14 +146,14 @@ const bookAppointment = async (req, res) => {
             return res.status(400).json({ error: insertError.message });
         }
 
-        // Fetch patient email, slot details, and facility name for the confirmation email
+      
         const [profileRes, slotRes, facilityRes] = await Promise.all([
             supabase.from('profiles').select('email, name, surname').eq('id', patient_id).single(),
             supabase.from('appointment_slots').select('slot_date, slot_time, duration_minutes').eq('id', slot_id).single(),
             supabase.from('facilities').select('name').eq('id', facility_id).single(),
         ]);
 
-        // Fall back to auth.users email if profiles.email is empty
+   
         let patientEmail = profileRes.data?.email;
         if (!patientEmail) {
             const { data: authUser } = await supabase.auth.admin.getUserById(patient_id);
