@@ -757,3 +757,109 @@
     gap: 8px;
   }
 }
+
+/* ===== Appointment Action Buttons ===== */
+.db-appt-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.db-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s, background 0.2s;
+}
+.db-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.db-btn-reschedule {
+  background: var(--green);
+  color: #fff;
+}
+.db-btn-reschedule:hover:not(:disabled) {
+  background: var(--green-dark);
+}
+.db-btn-cancel {
+  background: #fdecea;
+  color: #c62828;
+}
+.db-btn-cancel:hover {
+  background: #f8d7da;
+}
+.db-btn-secondary {
+  background: #eee;
+  color: #555;
+}
+.db-btn-secondary:hover {
+  background: #ddd;
+}
+
+/* ===== Reschedule Modal ===== */
+.db-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.db-modal {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  max-width: 520px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+.db-modal h3 {
+  margin: 0 0 8px;
+  color: var(--green-dark);
+}
+.db-modal p {
+  margin: 0 0 16px;
+  color: #555;
+  font-size: 0.95rem;
+}
+.db-reschedule-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.db-reschedule-slot {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+.db-reschedule-slot:hover {
+  border-color: var(--green-mid);
+  background: var(--green-xlight);
+}
+.db-reschedule-selected {
+  border-color: var(--green);
+  background: var(--green-light);
+}
+.db-check {
+  color: var(--green);
+  font-weight: 700;
+  margin-left: auto;
+}
+.db-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}

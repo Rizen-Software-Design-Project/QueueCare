@@ -57,6 +57,10 @@ export default function Dashboard() {
   const [editProfile, setEditProfile] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [savingProfile, setSavingProfile] = useState(false);
+  const [rescheduleAppt, setRescheduleAppt] = useState(null);
+  const [rescheduleSlots, setRescheduleSlots] = useState([]);
+  const [rescheduleSlotId, setRescheduleSlotId] = useState(null);
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
   const navigate = useNavigate();
 
  useEffect(() => {
@@ -170,6 +174,131 @@ export default function Dashboard() {
     setSavingProfile(false);
   }
 
+  async function cancelAppointment(appt) {
+    if (!confirm("Are you sure you want to cancel this appointment?")) {
+      return;
+    }
+    const { error } = await supabase
+      .from("appointments")
+      .update({ status: "cancelled" })
+      .eq("id", appt.id);
+    if (error) {
+      alert("Failed to cancel: " + error.message);
+      return;
+    }
+    // Decrement booked_count on the slot
+    if (appt.slot_id) {
+      const { data: slot } = await supabase
+        .from("appointment_slots")
+        .select("booked_count")
+        .eq("id", appt.slot_id)
+        .single();
+      if (slot && slot.booked_count > 0) {
+        await supabase
+          .from("appointment_slots")
+          .update({ booked_count: slot.booked_count - 1 })
+          .eq("id", appt.slot_id);
+      }
+    }
+    setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "cancelled" } : a));
+  }
+
+  async function openReschedule(appt) {
+    setRescheduleAppt(appt);
+    setRescheduleSlotId(null);
+    setRescheduleLoading(true);
+    // Fetch available slots for the same facility
+    const facilityId = appt.appointment_slots?.facility_id;
+    if (!facilityId) {
+      alert("Cannot determine facility for this appointment.");
+      setRescheduleLoading(false);
+      return;
+    }
+    const { data: allSlots } = await supabase
+      .from("appointment_slots")
+      .select("*")
+      .eq("facility_id", facilityId);
+    if (allSlots) {
+      const available = allSlots.filter(s => {
+        if (s.id === appt.slot_id) {
+          return false;
+        }
+        if ((s.booked_count || 0) >= (s.total_capacity || 1)) {
+          return false;
+        }
+        return true;
+      });
+      setRescheduleSlots(available);
+    }
+    setRescheduleLoading(false);
+  }
+
+  async function confirmReschedule() {
+    if (!rescheduleSlotId || !rescheduleAppt) {
+      return;
+    }
+    setRescheduleLoading(true);
+
+    // Update appointment to new slot
+    const { error } = await supabase
+      .from("appointments")
+      .update({ slot_id: rescheduleSlotId, updated_at: new Date().toISOString() })
+      .eq("id", rescheduleAppt.id);
+    if (error) {
+      alert("Reschedule failed: " + error.message);
+      setRescheduleLoading(false);
+      return;
+    }
+
+    // Decrement old slot booked_count
+    const oldSlotId = rescheduleAppt.slot_id;
+    if (oldSlotId) {
+      const { data: oldSlot } = await supabase
+        .from("appointment_slots")
+        .select("booked_count")
+        .eq("id", oldSlotId)
+        .single();
+      if (oldSlot && oldSlot.booked_count > 0) {
+        await supabase
+          .from("appointment_slots")
+          .update({ booked_count: oldSlot.booked_count - 1 })
+          .eq("id", oldSlotId);
+      }
+    }
+
+    // Increment new slot booked_count
+    const { data: newSlot } = await supabase
+      .from("appointment_slots")
+      .select("booked_count")
+      .eq("id", rescheduleSlotId)
+      .single();
+    if (newSlot) {
+      await supabase
+        .from("appointment_slots")
+        .update({ booked_count: (newSlot.booked_count || 0) + 1 })
+        .eq("id", rescheduleSlotId);
+    }
+
+    // Update local state with new slot data
+    const { data: updatedSlot } = await supabase
+      .from("appointment_slots")
+      .select("slot_date, slot_time, duration_minutes, facility_id, facilities(name, district, province)")
+      .eq("id", rescheduleSlotId)
+      .single();
+
+    setAppointments(prev => prev.map(a => {
+      if (a.id === rescheduleAppt.id) {
+        return { ...a, slot_id: rescheduleSlotId, appointment_slots: updatedSlot };
+      }
+      return a;
+    }));
+
+    setRescheduleAppt(null);
+    setRescheduleSlots([]);
+    setRescheduleSlotId(null);
+    setRescheduleLoading(false);
+  }
+
   function goTo(id) {
     if (id === "find-clinic") {
       navigate("/clinic-search");
@@ -236,6 +365,10 @@ export default function Dashboard() {
                         )}
                       </div>
                       <div className="db-appt-reason">{appt.reason}</div>
+                      <div className="db-appt-actions">
+                        <button className="db-btn db-btn-reschedule" onClick={() => openReschedule(appt)}>Reschedule</button>
+                        <button className="db-btn db-btn-cancel" onClick={() => cancelAppointment(appt)}>Cancel</button>
+                      </div>
                       <Badge status={appt.status} />
                     </div>
                   ))}
@@ -286,6 +419,47 @@ export default function Dashboard() {
 
         <main className="db-content">{renderContent()}</main>
       </div>
+
+      {/* Reschedule Modal */}
+      {rescheduleAppt && (
+        <div className="db-modal-overlay" onClick={() => setRescheduleAppt(null)}>
+          <div className="db-modal" onClick={e => e.stopPropagation()}>
+            <h3>Reschedule Appointment</h3>
+            <p>Current: {formatDate(rescheduleAppt.appointment_slots?.slot_date)} at {formatTime(rescheduleAppt.appointment_slots?.slot_time)}</p>
+            {rescheduleLoading && <p>Loading available slots…</p>}
+            {!rescheduleLoading && rescheduleSlots.length === 0 && (
+              <p className="db-empty">No other available slots for this clinic.</p>
+            )}
+            {!rescheduleLoading && rescheduleSlots.length > 0 && (
+              <div className="db-reschedule-slots">
+                {rescheduleSlots.map(slot => {
+                  const isSelected = rescheduleSlotId === slot.id;
+                  const spotsLeft = (slot.total_capacity || 1) - (slot.booked_count || 0);
+                  return (
+                    <div
+                      key={slot.id}
+                      className={`db-reschedule-slot ${isSelected ? "db-reschedule-selected" : ""}`}
+                      onClick={() => setRescheduleSlotId(slot.id)}
+                    >
+                      <span>📅 {formatDate(slot.slot_date)}</span>
+                      <span>🕐 {formatTime(slot.slot_time)}</span>
+                      <span>{slot.duration_minutes} min</span>
+                      <span>{spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left</span>
+                      {isSelected && <span className="db-check">✔</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="db-modal-actions">
+              <button className="db-btn db-btn-reschedule" disabled={!rescheduleSlotId || rescheduleLoading} onClick={confirmReschedule}>
+                {rescheduleLoading ? "Saving…" : "Confirm Reschedule"}
+              </button>
+              <button className="db-btn db-btn-secondary" onClick={() => setRescheduleAppt(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
