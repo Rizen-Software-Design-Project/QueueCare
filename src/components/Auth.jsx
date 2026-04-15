@@ -6,7 +6,6 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   FacebookAuthProvider,
-  OAuthProvider,
 } from "firebase/auth";
 import { auth, googleAuthProvider } from "../firebase";
 
@@ -18,7 +17,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const facebookAuthProvider = new FacebookAuthProvider();
 facebookAuthProvider.addScope("email");
-
 
 // ── Utilities ───────────────────────────────────────────────────────────────
 async function sha256Hex(value) {
@@ -266,12 +264,6 @@ const FacebookIcon = () => (
   </svg>
 );
 
-const AppleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-  </svg>
-);
-
 // ── ProfileStep ─────────────────────────────────────────────────────────────
 function ProfileStep({ identity, onComplete }) {
   const [firstName, setFirstName] = useState(identity?.name || "");
@@ -287,12 +279,6 @@ function ProfileStep({ identity, onComplete }) {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    if (!identity?.auth_provider || !identity?.provider_user_id) {
-      setError("Missing authenticated user identity.");
-      setLoading(false);
-      return;
-    }
 
     if (!firstName || !surname) {
       setError("Please enter your full name.");
@@ -319,6 +305,46 @@ function ProfileStep({ identity, onComplete }) {
       return;
     }
 
+    let authenticatedIdentity = null;
+
+    if (identity?.auth_provider === "supabase") {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setError("You must finish email verification before saving your profile.");
+        setLoading(false);
+        return;
+      }
+
+      authenticatedIdentity = {
+        auth_provider: "supabase",
+        provider_user_id: user.id,
+        email: user.email || identity?.email || "",
+        phone: user.phone || identity?.phone || "",
+      };
+    } else if (identity?.auth_provider === "firebase") {
+      const firebaseUser = auth.currentUser;
+
+      if (!firebaseUser) {
+        setError("You must finish phone/social authentication before saving your profile.");
+        setLoading(false);
+        return;
+      }
+
+      authenticatedIdentity = {
+        auth_provider: "firebase",
+        provider_user_id: firebaseUser.uid,
+        email: firebaseUser.email || identity?.email || "",
+        phone: firebaseUser.phoneNumber || identity?.phone || "",
+      };
+    } else {
+      setError("Missing authenticated user identity.");
+      setLoading(false);
+      return;
+    }
+
     const { data: existingIdRow, error: existingIdErr } = await supabase
       .from("profiles")
       .select("id, auth_provider, provider_user_id")
@@ -334,8 +360,8 @@ function ProfileStep({ identity, onComplete }) {
     if (
       existingIdRow &&
       !(
-        existingIdRow.auth_provider === identity.auth_provider &&
-        existingIdRow.provider_user_id === identity.provider_user_id
+        existingIdRow.auth_provider === authenticatedIdentity.auth_provider &&
+        existingIdRow.provider_user_id === authenticatedIdentity.provider_user_id
       )
     ) {
       setError("An account with this ID number already exists.");
@@ -345,15 +371,15 @@ function ProfileStep({ identity, onComplete }) {
 
     const { error: err } = await supabase.from("profiles").upsert(
       {
-        auth_provider: identity.auth_provider,
-        provider_user_id: identity.provider_user_id,
+        auth_provider: authenticatedIdentity.auth_provider,
+        provider_user_id: authenticatedIdentity.provider_user_id,
         name: firstName,
         surname,
         sex,
         id_number: hashed,
         dob: dobFromSAId(idNumber),
-        email: email || null,
-        phone_number: phone || null,
+        email: email || authenticatedIdentity.email || null,
+        phone_number: phone || authenticatedIdentity.phone || null,
       },
       { onConflict: "auth_provider,provider_user_id" }
     );
@@ -559,7 +585,6 @@ export default function AuthPage() {
     navigate("/dashboard");
   }
 
-  // ── Email login / signup ─────────────────────────────────────────────────
   async function handleEmailSubmit(e) {
     e.preventDefault();
     setError("");
@@ -673,7 +698,6 @@ export default function AuthPage() {
     });
   }
 
-  // ── Phone OTP ────────────────────────────────────────────────────────────
   async function handlePhoneSubmit(e) {
     e.preventDefault();
     setError("");
@@ -714,7 +738,7 @@ export default function AuthPage() {
       const result = await window.confirmationResult.confirm(code);
       const firebaseUser = result.user;
       const normalised = normaliseSAPhone(phone);
-      console.log("Phone OTP verified Firebase user:", firebaseUser.uid, firebaseUser.phoneNumber);
+
       setLoading(false);
 
       await routeAfterLogin({
@@ -741,7 +765,6 @@ export default function AuthPage() {
     await handlePhoneSubmit(e);
   }
 
-  // ── Social login ──────────────────────────────────────────────────────────
   async function handleSocialLogin(provider) {
     setError("");
     setLoading(true);
@@ -814,7 +837,6 @@ export default function AuthPage() {
               disabled={loading}
               onClick={() => handleSocialLogin(facebookAuthProvider)}
             />
-           
 
             <Divider />
 
