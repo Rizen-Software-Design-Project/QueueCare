@@ -1,0 +1,26 @@
+name: Login and Create account frontend tests
+
+on:
+  push:
+    branches: [ frontend-tests ]
+  pull_request:
+    branches: [frontend-tests ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npx vitest run src/components/Signin.test.jsx
