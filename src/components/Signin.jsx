@@ -151,6 +151,7 @@ function OtpBoxes({ value, onChange }) {
       {Array.from({ length: 6 }, (_, i) => (
         <input
           key={i}
+          data-testid={`otp-input-${i}`} // To help with testing
           ref={(el) => (refs.current[i] = el)}
           style={styles.otpBox}
           type="text"

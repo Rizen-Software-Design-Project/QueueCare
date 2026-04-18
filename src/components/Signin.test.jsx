@@ -1,5 +1,5 @@
 import {render, screen, waitFor} from "@testing-library/react";
-import {describe, it, expect, vi } from "vitest";
+import {describe, it, expect, vi, beforeEach } from "vitest";
 import Signin from "./Signin";
 import {signInWithEmailAndPassword, signInWithPopup} from "firebase/auth";
 import userEvent from "@testing-library/user-event";
@@ -52,6 +52,15 @@ const signInWithPasswordMock = vi.hoisted(() =>
   vi.fn(() => Promise.resolve({ error: null }))
 );
 
+const signUpWithEmailPassMock = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve({ error: null }))
+);
+
+const resendMock = vi.hoisted(() =>
+  vi.fn(() => Promise.resolve({ error: null }))
+);
+
+
 const mockQuery = {
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
@@ -64,6 +73,8 @@ vi.mock("@supabase/supabase-js", () => ({
   createClient: () => ({
     auth: {
       signInWithPassword: signInWithPasswordMock,
+      signUp: signUpWithEmailPassMock,
+      resend: resendMock,
       getUser: vi.fn(() =>
         Promise.resolve({
           data: { user: { id: "12345678", email: "test@rizen.com" } },
@@ -75,40 +86,39 @@ vi.mock("@supabase/supabase-js", () => ({
 }));
 
 
-//Sign in, Welcome, Google, Facebook
-describe("Continue with buttons visible", () => {
-  it("Renders the Continue with Google button", async() => {
+//Sign in -> Continue with Google, Continue with Facebook... PAGE
+describe("Sign in PAGE", () => {
+  beforeEach(async() => {
     render(<Signin/>);
-    const googleButton = screen.getByText("Continue with Google");
-    expect(googleButton).toBeInTheDocument();
   });
 
-  it("Renders the Continue with Facebook button", async() => {
-    render(<Signin/>);
-    const facebookButton = screen.getByText("Continue with Facebook");
-    expect(facebookButton).toBeInTheDocument();
+  it("Google button rendered", async() => {
+    const googleButton = screen.getByRole("button" , {name:"Continue with Google"});
+    expect(googleButton).toBeVisible();
   });
 
-  it("Renders the Continue with Email button", async() => {
-    render(<Signin/>);
-    const emailButton = screen.getByText("Continue with Email");
-    expect(emailButton).toBeInTheDocument();
+  it("Facebook button rendered", async() => {
+    const facebookButton = screen.getByRole("button", {name:"Continue with Facebook"});
+    expect(facebookButton).toBeVisible();
   });
 
-  it("Renders the Continue with Phone button", async() => {
-    render(<Signin/>);
-    const phoneButton = screen.getByText("Continue with Phone");
-    expect(phoneButton).toBeInTheDocument();
+  it("Email button rendered", async() => {
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    expect(emailButton).toBeVisible();
+  });
+
+  it("Phone button rendered", async() => {
+    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+    expect(phoneButton).toBeVisible();
   });
 });
 
-
 describe("Continue with Google button clicked", () => {
-  it("Triggers Firebase when Continue with Google clicked", async() => {
+  it("Triggers Firebase", async() => {
     const user = userEvent.setup();
     render(<Signin/>);
 
-    const googleButton = screen.getByText("Continue with Google");
+    const googleButton = screen.getByRole("button" , {name:"Continue with Google"});
     await user.click(googleButton);
 
     await waitFor(() => {
@@ -118,11 +128,11 @@ describe("Continue with Google button clicked", () => {
 });
 
 describe("Continue with Facebook button clicked", () => {
-  it("Triggers Firebase when Continue with Facebook clicked", async() => {
+  it("Triggers Firebase", async() => {
     const user = userEvent.setup();
     render(<Signin/>);
 
-    const facebookButton = screen.getByText("Continue with Facebook");
+    const facebookButton = screen.getByRole("button" , {name:"Continue with Facebook"});
     await user.click(facebookButton);
 
     await waitFor(() => {
@@ -131,130 +141,111 @@ describe("Continue with Facebook button clicked", () => {
   });
 });
 
-
-//Sign in, Email
-//To do - back button
-
-describe("Continue with Email button clicked, changes to email sign in page", () => {
-  it("Renders the back button", async() => {
+describe("Continue with Email button clicked", () => {
+  beforeEach(async() => {
     const user = userEvent.setup();
     render(<Signin/>);
 
-    const emailButton = screen.getByText("Continue with Email");
+    const emailButton = screen.getByRole("button" , {name:"Continue with Email"});
     await user.click(emailButton);
+  });
 
+  it("Renders the back button", async() => {
     const backButton = screen.getByRole("button", {name: "Back"});
-    expect(backButton).toBeInTheDocument();
+    expect(backButton).toBeVisible();
   });
 
   it("Renders email input field", async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-
-    const emailButton = screen.getByText("Continue with Email");
-    await user.click(emailButton);
-
     const emailField = screen.getByPlaceholderText("jane@example.com");
     expect(emailField).toHaveAttribute("type", "email");
+    expect(emailField).toBeVisible();
   });
 
   it("Renders password input field", async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-
-    const emailButton = screen.getByText("Continue with Email");
-    await user.click(emailButton);
-
     const passwordField = screen.getByPlaceholderText("Enter your password");
+    expect(passwordField).toHaveAttribute("type", "password");
     expect(passwordField).toBeVisible();
   });
 
   it("Renders Sign in button", async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-
-    const emailButton = screen.getByText("Continue with Email");
-    await user.click(emailButton);
-
     const signInButton = screen.getByRole("button", {name: "Sign in"});
-    expect(signInButton).toBeInTheDocument();
+    expect(signInButton).toBeVisible();
   });
 
   it("Renders Don't have an account button", async() => {
+    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
+    expect(dontHaveAnAccountButton).toBeVisible();
+  });
+});
+
+describe("Continue with Phone button clicked", () => {
+  beforeEach(async() => {
     const user = userEvent.setup();
     render(<Signin/>);
 
-    const emailButton = screen.getByText("Continue with Email");
-    await user.click(emailButton);
-    
-    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
-    expect(dontHaveAnAccountButton).toBeInTheDocument();
+    const continueWithPhoneButton = screen.getByRole("button", {name: "Continue with Phone"});
+    await user.click(continueWithPhoneButton);
+  });
+
+  it("Renders the back button", async() => {
+    const backButton = screen.getByRole("button", {name: "Back"});
+    expect(backButton).toBeVisible();
+  });
+
+  it("Renders the phone input field", async() => {
+    const phoneField = screen.getByRole("textbox");
+    expect(phoneField).toHaveAttribute("type", "tel");
+    expect(phoneField).toBeVisible();
+  });
+
+  it("Renders the Send OTP button", async() => {
+    const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
+    expect(sendOTPButton).toBeVisible();
   });
 });
 
 
-describe("Back button Clicked on sign in page, changes to sign in welcome page", () => {
+//Sign in - using Email address PAGE
+describe("Back button Clicked(Sign in - Email address page)", () => {
   beforeEach(async() => {
     const user = userEvent.setup();
     render(<Signin/>);
     
-    const emailButton = screen.getByText("Continue with Email");
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
     await user.click(emailButton);
+
+    const backButton = screen.getByRole("button", {name: "Back"});
+    await user.click(backButton);
   });
 
   it("Renders the Continue with Google button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const googleButton = screen.getByText("Continue with Google");
-    expect(googleButton).toBeInTheDocument();
+    const googleButton = screen.getByRole("button", {name:"Continue with Google"});
+    expect(googleButton).toBeVisible();
   });
 
   it("Renders the Continue with Facebook button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const facebookButton = screen.getByText("Continue with Facebook");
-    expect(facebookButton).toBeInTheDocument();
+    const facebookButton = screen.getByRole("button", {name:"Continue with Facebook"});
+    expect(facebookButton).toBeVisible();
   });
 
   it("Renders the Continue with Email button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const emailButton = screen.getByText("Continue with Email");
-    expect(emailButton).toBeInTheDocument();
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    expect(emailButton).toBeVisible();
   });
 
   it("Renders the Continue with Phone button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const phoneButton = screen.getByText("Continue with Phone");
-    expect(phoneButton).toBeInTheDocument();
+    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+    expect(phoneButton).toBeVisible();
   });
-})
-
+});
 
 describe("Sign in button Clicked", () => {
-  beforeEach(async() => {
+  it("Triggers Supabase", async () => {
     const user = userEvent.setup();
     render(<Signin/>);
     
-    const emailButton = screen.getByText("Continue with Email");
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
     await user.click(emailButton);
-  });
-
-  it("Triggers Supabase when Sign in clicked", async () => {
-    const user = userEvent.setup();
 
     const emailField = screen.getByPlaceholderText("jane@example.com");
     const passwordField = screen.getByPlaceholderText("Enter your password");
@@ -262,7 +253,7 @@ describe("Sign in button Clicked", () => {
     await user.type(emailField, "test@rizen.com");
     await user.type(passwordField, "12345678");
 
-    const signInButton = screen.getByRole("button", { name: "Sign in" });
+    const signInButton = screen.getByRole("button", {name: "Sign in"});
     await user.click(signInButton);
 
     await waitFor(() => {
@@ -271,279 +262,310 @@ describe("Sign in button Clicked", () => {
   });
 });
 
-
-describe("Don't have an account ? Create one Clicked. Leads to Create account page", () => {
+describe("Don't have an account ? Create one - Clicked", () => {
   beforeEach(async() => {
     const user = userEvent.setup();
     render(<Signin/>);
     
-    const emailButton = screen.getByText("Continue with Email");
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
     await user.click(emailButton);
+
+    const toggleButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
+    await user.click(toggleButton);
   });
 
   it("Renders the back button", async() => {
-    const user = userEvent.setup();
-
-    const toggleButton = screen.getByText("Don't have an account? Create one");
-    await user.click(toggleButton);
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    expect(backButton).toBeInTheDocument();
-  });
-
-  it("Renders email input field", async() => {
-    const user = userEvent.setup();
-
-    const toggleButton = screen.getByText("Don't have an account? Create one");
-    await user.click(toggleButton);
-    
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    expect(emailField).toHaveAttribute("type", "email");
-  });
-
-  it("Renders new password input field", async() => {
-    const user = userEvent.setup();
-
-    const toggleButton = screen.getByText("Don't have an account? Create one");
-    await user.click(toggleButton);
-    
-    const passwordField = screen.getByPlaceholderText("Create a strong password");
-    expect(passwordField).toBeVisible();
-  });
-
-  it("Renders confirm password input field", async() => {
-    const user = userEvent.setup();
-    const toggleButton = screen.getByText("Don't have an account? Create one");
-    await user.click(toggleButton);
-    
-    const confirmField = screen.getByPlaceholderText("Repeat your password");
-    expect(confirmField).toBeVisible();
-  });
-
-  it("Renders send verification code button", async() => {
-    const user = userEvent.setup();
-
-    const toggleButton = screen.getByText("Don't have an account? Create one");
-    await user.click(toggleButton);
-    
-    const sendVerificationCodeButton = screen.getByRole("button", {name: "Send verification code"});
-    expect(sendVerificationCodeButton).toBeVisible();
-  })
-
-  it("Renders Already have an account button", async() => {
-    const user = userEvent.setup();
-
-    const toggleButton = screen.getByText("Don't have an account? Create one");
-    await user.click(toggleButton);
-
-    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
-    expect(alreadyHaveAnAccountButton).toBeVisible();
-  })
-});
-
-
-describe("Back button Clicked on create account page, changes to sign in welcome page", () => {
-  beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-    
-    const emailButton = screen.getByText("Continue with Email");
-    await user.click(emailButton);
-
-    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
-  });
-
-  it("Renders the Continue with Google button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const googleButton = screen.getByText("Continue with Google");
-    expect(googleButton).toBeInTheDocument();
-  });
-
-  it("Renders the Continue with Facebook button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const facebookButton = screen.getByText("Continue with Facebook");
-    expect(facebookButton).toBeInTheDocument();
-  });
-
-  it("Renders the Continue with Email button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const emailButton = screen.getByText("Continue with Email");
-    expect(emailButton).toBeInTheDocument();
-  });
-
-  it("Renders the Continue with Phone button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const phoneButton = screen.getByText("Continue with Phone");
-    expect(phoneButton).toBeInTheDocument();
-  });
-})
-
-//To do - Send verification code
-
-describe("Already have an account Clicked, changes to sign in page", () => {
-  beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-    
-    const emailButton = screen.getByText("Continue with Email");
-    await user.click(emailButton);
-
-    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
-  });
-
-  it("Renders the back button", async() => {
-    const user = userEvent.setup();
-
-    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
-    await user.click(alreadyHaveAnAccountButton);
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    expect(backButton).toBeInTheDocument();
-  });
-
-  it("Renders email input field", async() => {
-    const user = userEvent.setup();
-
-    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
-    await user.click(alreadyHaveAnAccountButton);
-
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    expect(emailField).toHaveAttribute("type", "email");
-  });
-
-  it("Renders password input field", async() => {
-    const user = userEvent.setup();
-
-    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
-    await user.click(alreadyHaveAnAccountButton);
-
-    const passwordField = screen.getByPlaceholderText("Enter your password");
-    expect(passwordField).toBeVisible();
-  });
-
-  it("Renders Sign in button", async() => {
-    const user = userEvent.setup();
-
-    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
-    await user.click(alreadyHaveAnAccountButton);
-
-    const signInButton = screen.getByRole("button", {name: "Sign in"});
-    expect(signInButton).toBeInTheDocument();
-  });
-
-  it("Renders Don't have an account button", async() => {
-    const user = userEvent.setup();
-
-    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
-    await user.click(alreadyHaveAnAccountButton);
-    
-    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
-    expect(dontHaveAnAccountButton).toBeInTheDocument();
-  });  
-})
-
-
-describe("Continue with Phone button clicked, changes to phone sign in page", () => {
-  it("Renders the back button", async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-
-    const continueWithPhoneButton = screen.getByRole("button", {name: "Continue with Phone"});
-    await user.click(continueWithPhoneButton);
-
     const backButton = screen.getByRole("button", {name: "Back"});
     expect(backButton).toBeVisible();
   });
 
-  it("Renders the phone input field", async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-
-    const continueWithPhoneButton = screen.getByRole("button", {name: "Continue with Phone"});
-    await user.click(continueWithPhoneButton);
-
-    const phoneField = screen.getByPlaceholderText("821234567");
-    expect(phoneField).toHaveAttribute("type", "tel");
-    expect(phoneField).toBeVisible();
+  it("Renders email input field", async() => {
+    const emailField = screen.getByPlaceholderText("jane@example.com");
+    expect(emailField).toHaveAttribute("type", "email");
+    expect(emailField).toBeVisible();
   });
 
-  it("Renders the Send OTP button", async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+  it("Renders new password input field", async() => {
+    const passwordField = screen.getByPlaceholderText("Create a strong password");
+    expect(passwordField).toHaveAttribute("type", "password");
+    expect(passwordField).toBeVisible();
+  });
 
-    const continueWithPhoneButton = screen.getByRole("button", {name: "Continue with Phone"});
-    await user.click(continueWithPhoneButton);
+  it("Renders confirm password input field", async() => {
+    const confirmField = screen.getByPlaceholderText("Repeat your password");
+    expect(confirmField).toHaveAttribute("type", "password");
+    expect(confirmField).toBeVisible();
+  });
 
-    const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
-    expect(sendOTPButton).toBeVisible();
+  it("Renders Send verification code button", async() => {
+    const sendVerificationCodeButton = screen.getByRole("button", {name: "Send verification code"});
+    expect(sendVerificationCodeButton).toBeVisible();
+  });
+
+  it("Renders Already have an account button", async() => {
+    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
+    expect(alreadyHaveAnAccountButton).toBeVisible();
   });
 });
 
+//Create account PAGE
+describe("Back button Clicked(Create account page)", () => {
+  beforeEach(async() => {
+    const user = userEvent.setup();
+    render(<Signin/>);
+    
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    await user.click(emailButton);
+
+    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
+    await user.click(dontHaveAnAccountButton);
+
+    const backButton = screen.getByRole("button", {name: "Back"});
+    await user.click(backButton);
+  });
+
+  it("Renders the Continue with Google button", async() => {
+    const googleButton = screen.getByRole("button", {name:"Continue with Google"});
+    expect(googleButton).toBeVisible();
+  });
+
+  it("Renders the Continue with Facebook button", async() => {
+    const facebookButton = screen.getByRole("button", {name:"Continue with Facebook"});
+    expect(facebookButton).toBeVisible();
+  });
+
+  it("Renders the Continue with Email button", async() => {
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    expect(emailButton).toBeVisible();
+  });
+
+  it("Renders the Continue with Phone button", async() => {
+    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+    expect(phoneButton).toBeVisible();
+  });
+})
+
+describe("Send verification code Clicked", () => {
+  beforeEach(async() => {
+    const user = userEvent.setup();
+    render(<Signin/>);
+
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    await user.click(emailButton);
+
+    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
+    await user.click(dontHaveAnAccountButton);
+
+    const emailField = screen.getByPlaceholderText("jane@example.com");
+    const passwordField = screen.getByPlaceholderText("Create a strong password");
+    const confirmField = screen.getByPlaceholderText("Repeat your password");
+
+    await user.type(emailField, "test@rizen.com");
+    await user.type(passwordField, "12345678");
+    await user.type(confirmField, "12345678");
+
+    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
+    await user.click(sendVerificationCodeButton);
+  });
+
+  it("Triggers Supabase", async() => {
+    await waitFor(() => {
+      expect(signUpWithEmailPassMock).toHaveBeenCalled();
+    });
+  });
+
+  it("Renders back button", async() => {
+    const backButton = screen.getByRole("button", {name:"Back"});
+    expect(backButton).toBeVisible();
+  });
+
+  it("Renders OTP input boxes", async() => {
+    const otpBoxes = screen.getAllByRole("textbox");
+    expect(otpBoxes).toHaveLength(6);
+
+    otpBoxes.forEach((otpBox) => {
+      expect(otpBox).toBeVisible();
+    });
+  });
+
+  it("Renders Verify code button", async() => {
+    const verifyCodeButton = screen.getByRole("button", {name:"Verify code"});
+    expect(verifyCodeButton).toBeVisible();
+  });
+
+  it("Renders Resend code button", async() => {
+    const resendCodeButton = screen.getByRole("button", {name:"Resend code"});
+    expect(resendCodeButton).toBeVisible();
+  });
+});
+
+describe("Already have an account Clicked", () => {
+  beforeEach(async() => {
+    const user = userEvent.setup();
+    render(<Signin/>);
+    
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    await user.click(emailButton);
+
+    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
+    await user.click(dontHaveAnAccountButton);
+
+    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
+    await user.click(alreadyHaveAnAccountButton);
+  });
+
+  it("Renders the back button", async() => {
+    const backButton = screen.getByRole("button", {name: "Back"});
+    expect(backButton).toBeVisible();
+  });
+
+  it("Renders email input field", async() => {
+    const emailField = screen.getByPlaceholderText("jane@example.com");
+    expect(emailField).toHaveAttribute("type", "email");
+    expect(emailField).toBeVisible();
+  });
+
+  it("Renders password input field", async() => {
+    const passwordField = screen.getByPlaceholderText("Enter your password");
+    expect(passwordField).toHaveAttribute("type", "password");
+    expect(passwordField).toBeVisible();
+  });
+
+  it("Renders Sign in button", async() => {
+    const signInButton = screen.getByRole("button", {name: "Sign in"});
+    expect(signInButton).toBeVisible();
+  });
+
+  it("Renders Don't have an account button", async() => { 
+    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
+    expect(dontHaveAnAccountButton).toBeVisible();
+  });  
+});
+
+//Email OTP PAGE
+describe("Back button Clicked(Email OTP PAGE)", () => {
+  beforeEach(async() => {
+    const user = userEvent.setup();
+    render(<Signin/>);
+
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    await user.click(emailButton);
+
+    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
+    await user.click(dontHaveAnAccountButton);
+
+    const emailField = screen.getByPlaceholderText("jane@example.com");
+    const passwordField = screen.getByPlaceholderText("Create a strong password");
+    const confirmField = screen.getByPlaceholderText("Repeat your password");
+
+    await user.type(emailField, "test@rizen.com");
+    await user.type(passwordField, "12345678");
+    await user.type(confirmField, "12345678");
+
+    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
+    await user.click(sendVerificationCodeButton);
+
+    const backButton = screen.getByRole("button", {name:"Back"});
+    await user.click(backButton);
+  });
+
+  it("Renders the back button", async() => {
+    const backButton = screen.getByRole("button", {name: "Back"});
+    expect(backButton).toBeVisible();
+  });
+
+  it("Renders email input field", async() => {
+    const emailField = screen.getByPlaceholderText("jane@example.com");
+    expect(emailField).toHaveAttribute("type", "email");
+    expect(emailField).toBeVisible();
+  });
+
+  it("Renders new password input field", async() => {
+    const passwordField = screen.getByPlaceholderText("Create a strong password");
+    expect(passwordField).toHaveAttribute("type", "password");
+    expect(passwordField).toBeVisible();
+  });
+
+  it("Renders confirm password input field", async() => {
+    const confirmField = screen.getByPlaceholderText("Repeat your password");
+    expect(confirmField).toHaveAttribute("type", "password");
+    expect(confirmField).toBeVisible();
+  });
+
+  it("Renders Send verification code button", async() => {
+    const sendVerificationCodeButton = screen.getByRole("button", {name: "Send verification code"});
+    expect(sendVerificationCodeButton).toBeVisible();
+  });
+
+  it("Renders Already have an account button", async() => {
+    const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
+    expect(alreadyHaveAnAccountButton).toBeVisible();
+  });  
+});
+
+//verify code
+
+describe("Resend button Clicked", () => {
+  it("Triggers Supabase", async() => {
+    const user = userEvent.setup();
+    render(<Signin/>);
+
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    await user.click(emailButton);
+
+    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
+    await user.click(dontHaveAnAccountButton);
+
+    const emailField = screen.getByPlaceholderText("jane@example.com");
+    const passwordField = screen.getByPlaceholderText("Create a strong password");
+    const confirmField = screen.getByPlaceholderText("Repeat your password");
+
+    await user.type(emailField, "test@rizen.com");
+    await user.type(passwordField, "12345678");
+    await user.type(confirmField, "12345678");
+
+    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
+    await user.click(sendVerificationCodeButton);
+
+    const resendCodeButton = screen.getByRole("button", {name:"Resend code"});
+    await waitFor(() => {
+      expect(resendMock).toHaveBeenCalled();
+    });
+  });
+});
+
+
+//Sign in - using Phone PAGE
 describe("Back button Clicked on Continue with Phone page, changes to sign in welcome ppage", () => {
   beforeEach(async() => {
     const user = userEvent.setup();
     render(<Signin/>);
     
-    const phoneButton = screen.getByText("Continue with Phone");
+    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
     await user.click(phoneButton);
+
+    const backButton = screen.getByRole("button", {name: "Back"});
+    await user.click(backButton);
   });
 
   it("Renders the Continue with Google button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const googleButton = screen.getByText("Continue with Google");
-    expect(googleButton).toBeInTheDocument();
+    const googleButton = screen.getByRole("button", {name:"Continue with Google"});
+    expect(googleButton).toBeVisible();
   });
 
   it("Renders the Continue with Facebook button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const facebookButton = screen.getByText("Continue with Facebook");
-    expect(facebookButton).toBeInTheDocument();
+    const facebookButton = screen.getByRole("button", {name:"Continue with Facebook"});
+    expect(facebookButton).toBeVisible();
   });
 
   it("Renders the Continue with Email button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const emailButton = screen.getByText("Continue with Email");
-    expect(emailButton).toBeInTheDocument();
+    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+    expect(emailButton).toBeVisible();
   });
 
   it("Renders the Continue with Phone button", async() => {
-    const user = userEvent.setup();
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
-
-    const phoneButton = screen.getByText("Continue with Phone");
-    expect(phoneButton).toBeInTheDocument();
+    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+    expect(phoneButton).toBeVisible();
   });
 })
 
