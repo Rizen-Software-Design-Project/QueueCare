@@ -5,6 +5,7 @@ import Dashboard from "./components/Dashboard.jsx";
 import ClinicSearch from "./components/Clinic_search.jsx";
 import Applications from "./components/Applications.jsx";
 import BookAppointment from "./components/BookAppointment";
+import StaffDashboard from "./components/StaffDashboard";
 import "./App.css";
 
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/clinic-search" element={<ClinicSearch />} />
         <Route path="/applications" element={<Applications />} />
         <Route path="/clinic" element={<BookAppointment />} />
+        <Route path="/staff-dashboard" element={<StaffDashboard />} />
 
 
       </Routes>

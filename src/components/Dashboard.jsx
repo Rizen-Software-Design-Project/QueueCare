@@ -364,29 +364,21 @@ export default function Dashboard() {
     if (!confirm("Are you sure you want to cancel this appointment?")) {
       return;
     }
-    const { error } = await supabase
-      .from("appointments")
-      .update({ status: "cancelled" })
-      .eq("id", appt.id);
-    if (error) {
-      alert("Failed to cancel: " + error.message);
-      return;
-    }
-    // Decrement booked_count on the slot
-    if (appt.slot_id) {
-      const { data: slot } = await supabase
-        .from("appointment_slots")
-        .select("booked_count")
-        .eq("id", appt.slot_id)
-        .single();
-      if (slot && slot.booked_count > 0) {
-        await supabase
-          .from("appointment_slots")
-          .update({ booked_count: slot.booked_count - 1 })
-          .eq("id", appt.slot_id);
+    try {
+      const res = await fetch(`/appointments/${appt.id}/cancel`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patient_id: profile.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert("Failed to cancel: " + (data.error || "Unknown error"));
+        return;
       }
+      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "cancelled" } : a));
+    } catch (err) {
+      alert("Failed to cancel: " + err.message);
     }
-    setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "cancelled" } : a));
   }
 
   async function openReschedule(appt) {
@@ -425,63 +417,42 @@ export default function Dashboard() {
     }
     setRescheduleLoading(true);
 
-    // Update appointment to new slot
-    const { error } = await supabase
-      .from("appointments")
-      .update({ slot_id: rescheduleSlotId, updated_at: new Date().toISOString() })
-      .eq("id", rescheduleAppt.id);
-    if (error) {
-      alert("Reschedule failed: " + error.message);
-      setRescheduleLoading(false);
-      return;
-    }
+    try {
+      const res = await fetch(`/appointments/${rescheduleAppt.id}/reschedule`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id: profile.id,
+          new_slot_id: rescheduleSlotId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert("Reschedule failed: " + (data.error || "Unknown error"));
+        setRescheduleLoading(false);
+        return;
+      }
 
-    // Decrement old slot booked_count
-    const oldSlotId = rescheduleAppt.slot_id;
-    if (oldSlotId) {
-      const { data: oldSlot } = await supabase
+      // Update local state with new slot data
+      const { data: updatedSlot } = await supabase
         .from("appointment_slots")
-        .select("booked_count")
-        .eq("id", oldSlotId)
+        .select("slot_date, slot_time, duration_minutes, facility_id, facilities(name, district, province)")
+        .eq("id", rescheduleSlotId)
         .single();
-      if (oldSlot && oldSlot.booked_count > 0) {
-        await supabase
-          .from("appointment_slots")
-          .update({ booked_count: oldSlot.booked_count - 1 })
-          .eq("id", oldSlotId);
-      }
+
+      setAppointments(prev => prev.map(a => {
+        if (a.id === rescheduleAppt.id) {
+          return { ...a, slot_id: rescheduleSlotId, appointment_slots: updatedSlot };
+        }
+        return a;
+      }));
+
+      setRescheduleAppt(null);
+      setRescheduleSlots([]);
+      setRescheduleSlotId(null);
+    } catch (err) {
+      alert("Reschedule failed: " + err.message);
     }
-
-    // Increment new slot booked_count
-    const { data: newSlot } = await supabase
-      .from("appointment_slots")
-      .select("booked_count")
-      .eq("id", rescheduleSlotId)
-      .single();
-    if (newSlot) {
-      await supabase
-        .from("appointment_slots")
-        .update({ booked_count: (newSlot.booked_count || 0) + 1 })
-        .eq("id", rescheduleSlotId);
-    }
-
-    // Update local state with new slot data
-    const { data: updatedSlot } = await supabase
-      .from("appointment_slots")
-      .select("slot_date, slot_time, duration_minutes, facility_id, facilities(name, district, province)")
-      .eq("id", rescheduleSlotId)
-      .single();
-
-    setAppointments(prev => prev.map(a => {
-      if (a.id === rescheduleAppt.id) {
-        return { ...a, slot_id: rescheduleSlotId, appointment_slots: updatedSlot };
-      }
-      return a;
-    }));
-
-    setRescheduleAppt(null);
-    setRescheduleSlots([]);
-    setRescheduleSlotId(null);
     setRescheduleLoading(false);
   }
 
