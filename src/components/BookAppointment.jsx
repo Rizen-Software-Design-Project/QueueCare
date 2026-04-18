@@ -167,40 +167,21 @@ const handleBook = async () => {
   setStatus({ type: "loading", message: "Booking appointment..." });
 
   try {
-    const {
-      data: { user: supabaseUser },
-    } = await supabase.auth.getUser();
-
-    const firebaseUser = auth.currentUser || null;
-
-    const authProvider = supabaseUser
-      ? "supabase"
-      : firebaseUser
-      ? "firebase"
-      : null;
-
-    const providerUserId = supabaseUser?.id || firebaseUser?.uid || null;
-
-    if (!authProvider || !providerUserId) {
-      throw new Error("You must be signed in to book an appointment.");
-    }
-
-    const { data, error } = await supabase.functions.invoke("book-appointment", {
-      body: {
-        clinicId: Number(clinicId),
-        slotId: selectedSlotId,
+    const res = await fetch("/appointments/book", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patient_id: patientId,
+        facility_id: Number(clinicId),
+        slot_id: selectedSlotId,
         reason: reason.trim(),
-        authProvider,
-        providerUserId,
-      },
+      }),
     });
 
-    if (error) {
-      throw new Error(error.message || "Function invocation failed.");
-    }
+    const data = await res.json();
 
-    if (data?.error) {
-      throw new Error(data.error);
+    if (!res.ok) {
+      throw new Error(data.error || "Booking failed.");
     }
 
     setBooking(data.appointment);
