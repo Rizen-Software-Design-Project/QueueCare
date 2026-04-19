@@ -208,7 +208,7 @@ const bookAppointment = async (req, res) => {
 
 const signUp = async (req, res) => {
     try {
-        const { email, password, full_name, phone_number, id_number, role = 'patient' } = req.body;
+        const { email, password, name, surname, phone_number, id_number, role = 'patient' } = req.body;
 
         const { error: authError } = await supabase.auth.signUp({
             email,
@@ -224,7 +224,8 @@ const signUp = async (req, res) => {
             .insert({
                 email,
                 password,
-                full_name,
+                name,
+                surname,
                 phone_number,
                 id_number,
                 role
@@ -238,7 +239,7 @@ const signUp = async (req, res) => {
             .from('profiles')
             .select('id')
             .eq('email', email)
-            .order('created_at', { ascending: false })
+            .order('submitted_at', { ascending: false })
             .limit(1)
             .single();
 

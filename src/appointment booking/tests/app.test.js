@@ -210,7 +210,8 @@ describe('Appointment API', () => {
             .send({
                 email: 'sam@example.com',
                 password: '123456',
-                full_name: 'Sam Test',
+                name: 'Sam',
+                surname: 'Test',
                 phone_number: '555-111',
                 id_number: 'ID-1'
             });
@@ -237,7 +238,8 @@ describe('Appointment API', () => {
             .send({
                 email: 'jane@example.com',
                 password: '123456',
-                full_name: 'Jane Doe',
+                name: 'Jane',
+                surname: 'Doe',
                 phone_number: '555-222',
                 id_number: 'ID-2'
             });
@@ -351,7 +353,8 @@ describe('Appointment API', () => {
             .send({
                 email: 'happy@example.com',
                 password: '123456',
-                full_name: 'Happy Path',
+                name: 'Happy Path',
+                surname: 'Tester',
                 phone_number: '555-444',
                 id_number: 'ID-4'
             });
