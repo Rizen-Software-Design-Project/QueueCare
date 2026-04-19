@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
+import { viewFullQueue, updateQueueStatus } from "../queueApi";
 import "./StaffDashboard.css";
 
 const SUPABASE_URL = "https://vktjtxljwzyakobkkhol.supabase.co";
@@ -37,7 +38,9 @@ export default function StaffDashboard() {
   const [editSlotDuration, setEditSlotDuration] = useState("");
   const [updatingSlot, setUpdatingSlot] = useState(false);
   const [updateSlotMsg, setUpdateSlotMsg] = useState({ type: "", text: "" });
-  // ── On mount: resolve facility from staff assignment ─────────────────────
+  // ── Queue Management ─────────────────────
+  const [queueList,    setQueueList]    = useState([]);
+  const [queueLoading, setQueueLoading] = useState(false);
  
 
   // ── Fetch appointments for facility ──────────────────────────────────────
@@ -145,8 +148,33 @@ export default function StaffDashboard() {
 
     loadFacility();
   }, []);
+  useEffect(() => {
+  if (!facilityId) return;
 
-  
+  async function pollQueue() {
+    const data = await viewFullQueue(facilityId);
+    if (!data.error) setQueueList(data.data || []);
+  }
+
+  pollQueue();
+  const interval = setInterval(pollQueue, 1000);
+  return () => clearInterval(interval);
+}, [facilityId]);
+  async function handleQueueStatusUpdate(contactDetails, newStatus) {
+  const data = await updateQueueStatus(contactDetails, facilityId, newStatus);
+  if (data.error) {
+    alert("Failed to update queue: " + data.error);
+    return;
+  }
+  // Optimistically update local state
+  setQueueList(prev =>
+    prev.map(entry =>
+      (entry.profiles?.email === contactDetails || entry.profiles?.phone_number === contactDetails)
+        ? { ...entry, virtual_queue: { ...entry.virtual_queue, status: newStatus } }
+        : entry
+    )
+  );
+}
   // ── Inline status update ──────────────────────────────────────────────────
   async function updateStatus(apptId, newStatus) {
     setUpdatingId(apptId);
@@ -382,6 +410,67 @@ async function handleUpdateSlot(slotId) {
             </div>
           )}
         </section>
+          {/* ── Live Queue ── */}
+<section className="staff-card" style={{ gridColumn: "1 / -1" }}>
+  <h2>Live Patient Queue</h2>
+
+  {queueList.length === 0 ? (
+    <p style={{ color: "#888" }}>No patients currently in queue.</p>
+  ) : (
+    <div style={{ overflowX: "auto" }}>
+      <table className="staff-table">
+        <thead>
+          <tr>
+            <th>Position</th>
+            <th>Patient</th>
+            <th>Reason</th>
+            <th>Slot Time</th>
+            <th>End Time</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {queueList.map((entry, i) => {
+            const contact = entry.profiles?.email || entry.profiles?.phone_number;
+            const status  = entry.virtual_queue?.status;
+            return (
+              <tr key={i}>
+                <td>{entry.position ?? "—"}</td>
+                <td>{entry.profiles?.name} {entry.profiles?.surname}</td>
+                <td>{entry.reason || "—"}</td>
+                <td>{entry.appointment_slots?.slot_time?.slice(0, 5) || "—"}</td>
+                <td>{entry.appointment_slots?.end_time?.slice(0, 5) || "—"}</td>
+                <td>
+                  <span className={`staff-badge staff-badge-${status?.toLowerCase().replace(" ", "-")}`}>
+                    {status}
+                  </span>
+                </td>
+                <td>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {["Waiting", "In Consultation", "Complete"]
+                      .filter(s => s !== status)
+                      .map(s => (
+                        <button
+                          key={s}
+                          className="staff-back-btn"
+                          style={{ fontSize: 11, padding: "3px 8px" }}
+                          onClick={() => handleQueueStatusUpdate(contact, s)}
+                        >
+                          {s}
+                        </button>
+                      ))
+                    }
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+</section>
 
         {/* ── Create Slot ── */}
         <section className="staff-card">

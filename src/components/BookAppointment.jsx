@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "../queueAPI";
 import "./BookAppointment.css";
-
+import { addToQueue } from "../queueApi";
 const supabase = createClient(
   "https://vktjtxljwzyakobkkhol.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA"
@@ -26,6 +26,7 @@ export default function BookAppointment() {
   });
   const [booking, setBooking] = useState(null);
   const [patientId, setPatientId] = useState(null);
+  const [profile,   setProfile]   = useState(null);
 
   useEffect(() => {
     let unsub = null;
@@ -57,7 +58,7 @@ export default function BookAppointment() {
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, email, phone_number")
           .eq("auth_provider", authProvider)
           .eq("provider_user_id", providerUserId)
           .maybeSingle();
@@ -71,6 +72,7 @@ export default function BookAppointment() {
         }
 
         setPatientId(profile.id);
+        setProfile(profile);
       });
     }
 
@@ -189,6 +191,10 @@ const handleBook = async () => {
       type: "success",
       message: "Appointment booked successfully",
     });
+    const contactDetails = profile?.email || profile?.phone_number;
+    if (contactDetails && clinicId) {
+      await addToQueue(contactDetails, clinicId);
+    }
   } catch (err) {
     setStatus({
       type: "error",

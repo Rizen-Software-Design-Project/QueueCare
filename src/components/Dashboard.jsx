@@ -12,13 +12,13 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../firebase";
 import { createClient } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import Applications from "./Applications.jsx";
 import AdminClinics from "./AdminClinics";
 import AdminStaff from "./AdminStaff.jsx";
+import { getMyQueue, removeFromQueue, notifyPatient } from "../queueApi";
+
 import "./Dashboard.css";
 
 
@@ -125,7 +125,8 @@ const [availabilityStatus, setAvailabilityStatus] = useState({ type: "", message
   const [rescheduleSlots,  setRescheduleSlots]  = useState([]);
   const [rescheduleSlotId, setRescheduleSlotId] = useState(null);
   const [rescheduleLoading,setRescheduleLoading]= useState(false);
-
+  // Queue management
+  const [queueData, setQueueData] = useState(null);
   const navigate = useNavigate();
 
   const NAV_ITEMS = useMemo(() => {
@@ -331,7 +332,32 @@ const [availabilityStatus, setAvailabilityStatus] = useState({ type: "", message
   };
 
 }, [navigate]);
+  useEffect(() => {
+  if (!profile || profile.role !== "patient") return;
 
+  const contactDetails = profile.email || profile.phone_number;
+  const facilityId     = appointments[0]?.appointment_slots?.facility_id;
+
+  if (!contactDetails || !facilityId) return;
+
+  // Poll queue every second
+  const queueInterval = setInterval(async () => {
+    const data = await getMyQueue(contactDetails, facilityId);
+    if (!data.error) setQueueData(data);
+  }, 1000);
+
+  // Notify every 60 seconds
+  const notifyInterval = setInterval(async () => {
+    if (profile.email) {
+      await notifyPatient(profile.email, facilityId);
+    }
+  }, 60000);
+
+  return () => {
+    clearInterval(queueInterval);
+    clearInterval(notifyInterval);
+  };
+}, [profile, appointments]);
   // ── Actions ───────────────────────────────────────────────────────────────
   async function handleLogout() {
     await Promise.allSettled([supabase.auth.signOut(), signOut(auth)]);
@@ -354,25 +380,32 @@ const [availabilityStatus, setAvailabilityStatus] = useState({ type: "", message
   }
 
   async function cancelAppointment(appt) {
-    if (!confirm("Are you sure you want to cancel this appointment?")) {
-      return;
+  if (!confirm("Are you sure you want to cancel this appointment?")) return;
+
+  try {
+    const res = await fetch(`/appointments/${appt.id}/cancel`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient_id: profile.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) { alert("Failed to cancel: " + (data.error || "Unknown error")); return; }
+
+    setAppointments(prev => prev.map(a =>
+      a.id === appt.id ? { ...a, status: "cancelled" } : a
+    ));
+
+    // Remove from queue
+    const contactDetails = profile.email || profile.phone_number;
+    const facilityId     = appt.appointment_slots?.facility_id;
+    if (contactDetails && facilityId) {
+      await removeFromQueue(contactDetails, facilityId);
+      setQueueData(null);
     }
-    try {
-      const res = await fetch(`/appointments/${appt.id}/cancel`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patient_id: profile.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert("Failed to cancel: " + (data.error || "Unknown error"));
-        return;
-      }
-      setAppointments(prev => prev.map(a => a.id === appt.id ? { ...a, status: "cancelled" } : a));
-    } catch (err) {
-      alert("Failed to cancel: " + err.message);
-    }
+  } catch (err) {
+    alert("Failed to cancel: " + err.message);
   }
+}
 
   async function openReschedule(appt) {
     setRescheduleAppt(appt);
@@ -605,6 +638,9 @@ function updateAvailabilityDay(day, field, value) {
           </p>
         </div>
       )}
+
+    {/* Queue Status Card */}
+
     </div>
   );
 }
@@ -665,7 +701,39 @@ function updateAvailabilityDay(day, field, value) {
             </div>
           )}
         </div>
+        {queueData && (
+  <div className="db-card" style={{ marginTop: 20 }}>
+    <h3>🔢 My Queue Status</h3>
+    <div className="db-stat-grid" style={{ marginBottom: 12 }}>
+      <div className="db-stat-card db-stat-blue">
+        <span className="db-stat-num">{queueData.queue_status || "—"}</span>
+        <span className="db-stat-label">Queue Status</span>
       </div>
+      <div className="db-stat-card db-stat-orange">
+        <span className="db-stat-num">{queueData.estimated_wait || "—"}</span>
+        <span className="db-stat-label">Estimated Wait</span>
+      </div>
+    </div>
+    {queueData.data?.[0] && (
+      <>
+        <p>
+          <strong>Date:</strong>{" "}
+          {queueData.data[0].appointment_slots?.slot_date || "—"}
+        </p>
+        <p>
+          <strong>Time:</strong>{" "}
+          {queueData.data[0].appointment_slots?.slot_time?.slice(0, 5) || "—"}
+        </p>
+        <p>
+          <strong>Reason:</strong>{" "}
+          {queueData.data[0].reason || "—"}
+        </p>
+      </>
+    )}
+  </div>
+)} 
+      </div>
+      
     );
   }
 
@@ -698,28 +766,57 @@ function updateAvailabilityDay(day, field, value) {
   }
 
   function renderPatientQueue() {
-    return (
-      <div className="db-section">
-        <h2 className="db-section-title">My Queue</h2>
-        {queue.length === 0 ? <p>No queue entries found.</p> : (
-          <div className="db-list">
-            {queue.map((entry) => (
-              <div className="db-card" key={entry.id}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-                  <div>
-                    <h3 style={{ marginBottom: 6 }}>{entry.facilities?.name || "Facility"}</h3>
-                    <p>Joined: {formatDateTime(entry.joined_at)}</p>
-                    <p>Position: {entry.position ?? "—"}</p>
-                  </div>
-                  <Badge status={entry.status} />
-                </div>
-              </div>
-            ))}
+  return (
+    <div className="db-section">
+      <h2 className="db-section-title">My Queue</h2>
+
+      {!queueData ? (
+        <p className="db-empty">You are not currently in any queue.</p>
+      ) : queueData.error ? (
+        <p className="db-empty">{queueData.error}</p>
+      ) : (
+        <div className="db-card">
+          <div className="db-stat-grid" style={{ marginBottom: 16 }}>
+            <div className="db-stat-card db-stat-blue">
+              <span className="db-stat-num">{queueData.queue_status || "—"}</span>
+              <span className="db-stat-label">Status</span>
+            </div>
+            <div className="db-stat-card db-stat-orange">
+              <span className="db-stat-num">{queueData.estimated_wait || "—"}</span>
+              <span className="db-stat-label">Estimated Wait</span>
+            </div>
           </div>
-        )}
-      </div>
-    );
-  }
+          {queueData.data?.[0] && (
+            <>
+              <p><strong>Appointment Date:</strong> {formatDate(queueData.data[0].appointment_slots?.slot_date)}</p>
+              <p><strong>Appointment Time:</strong> {formatTime(queueData.data[0].appointment_slots?.slot_time)}</p>
+              <p><strong>End Time:</strong> {queueData.data[0].appointment_slots?.end_time?.slice(0,5) || "—"}</p>
+              <p><strong>Reason:</strong> {queueData.data[0].reason || "—"}</p>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Old queue_entries table */}
+      {queue.length > 0 && (
+        <div className="db-list" style={{ marginTop: 16 }}>
+          {queue.map((entry) => (
+            <div className="db-card" key={entry.id}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                <div>
+                  <h3 style={{ marginBottom: 6 }}>{entry.facilities?.name || "Facility"}</h3>
+                  <p>Joined: {formatDateTime(entry.joined_at)}</p>
+                  <p>Position: {entry.position ?? "—"}</p>
+                </div>
+                <Badge status={entry.status} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
   function renderNotifications() {
     return (

@@ -281,54 +281,25 @@ const bookAppointment = async (req, res) => {
 };
 
 //PATIENT: Cancel their own appointment
-
 const cancelAppointment = async (req, res) => {
     try {
-<<<<<<< HEAD
-        const { email, password, name, surname, phone_number, id_number, role = 'patient' } = req.body;
-=======
         const { appointment_id } = req.params;
         const { patient_id } = req.body;
->>>>>>> c7ecff87d34349c4ee5e1d9c87f237f97aca4027
 
         if (!patient_id) {
             return res.status(400).json({ error: 'patient_id is required' });
         }
 
-<<<<<<< HEAD
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-                email,
-                password,
-                name,
-                surname,
-                phone_number,
-                id_number,
-                role
-            });
-
-        if (profileError) {
-            return res.status(400).json({ error: profileError.message });
-        }
-
-        const { data: profile, error: profileReadError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('email', email)
-            .order('submitted_at', { ascending: false })
-            .limit(1)
-=======
         const { data: appointment, error: fetchError } = await supabase
             .from('appointments')
             .select('id, patient_id, slot_id, status')
             .eq('id', appointment_id)
->>>>>>> c7ecff87d34349c4ee5e1d9c87f237f97aca4027
             .single();
 
         if (fetchError || !appointment) {
-            return res.status(404).json({ error: 'Appointment not found' });
-        }
+            return res.status(404).json({ error: 'Appointment not found' });}
+
+            
         if (appointment.patient_id !== patient_id) {
             return res.status(403).json({ error: 'You can only cancel your own appointments' });
         }
@@ -375,7 +346,6 @@ const cancelAppointment = async (req, res) => {
     }
 };
 
-//PATIENT: Reschedule appointment
 
 const rescheduleAppointment = async (req, res) => {
     try {
