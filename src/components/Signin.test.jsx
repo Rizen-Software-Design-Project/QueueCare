@@ -4,6 +4,19 @@ import Signin from "./Signin";
 import {signInWithEmailAndPassword, signInWithPopup, signInWithPhoneNumber} from "firebase/auth";
 import userEvent from "@testing-library/user-event";
 
+// *****THE COMMENTS ARE NECESSARY*****
+//mocks
+//opening pages
+//back button clicked
+//navigate to page ...
+//fill and submit
+//tests(describes)
+
+
+
+
+
+//mocks
 vi.mock("firebase/auth", () => {
   class GoogleAuthProvider {
     constructor() {
@@ -31,14 +44,7 @@ vi.mock("firebase/auth", () => {
     FacebookAuthProvider,
     RecaptchaVerifier,
 
-    signInWithPopup: vi.fn(() =>
-      Promise.resolve({
-        user: {
-          uid: "123",
-          email: "test@example.com",
-        },
-      })
-    ),
+    signInWithPopup: vi.fn(),
 
     signInWithPhoneNumber: vi.fn(),
   };
@@ -69,10 +75,8 @@ const mockQuery = {
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
   ilike: vi.fn().mockReturnThis(),
-  upsert: vi.fn(() => Promise.resolve({ error: null })),
-  maybeSingle: vi.fn(() =>
-    Promise.resolve({ data: null, error: null })
-  ),
+  upsert: vi.fn().mockReturnThis(),
+  maybeSingle: vi.fn().mockReturnThis()
 };
 
 vi.mock("@supabase/supabase-js", () => ({
@@ -82,6 +86,7 @@ vi.mock("@supabase/supabase-js", () => ({
       signUp: signUpWithEmailPassMock,
       resend: resendMock,
       verifyOtp: verifyOtpMock,
+      
       getUser: vi.fn(() =>
         Promise.resolve({
           data: { user: { id: "12345678", email: "test@rizen.com" } },
@@ -97,9 +102,7 @@ vi.mock("@supabase/supabase-js", () => ({
 
 
 
-
-//functions
-//opening Sign In - Welcome PAGE
+//opening pages
 function openSignInWelcomePage(){
   it("Renders the Continue with Google button", async() => {
     const googleButton = screen.getByRole("button", {name:"Continue with Google"});
@@ -122,7 +125,6 @@ function openSignInWelcomePage(){
   });
 }
 
-//opening Email Sign In PAGE
 function openEmailSignInPage(){
     it("Renders the Back button", async() => {
     const backButton = screen.getByRole("button", {name: "Back"});
@@ -152,7 +154,7 @@ function openEmailSignInPage(){
   });
 }
 
-//opening Phone Sign In PAGE
+
 function openPhoneSignInPage(){
     it("Renders the Back button", async() => {
     const backButton = screen.getByRole("button", {name: "Back"});
@@ -171,7 +173,7 @@ function openPhoneSignInPage(){
   });
 }
 
-//opening Email Create Account PAGE
+
 function openEmailCreateAccountPage(){
   it("Renders the Back button", async() => {
     const backButton = screen.getByRole("button", {name: "Back"});
@@ -207,7 +209,7 @@ function openEmailCreateAccountPage(){
   });
 }
 
-//opening Email-OTP PAGE
+
 function openEmailOtpPage(){
   it("Renders the Back button", async() => {
     const backButton = screen.getByRole("button", {name:"Back"});
@@ -234,7 +236,7 @@ function openEmailOtpPage(){
   });
 }
 
-//opening Complete your profile PAGE
+
 function openCompleteProfile(){
   it("Renders Name field", async() => {
     const nameField = screen.getByPlaceholderText("Jane");
@@ -266,7 +268,7 @@ function openCompleteProfile(){
   //email or phone
 }
 
-//opening Done PAGE
+
 function openDonePage(){
   it("Render Go to dashboard button", async() => {
     const goToDashboardButton = screen.getByRole("button", {name:"Go to Dashboard"});
@@ -279,7 +281,7 @@ function openDonePage(){
   });
 }
 
-//opening Phone-OTP PAGE
+
 function openPhoneOtpPage(){
   it("Renders the Back button", async() => {
     const backButton = screen.getByRole("button", {name:"Back"});
@@ -308,6 +310,139 @@ function openPhoneOtpPage(){
 
 
 
+
+
+//back button clicked
+async function backButtonClicked(){
+  const user = userEvent.setup();
+
+  const backButton = screen.getByRole("button", { name: "Back" });
+  await user.click(backButton);
+} 
+
+
+
+
+
+//navigate to page ...
+async function navigateToEmailSignIn(){
+  const user = userEvent.setup();
+  render(<Signin />);
+  
+  const emailButton = screen.getByRole("button", { name: "Continue with Email" });
+  await user.click(emailButton);
+  
+  return user;
+}
+
+async function navigateToEmailCreateAccount(){
+  const user = userEvent.setup();
+  render(<Signin/>);
+    
+  const emailButton = screen.getByRole("button", {name:"Continue with Email"});
+  await user.click(emailButton);
+
+  const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
+  await user.click(dontHaveAnAccountButton);
+
+  return user;
+}
+
+async function navigateToPhoneSignIn(){
+  const user = userEvent.setup();
+  render(<Signin/>);
+  
+  const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+  await user.click(phoneButton);
+
+  return user;
+}
+
+
+
+
+
+//fill and submit
+async function fillSubmitEmailSignIn(){
+  const user = userEvent.setup();
+
+  const emailField = screen.getByPlaceholderText("jane@example.com");
+  const passwordField = screen.getByPlaceholderText("Enter your password");
+
+  await user.type(emailField, "test@rizen.com");
+  await user.type(passwordField, "12345678");
+
+  const signInButton = screen.getByRole("button", {name: "Sign in"});
+  await user.click(signInButton);
+}
+
+async function fillSubmitEmailCreateAccount(){
+  const user = userEvent.setup();
+
+  const emailField = screen.getByPlaceholderText("jane@example.com");
+  const passwordField = screen.getByPlaceholderText("Create a strong password");
+  const confirmField = screen.getByPlaceholderText("Repeat your password");
+
+  await user.type(emailField, "test@rizen.com");
+  await user.type(passwordField, "12345678");
+  await user.type(confirmField, "12345678");
+
+  const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
+  await user.click(sendVerificationCodeButton);
+}
+
+async function fillSubmitEmailOtp(){
+  const user = userEvent.setup();
+
+  const boxes = [
+    screen.getByTestId("otp-input-0"),
+    screen.getByTestId("otp-input-1"),
+    screen.getByTestId("otp-input-2"),
+    screen.getByTestId("otp-input-3"),
+    screen.getByTestId("otp-input-4"),
+    screen.getByTestId("otp-input-5"),
+  ];
+
+  for (let i = 0; i < boxes.length; i++) {
+    await user.type(boxes[i], "1");
+  }
+
+  const verifyCodeButton = screen.getByRole("button", {name:"Verify code"});
+  await user.click(verifyCodeButton);
+}
+
+async function fillSubmitPhoneSignIn(){
+  const user = userEvent.setup();
+
+  const phoneField = screen.getByRole("textbox");
+  await user.type(phoneField, "0820000000")
+
+  const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
+  await user.click(sendOTPButton);
+}
+
+async function fillSubmitCompleteProfile() {
+  const user = userEvent.setup();
+
+  const nameField = screen.getByPlaceholderText("Jane");
+  const surnameField = screen.getByPlaceholderText("Dlamini");
+  const genderButton = screen.getByRole("button", {name:"Male"});
+  const IdField = screen.getByPlaceholderText("13 digits");
+
+  await user.type(nameField, "abc");
+  await user.type(surnameField, "xyz");
+  await user.click(genderButton);
+  await user.type(IdField, "0101011234567");
+
+  const saveContinueButton = screen.getByRole("button", {name:"Save & continue"});
+  await user.click(saveContinueButton);
+}
+
+
+
+
+
+//tests(describes)
 //Sign in -> Continue with Google, Continue with Facebook... PAGE
 describe("Sign in - Welcome PAGE", () => {
   beforeEach(async() => {
@@ -376,15 +511,10 @@ describe("Continue with Phone button clicked", () => {
 
 //Sign in - using Email address PAGE
 describe("Back button clicked from Email Sign In page)", () => {
-  beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+  beforeEach(async () => {
+    const user = await navigateToEmailSignIn();
     
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
+    await backButtonClicked()
   });
 
   openSignInWelcomePage();
@@ -392,20 +522,9 @@ describe("Back button clicked from Email Sign In page)", () => {
 
 describe("Email Sign in button clicked", () => {
   it("Triggers Supabase", async () => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-    
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
+    const user = await navigateToEmailSignIn();
 
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    const passwordField = screen.getByPlaceholderText("Enter your password");
-
-    await user.type(emailField, "test@rizen.com");
-    await user.type(passwordField, "12345678");
-
-    const signInButton = screen.getByRole("button", {name: "Sign in"});
-    await user.click(signInButton);
+    await fillSubmitEmailSignIn();
 
     await waitFor(() => {
       expect(signInWithPasswordMock).toHaveBeenCalled();
@@ -417,11 +536,7 @@ describe("Email Sign in button clicked", () => {
 
 describe("Don't have an account ? Create one - Clicked", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-    
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
+    const user = await navigateToEmailSignIn();
 
     const toggleButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
     await user.click(toggleButton);
@@ -433,17 +548,9 @@ describe("Don't have an account ? Create one - Clicked", () => {
 //Create account PAGE
 describe("Back button clicked from Email Create account page)", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-    
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
+    const user = await navigateToEmailCreateAccount();
 
-    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
-
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
+    await backButtonClicked();
   });
 
   openSignInWelcomePage();
@@ -452,25 +559,9 @@ describe("Back button clicked from Email Create account page)", () => {
 
 describe("Send verification code clicked", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToEmailCreateAccount();
 
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
-
-    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
-
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    const passwordField = screen.getByPlaceholderText("Create a strong password");
-    const confirmField = screen.getByPlaceholderText("Repeat your password");
-
-    await user.type(emailField, "test@rizen.com");
-    await user.type(passwordField, "12345678");
-    await user.type(confirmField, "12345678");
-
-    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
-    await user.click(sendVerificationCodeButton);
+    await fillSubmitEmailCreateAccount();
   });
 
   it("Triggers Supabase", async() => {
@@ -484,14 +575,7 @@ describe("Send verification code clicked", () => {
 
 describe("Already have an account clicked", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-    
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
-
-    const dontHaveAnAccountButton = screen.getByRole("button", {name: "Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
+    const user = await navigateToEmailCreateAccount();
 
     const alreadyHaveAnAccountButton = screen.getByRole("button", {name: "Already have an account? Sign in"});
     await user.click(alreadyHaveAnAccountButton);
@@ -503,28 +587,11 @@ describe("Already have an account clicked", () => {
 //Email OTP PAGE
 describe("Back button clicked from Email OTP page", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToEmailCreateAccount();
 
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
+    await fillSubmitEmailCreateAccount();
 
-    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
-
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    const passwordField = screen.getByPlaceholderText("Create a strong password");
-    const confirmField = screen.getByPlaceholderText("Repeat your password");
-
-    await user.type(emailField, "test@rizen.com");
-    await user.type(passwordField, "12345678");
-    await user.type(confirmField, "12345678");
-
-    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
-    await user.click(sendVerificationCodeButton);
-
-    const backButton = screen.getByRole("button", {name:"Back"});
-    await user.click(backButton);
+    await backButtonClicked();
   });
 
   openEmailCreateAccountPage(); 
@@ -532,41 +599,11 @@ describe("Back button clicked from Email OTP page", () => {
 
 describe("Verify code clicked", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToEmailCreateAccount();
 
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
+    await fillSubmitEmailCreateAccount();
 
-    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
-
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    const passwordField = screen.getByPlaceholderText("Create a strong password");
-    const confirmField = screen.getByPlaceholderText("Repeat your password");
-
-    await user.type(emailField, "test@rizen.com");
-    await user.type(passwordField, "12345678");
-    await user.type(confirmField, "12345678");
-
-    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
-    await user.click(sendVerificationCodeButton);
-
-    const boxes = [
-      screen.getByTestId("otp-input-0"),
-      screen.getByTestId("otp-input-1"),
-      screen.getByTestId("otp-input-2"),
-      screen.getByTestId("otp-input-3"),
-      screen.getByTestId("otp-input-4"),
-      screen.getByTestId("otp-input-5"),
-    ];
-
-    for (let i = 0; i < boxes.length; i++) {
-      await user.type(boxes[i], "1");
-    }
-
-    const verifyCodeButton = screen.getByRole("button", {name:"Verify code"});
-    await user.click(verifyCodeButton);
+    await fillSubmitEmailOtp();
   });
 
   it("Triggers Supabase", async() => {
@@ -580,25 +617,9 @@ describe("Verify code clicked", () => {
 
 describe("Resend button clicked", () => {
   it("Triggers Supabase", async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToEmailCreateAccount();
 
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
-
-    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
-
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    const passwordField = screen.getByPlaceholderText("Create a strong password");
-    const confirmField = screen.getByPlaceholderText("Repeat your password");
-
-    await user.type(emailField, "test@rizen.com");
-    await user.type(passwordField, "12345678");
-    await user.type(confirmField, "12345678");
-
-    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
-    await user.click(sendVerificationCodeButton);
+    await fillSubmitEmailCreateAccount();
 
     const resendCodeButton = screen.getByRole("button", {name:"Resend code"});
     await user.click(resendCodeButton);
@@ -612,14 +633,9 @@ describe("Resend button clicked", () => {
 //Sign in - using Phone PAGE
 describe("Back button clicked from Phone Sign In page", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
-    
-    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
-    await user.click(phoneButton);
+    const user = await navigateToPhoneSignIn();
 
-    const backButton = screen.getByRole("button", {name: "Back"});
-    await user.click(backButton);
+    await backButtonClicked();
   });
 
   openSignInWelcomePage();
@@ -627,17 +643,9 @@ describe("Back button clicked from Phone Sign In page", () => {
 
 describe("Send OTP button clicked", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToPhoneSignIn();
 
-    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
-    await user.click(phoneButton);
-
-    const phoneField = screen.getByRole("textbox");
-    await user.type(phoneField, "0820000000")
-
-    const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
-    await user.click(sendOTPButton);
+    await fillSubmitPhoneSignIn();
   });
 
   it("Triggers Firebase", async() => {
@@ -652,21 +660,9 @@ describe("Send OTP button clicked", () => {
 //Phone OTP PAGE
 describe("Back button clicked from Phone OTP page", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToPhoneSignIn();
 
-    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
-    await user.click(phoneButton);
-
-    const phoneField = screen.getByRole("textbox");
-    await user.type(phoneField, "0820000000")
-
-    const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
-    await user.click(sendOTPButton);
-
-    await waitFor(() => {
-      expect(signInWithPhoneNumber).toHaveBeenCalled();
-    });
+    await fillSubmitPhoneSignIn();
 
     const backButton = screen.getByRole("button", {name:"Back"});
     await user.click(backButton);
@@ -716,21 +712,9 @@ describe("Back button clicked from Phone OTP page", () => {
 
 describe("Resend OTP clicked", () => {
   it("Triggers Supabase", async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToPhoneSignIn();
 
-    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
-    await user.click(phoneButton);
-
-    const phoneField = screen.getByRole("textbox");
-    await user.type(phoneField, "0820000000")
-
-    const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
-    await user.click(sendOTPButton);
-
-    await waitFor(() => {
-      expect(signInWithPhoneNumber).toHaveBeenCalled();
-    });
+    await fillSubmitPhoneSignIn();
 
     const resendOtpButton = screen.getByRole("button", {name:"Resend OTP"});
     await user.click(resendOtpButton);
@@ -745,123 +729,29 @@ describe("Resend OTP clicked", () => {
 //Commplete profile PAGE
 describe("Save & continue clicked", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToEmailCreateAccount();
 
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
+    await fillSubmitEmailCreateAccount();
 
-    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
+    await fillSubmitEmailOtp();
 
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    const passwordField = screen.getByPlaceholderText("Create a strong password");
-    const confirmField = screen.getByPlaceholderText("Repeat your password");
+    await fillSubmitCompleteProfile();
+  });
 
-    await user.type(emailField, "test@rizen.com");
-    await user.type(passwordField, "12345678");
-    await user.type(confirmField, "12345678");
-
-    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
-    await user.click(sendVerificationCodeButton);
-
-    await waitFor(() => {
-      expect(signUpWithEmailPassMock).toHaveBeenCalled();
-    });
-
-    const boxes = [
-      screen.getByTestId("otp-input-0"),
-      screen.getByTestId("otp-input-1"),
-      screen.getByTestId("otp-input-2"),
-      screen.getByTestId("otp-input-3"),
-      screen.getByTestId("otp-input-4"),
-      screen.getByTestId("otp-input-5"),
-    ];
-
-    for (let i = 0; i < boxes.length; i++) {
-      await user.type(boxes[i], "1");
-    }
-
-    const verifyCodeButton = screen.getByRole("button", {name:"Verify code"});
-    await user.click(verifyCodeButton);
-
-    await waitFor(() => {
-      expect(verifyOtpMock).toHaveBeenCalled();
-    });
-
-    const nameField = screen.getByPlaceholderText("Jane");
-    const surnameField = screen.getByPlaceholderText("Dlamini");
-    const genderButton = screen.getByRole("button", {name:"Male"});
-    const IdField = screen.getByPlaceholderText("13 digits");
-
-    await user.type(nameField, "abc");
-    await user.type(surnameField, "xyz");
-    await user.click(genderButton);
-    await user.type(IdField, "0101011234567");
-
-    const saveContinueButton = screen.getByRole("button", {name:"Save & continue"});
-    await user.click(saveContinueButton);
-    });
-
-    openDonePage();
+  openDonePage();
 });
 
 
 //Done page
 describe("Back to login clicked from Done page", () => {
   beforeEach(async() => {
-    const user = userEvent.setup();
-    render(<Signin/>);
+    const user = await navigateToEmailCreateAccount();
 
-    const emailButton = screen.getByRole("button", {name:"Continue with Email"});
-    await user.click(emailButton);
+    await fillSubmitEmailCreateAccount()
 
-    const dontHaveAnAccountButton = screen.getByRole("button", {name:"Don't have an account? Create one"});
-    await user.click(dontHaveAnAccountButton);
+    await fillSubmitEmailOtp();
 
-    const emailField = screen.getByPlaceholderText("jane@example.com");
-    const passwordField = screen.getByPlaceholderText("Create a strong password");
-    const confirmField = screen.getByPlaceholderText("Repeat your password");
-
-    await user.type(emailField, "test@rizen.com");
-    await user.type(passwordField, "12345678");
-    await user.type(confirmField, "12345678");
-
-    const sendVerificationCodeButton = screen.getByRole("button", {name:"Send verification code"});
-    await user.click(sendVerificationCodeButton);
-
-    const boxes = [
-      screen.getByTestId("otp-input-0"),
-      screen.getByTestId("otp-input-1"),
-      screen.getByTestId("otp-input-2"),
-      screen.getByTestId("otp-input-3"),
-      screen.getByTestId("otp-input-4"),
-      screen.getByTestId("otp-input-5"),
-    ];
-
-    for (let i = 0; i < boxes.length; i++) {
-      await user.type(boxes[i], "1");
-    }
-
-    const verifyCodeButton = screen.getByRole("button", {name:"Verify code"});
-    await user.click(verifyCodeButton);
-
-    await waitFor(() => {
-      expect(verifyOtpMock).toHaveBeenCalled();
-    });
-
-    const nameField = screen.getByPlaceholderText("Jane");
-    const surnameField = screen.getByPlaceholderText("Dlamini");
-    const genderButton = screen.getByRole("button", {name:"Male"});
-    const IdField = screen.getByPlaceholderText("13 digits");
-
-    await user.type(nameField, "abc");
-    await user.type(surnameField, "xyz");
-    await user.click(genderButton);
-    await user.type(IdField, "0101011234567");
-
-    const saveContinueButton = screen.getByRole("button", {name:"Save & continue"});
-    await user.click(saveContinueButton);
+    await fillSubmitCompleteProfile();
 
     const backToLoginButton = screen.getByRole("button", {name:"Back to login"});
     await user.click(backToLoginButton);
