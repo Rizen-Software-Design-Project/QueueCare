@@ -1,7 +1,7 @@
 import {render, screen, waitFor} from "@testing-library/react";
 import {describe, it, expect, vi, beforeEach } from "vitest";
 import Signin from "./Signin";
-import {signInWithEmailAndPassword, signInWithPopup} from "firebase/auth";
+import {signInWithEmailAndPassword, signInWithPopup, signInWithPhoneNumber} from "firebase/auth";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("firebase/auth", () => {
@@ -43,6 +43,7 @@ vi.mock("firebase/auth", () => {
     signInWithPhoneNumber: vi.fn(),
   };
 });
+
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
@@ -278,8 +279,32 @@ function openDonePage(){
   });
 }
 
+//opening Phone-OTP PAGE
+function openPhoneOtpPage(){
+  it("Renders the Back button", async() => {
+    const backButton = screen.getByRole("button", {name:"Back"});
+    expect(backButton).toBeVisible();
+  });
 
+  it("Renders OTP input boxes", async() => {
+    const otpBoxes = screen.getAllByRole("textbox");
+    expect(otpBoxes).toHaveLength(6);
 
+    otpBoxes.forEach((otpBox) => {
+      expect(otpBox).toBeVisible();
+    });
+  });
+
+  it("Renders Verify button", async() => {
+    const verifyButton = screen.getByRole("button", {name:"Verify"});
+    expect(verifyButton).toBeVisible();
+  });
+
+  it("Renders Resend OTP button", async() => {
+    const resendCodeButton = screen.getByRole("button", {name:"Resend OTP"});
+    expect(resendCodeButton).toBeVisible();
+  });
+}
 
 
 
@@ -600,9 +625,121 @@ describe("Back button clicked from Phone Sign In page", () => {
   openSignInWelcomePage();
 });
 
+describe("Send OTP button clicked", () => {
+  beforeEach(async() => {
+    const user = userEvent.setup();
+    render(<Signin/>);
+
+    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+    await user.click(phoneButton);
+
+    const phoneField = screen.getByRole("textbox");
+    await user.type(phoneField, "0820000000")
+
+    const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
+    await user.click(sendOTPButton);
+  });
+
+  it("Triggers Firebase", async() => {
+    await waitFor(() => {
+      expect(signInWithPhoneNumber).toHaveBeenCalled();
+    });
+  });
+
+  openPhoneOtpPage();
+});
+
+//Phone OTP PAGE
+describe("Back button clicked from Phone OTP page", () => {
+  beforeEach(async() => {
+    const user = userEvent.setup();
+    render(<Signin/>);
+
+    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+    await user.click(phoneButton);
+
+    const phoneField = screen.getByRole("textbox");
+    await user.type(phoneField, "0820000000")
+
+    const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
+    await user.click(sendOTPButton);
+
+    await waitFor(() => {
+      expect(signInWithPhoneNumber).toHaveBeenCalled();
+    });
+
+    const backButton = screen.getByRole("button", {name:"Back"});
+    await user.click(backButton);
+  });
+
+  openPhoneSignInPage();
+});
+
+// describe("Verify button clicked", () => {
+//   beforeEach(async() => { 
+//     const user = userEvent.setup();
+//     render(<Signin/>);
+
+//     const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+//     await user.click(phoneButton);
+
+//     const phoneField = screen.getByRole("textbox");
+//     await user.type(phoneField, "0820000000")
+
+//     const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
+//     await user.click(sendOTPButton);
+
+//     await waitFor(() => {
+//       expect(signInWithPhoneNumber).toHaveBeenCalled();
+//     });
+
+//     const boxes = [
+//       screen.getByTestId("otp-input-0"),
+//       screen.getByTestId("otp-input-1"),
+//       screen.getByTestId("otp-input-2"),
+//       screen.getByTestId("otp-input-3"),
+//       screen.getByTestId("otp-input-4"),
+//       screen.getByTestId("otp-input-5"),
+//     ];
+
+//     for (let i = 0; i < boxes.length; i++) {
+//       await user.type(boxes[i], "1");
+//     }
+
+//     const verifyButton = screen.getByRole("button", {name:"Verify"});
+//     await user.click(verifyButton);
+//   });
+
+//   //opening dashboard OR complete profile
+// });
 
 
-//To do - Send OTP button
+describe("Resend OTP clicked", () => {
+  it("Triggers Supabase", async() => {
+    const user = userEvent.setup();
+    render(<Signin/>);
+
+    const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
+    await user.click(phoneButton);
+
+    const phoneField = screen.getByRole("textbox");
+    await user.type(phoneField, "0820000000")
+
+    const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
+    await user.click(sendOTPButton);
+
+    await waitFor(() => {
+      expect(signInWithPhoneNumber).toHaveBeenCalled();
+    });
+
+    const resendOtpButton = screen.getByRole("button", {name:"Resend OTP"});
+    await user.click(resendOtpButton);
+
+    await waitFor(() => {
+      expect(signInWithPhoneNumber).toHaveBeenCalled();
+    });
+  });
+});
 
 
 //Commplete profile PAGE
@@ -733,6 +870,6 @@ describe("Back to login clicked from Done page", () => {
   openSignInWelcomePage();
 });
 
-describe("Go to dashboard clicked", () => {
-  //open dashboard
-});
+// describe("Go to dashboard clicked", () => {
+//   //open dashboard
+// });
