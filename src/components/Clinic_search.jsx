@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Clinic_search.css";
+import { FiGrid, FiCreditCard, FiMap, FiSearch, FiClock, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiLogOut, FiMapPin} from "react-icons/fi";
+import { FaHospital } from "react-icons/fa";
 
 // ================= CONFIG =================
 const SUPABASE_URL = "https://vktjtxljwzyakobkkhol.supabase.co";
@@ -66,6 +68,13 @@ export default function ClinicSearch() {
         mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
           center: { lat: -28.479, lng: 24.672 },
           zoom: 5,
+          styles: [
+            {
+              featureType: "poi.medical",
+              elementType: "labels.icon",
+              stylers: [{ color: "#1B5E20" }],
+            },
+          ],
         });
       }
     };
@@ -98,7 +107,14 @@ export default function ClinicSearch() {
           position: userLocation,
           map,
           title: "You are here",
-          icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: "#1B5E20",
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: "white",
+          },
         });
         markersRef.current.push(userMarker);
         bounds.extend(userLocation);
@@ -111,11 +127,20 @@ export default function ClinicSearch() {
             position: pos,
             map,
             title: clinic.name || "Clinic",
-            icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+            icon: {
+              url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+              scaledSize: new window.google.maps.Size(32, 32),
+            },
           });
           const infoWindow = new window.google.maps.InfoWindow();
           const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${clinic.latitude},${clinic.longitude}`;
-          infoWindow.setContent(`<h3>${clinic.name}</h3><p>${clinic.district || ""}</p><a href="${mapsUrl}" target="_blank">🚗 Get Directions</a>`);
+          infoWindow.setContent(`
+            <div style="font-family: system-ui; padding: 4px;">
+              <strong style="color: #1B5E20;">${clinic.name}</strong>
+              <p style="margin: 6px 0; font-size: 0.85rem;">${clinic.district || ""}</p>
+              <a href="${mapsUrl}" target="_blank" style="color: #1B5E20; text-decoration: none; font-weight: 500;">🚗 Get Directions</a>
+            </div>
+          `);
           marker.addListener("click", () => infoWindow.open(map, marker));
           markersRef.current.push(marker);
           bounds.extend(pos);
@@ -133,7 +158,7 @@ export default function ClinicSearch() {
   // ================= SEARCH CLINICS =================
   const searchClinics = useCallback(
     async (name, prov, dist) => {
-      setStatus({ type: "loading", message: "🔍 Searching..." });
+      setStatus({ type: "loading", message: "🔍 Searching clinics..." });
       setClinics([]);
 
       try {
@@ -246,7 +271,7 @@ export default function ClinicSearch() {
     if (userLocation) {
       performNearbySearch(userLocation);
     } else {
-      setStatus({ type: "loading", message: "📍 Getting your location..." });
+      setStatus({ type: "loading", message: "<FaMapPin /> Getting your location..." });
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -274,12 +299,12 @@ export default function ClinicSearch() {
 
   return (
     <div className="cs-wrapper">
-      <h2>🏥 South African Clinics</h2>
+      <h2><FaHospital /> South African Clinics</h2>
 
       {/* Main filter row */}
       <div className="filter-row">
         <div className="filter-group">
-          <label>🏷️ Clinic name</label>
+          <label><FiCreditCard /> Clinic name</label>
           <input
             type="text"
             placeholder="e.g., Tygerberg"
@@ -289,32 +314,32 @@ export default function ClinicSearch() {
           />
         </div>
         <div className="filter-group">
-          <label>🗺️ Province</label>
+          <label><FiMap /> Province</label>
           <select value={province} onChange={handleProvinceChange}>
-            <option value="">-- Any province --</option>
+            <option value="">Any province </option>
             {Object.keys(districtsByProvince).map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
         </div>
         <div className="filter-group">
-          <label>📍 District</label>
+          <label><FiMapPin /> District</label>
           <select value={district} onChange={(e) => setDistrict(e.target.value)}>
-            <option value="">-- Any district --</option>
+            <option value="">Any district</option>
             {availableDistricts.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
           </select>
         </div>
         <div className="filter-group">
-          <button onClick={applyFilters}>🔍 Apply filters</button>
+          <button onClick={applyFilters}><FiSearch /> Apply filters</button>
         </div>
       </div>
 
       {/* Nearby row */}
       <div className="nearby-row">
         <div className="filter-group-inline">
-          <button id="nearMeBtn" onClick={findNearbyClinics}>📍 Clinics Near Me</button>
+          <button id="nearMeBtn" onClick={findNearbyClinics}><FiMapPin /> Clinics Near Me</button>
           <select value={radius} onChange={(e) => setRadius(e.target.value)}>
             <option value="5">5 km</option>
             <option value="10">10 km</option>
@@ -339,14 +364,14 @@ export default function ClinicSearch() {
           <div key={clinic.id} className="clinic-card">
             <div className="clinic-info">
               <div className="clinic-name">{clinic.name}</div>
-              <div className="clinic-distance">📍 {distanceText}</div>
+              <div className="clinic-distance"><FiMapPin /> {distanceText}</div>
               <div className="clinic-district">
                 {clinic.district || ""}
                 {clinic.province ? `, ${clinic.province}` : ""}
               </div>
             </div>
             <button className="book-btn" onClick={() => navigate(bookUrl)}>
-              📅 Book now
+              <FiCalendar /> Book now
             </button>
           </div>
         );
