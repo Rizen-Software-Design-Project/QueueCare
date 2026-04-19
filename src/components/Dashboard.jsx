@@ -432,8 +432,10 @@ const [availabilityStatus, setAvailabilityStatus] = useState({ type: "", message
 
   function goTo(id) {
     if (id === "find-clinic") { navigate("/clinic-search"); return; }
-    setActiveTab(id);
-    setSidebarOpen(false);
+    if (id === "staff-appointments" || id === "patients") { navigate("/staff-dashboard"); return; }
+  setActiveTab(id);
+  setSidebarOpen(false);
+    
   }
     async function saveAvailability() {
   if (!latestAssignment) return;
@@ -783,15 +785,42 @@ function updateAvailabilityDay(day, field, value) {
   }
 
   function renderContent() {
-    switch (activeTab) {
-      case "overview":         return renderOverview();
-      case "appointments":
-      case "staff-appointments": return renderAppointments();
-      case "queue":            return profile?.role === "patient" ? renderPatientQueue()
-                                      : <div className="db-section"><h2 className="db-section-title">Patient Queue</h2><p>Staff queue management UI goes here.</p></div>;
-      case "staff-queue":      return <div className="db-section"><h2 className="db-section-title">Patient Queue</h2><p>Staff queue management UI goes here.</p></div>;
-      case "patients":         return <div className="db-section"><h2 className="db-section-title">Patients</h2><p>Staff patient list UI goes here.</p></div>;
-      case "applications":     return (
+  switch (activeTab) {
+    case "overview":
+      return renderOverview();
+
+    case "appointments":
+    case "staff-appointments":
+      return renderAppointments();
+
+    case "queue":
+      return profile?.role === "patient"
+        ? renderPatientQueue()
+        : <div className="db-section"><h2 className="db-section-title">Patient Queue</h2><p>Staff queue management UI goes here.</p></div>;
+
+    case "staff-queue":
+    case "patients":
+      return (
+        <div className="db-section">
+          <h2 className="db-section-title">
+            {activeTab === "staff-queue" ? "Patient Queue" : "Patients"}
+          </h2>
+          <div className="db-card" style={{ textAlign: "center", padding: 40 }}>
+            <p style={{ color: "#666", marginBottom: 20 }}>
+              Manage appointments, slots, and patients in the Staff Dashboard.
+            </p>
+            <button
+              className="db-btn db-btn-reschedule"
+              onClick={() => navigate("/staff-dashboard")}
+            >
+              Open Staff Dashboard →
+            </button>
+          </div>
+        </div>
+      );
+
+    case "applications":
+      return (
         <Applications
           profile={profile}
           onRoleUpdated={(profileId, newRole) => {
@@ -799,15 +828,29 @@ function updateAvailabilityDay(day, field, value) {
           }}
         />
       );
-      case "staff":            return <AdminStaff />;
-      case "clinics":          return <AdminClinics />;
-      case "notifications":    return renderNotifications();
-      case "profile":          return renderProfile();
-      case "policy":           return <div className="db-section"><h2 className="db-section-title">Service Policy</h2><p>Policy content goes here.</p></div>;
-      case "settings":         return <div className="db-section"><h2 className="db-section-title">Settings</h2><p>Patient settings page goes here.</p></div>;
-      default:                 return <div className="db-section"><h2>{activeTab}</h2></div>;
-    }
+
+    case "staff":
+      return <AdminStaff />;
+
+    case "clinics":
+      return <AdminClinics />;
+
+    case "notifications":
+      return renderNotifications();
+
+    case "profile":
+      return renderProfile();
+
+    case "policy":
+      return <div className="db-section"><h2 className="db-section-title">Service Policy</h2><p>Policy content goes here.</p></div>;
+
+    case "settings":
+      return <div className="db-section"><h2 className="db-section-title">Settings</h2><p>Patient settings page goes here.</p></div>;
+
+    default:
+      return <div className="db-section"><h2>{activeTab}</h2></div>;
   }
+}
 
   // ── Layout ────────────────────────────────────────────────────────────────
   return (
