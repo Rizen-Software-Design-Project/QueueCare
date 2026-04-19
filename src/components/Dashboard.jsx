@@ -21,6 +21,11 @@ import AdminClinics from "./AdminClinics";
 import AdminStaff from "./AdminStaff.jsx";
 import "./Dashboard.css";
 
+import { FiGrid, FiClock, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiLogOut} from "react-icons/fi";
+import { FaStethoscope } from "react-icons/fa";
+
+import { FaHospital } from "react-icons/fa";
+
 
 
 
@@ -31,32 +36,32 @@ const supabase = createClient(
 
 // ── Navigation config ────────────────────────────────────────────────────────
 const PATIENT_NAV = [
-  { id: "overview",       icon: "⊞",  label: "Overview" },
-  { id: "appointments",   icon: "📅", label: "Appointments" },
-  { id: "queue",          icon: "🔢", label: "My Queue" },
-  { id: "notifications",  icon: "🔔", label: "Notifications" },
-  { id: "profile",        icon: "👤", label: "Profile" },
-  { id: "find-clinic",    icon: "🏥", label: "Find a Clinic" },
-  { id: "policy",         icon: "📄", label: "Service Policy" },
-  { id: "settings",       icon: "⚙️", label: "Settings" },
+  { id: "overview",      icon: <FiGrid />,      label: "Overview" },
+  { id: "appointments",  icon: <FiCalendar />,  label: "Appointments" },
+  { id: "queue",         icon: <FiHash />,      label: "My Queue" },
+  { id: "notifications", icon: <FiBell />,      label: "Notifications" },
+  { id: "profile",       icon: <FiUser />,      label: "Profile" },
+  { id: "find-clinic",   icon: <FaHospital />,  label: "Find a Clinic" },
+  { id: "policy",        icon: <FiFileText />,  label: "Service Policy" },
+  { id: "settings",      icon: <FiSettings />,  label: "Settings" },
 ];
 
 const STAFF_NAV = [
-  { id: "overview",          icon: "⊞",  label: "Overview" },
-  { id: "staff-appointments",icon: "📅", label: "Clinic Appointments" },
-  { id: "staff-queue",       icon: "📋", label: "Patient Queue" },
-  { id: "patients",          icon: "🧑‍⚕️",label: "Patients" },
-  { id: "notifications",     icon: "🔔", label: "Notifications" },
-  { id: "profile",           icon: "👤", label: "Profile" },
+  { id: "overview",          icon: <FiGrid />,  label: "Overview" },
+  { id: "staff-appointments",icon: <FiCalendar />, label: "Clinic Appointments" },
+  { id: "staff-queue",       icon: <FiHash />,       label: "Patient Queue" },
+  { id: "patients",          icon: <FiUser />,label: "Patients" },
+  { id: "notifications",     icon: <FiBell />, label: "Notifications" },
+  { id: "profile",           icon: <FiUser />, label: "Profile" },
 ];
 
 const ADMIN_NAV = [
-  { id: "overview",      icon: "⊞",  label: "Overview" },
-  { id: "applications",  icon: "📑", label: "Applications" },
-  { id: "staff",         icon: "🧑‍⚕️",label: "Staff Management" },
-  { id: "clinics",       icon: "🏥", label: "Clinics" },
-  { id: "notifications", icon: "🔔", label: "Notifications" },
-  { id: "profile",       icon: "👤", label: "Profile" },
+  { id: "overview",      icon: <FiGrid />,  label: "Overview" },
+  { id: "applications",  icon: <FiFileText />, label: "Applications" },
+  { id: "staff",         icon: <FiUser />,label: "Staff Management" },
+  { id: "clinics",       icon: <FaHospital />, label: "Clinics" },
+  { id: "notifications", icon: <FiBell />, label: "Notifications" },
+  { id: "profile",       icon: <FiUser />, label: "Profile" },
 ];
 
 // ── Status badge ─────────────────────────────────────────────────────────────
@@ -647,12 +652,12 @@ function updateAvailabilityDay(day, field, value) {
                     {appt.appointment_slots?.facilities?.name || appt.facilities?.name || "Clinic"}
                   </div>
                   <div className="db-appt-details">
-                    <span>📅 {formatDate(appt.appointment_slots?.slot_date)}</span>
-                    <span>🕐 {formatTime(appt.appointment_slots?.slot_time)}</span>
+                    <span><FiCalendar /> {formatDate(appt.appointment_slots?.slot_date)}</span>
+                    <span><FiClock /> {formatTime(appt.appointment_slots?.slot_time)}</span>
                     {appt.appointment_slots?.duration_minutes && (
-                      <span>⏱ {appt.appointment_slots.duration_minutes} min</span>
+                      <span><FiClock /> {appt.appointment_slots.duration_minutes} min</span>
                     )}
-                    {appt.queuePosition && <span>🔢 Position #{appt.queuePosition}</span>}
+                    {appt.queuePosition && <span><FiHash /> Position #{appt.queuePosition}</span>}
                   </div>
                   <div className="db-appt-reason">{appt.reason}</div>
                   <div className="db-appt-actions">
@@ -856,7 +861,7 @@ function updateAvailabilityDay(day, field, value) {
   return (
     <div className="db-root">
       <aside className={`db-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div className="db-sidebar-brand">🩺 QueueCare</div>
+        <div className="db-sidebar-brand"><FaStethoscope style={{ color: "white" }} /> QueueCare</div>
         <nav className="db-nav">
           {NAV_ITEMS.map((item) => (
             <button key={item.id}
@@ -866,7 +871,7 @@ function updateAvailabilityDay(day, field, value) {
             </button>
           ))}
         </nav>
-        <button className="db-sidebar-logout" onClick={handleLogout}>🚪 Logout</button>
+        <button className="db-sidebar-logout" onClick={handleLogout}><FiLogOut /> Logout</button>
       </aside>
 
       <div className="db-main">
@@ -899,8 +904,8 @@ function updateAvailabilityDay(day, field, value) {
                     <div key={slot.id}
                       className={`db-reschedule-slot ${isSelected ? "db-reschedule-selected" : ""}`}
                       onClick={() => setRescheduleSlotId(slot.id)}>
-                      <span>📅 {formatDate(slot.slot_date)}</span>
-                      <span>🕐 {formatTime(slot.slot_time)}</span>
+                      <span><FiCalendar /> {formatDate(slot.slot_date)}</span>
+                      <span><FiClock /> {formatTime(slot.slot_time)}</span>
                       <span>{slot.duration_minutes} min</span>
                       <span>{spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left</span>
                       {isSelected && <span className="db-check">✔</span>}
