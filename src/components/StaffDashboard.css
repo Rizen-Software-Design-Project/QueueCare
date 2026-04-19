@@ -176,3 +176,36 @@
   background: #e3f2fd;
   color: #1565c0;
 }
+.staff-action-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.staff-action-btn:hover {
+  background: #1565c0;
+}
+
+.staff-action-btn:disabled {
+  background: #90caf9;
+  cursor: not-allowed;
+}
+
+.staff-table button {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.staff-table button:hover {
+  background: #1565c0;
+}
