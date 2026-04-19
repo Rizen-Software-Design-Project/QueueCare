@@ -6,7 +6,7 @@ import Applications     from "./components/Applications.jsx";
 import BookAppointment  from "./components/BookAppointment";
 import AuthPage         from "./components/AuthPage.jsx";
 import ProfileSetupPage from "./components/ProfileSetupPage.jsx";
-
+import StaffDashboard from "./components/StaffDashboard";
 import "./App.css";
 
 
@@ -22,6 +22,7 @@ function App() {
         <Route path="/applications"  element={<Applications />} />
         <Route path="/clinic"        element={<BookAppointment />} />
         <Route path="*"              element={<Navigate to="/" replace />} />
+        <Route path="/staff-dashboard" element={<StaffDashboard />} />
 
 
       </Routes>
