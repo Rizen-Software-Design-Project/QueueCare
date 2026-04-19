@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, beforeEach } from "vitest";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, MemoryRouter, Routes, Route } from "react-router-dom";
 import Welcome from "./Welcome";
+import userEvent from "@testing-library/user-event";
 
 describe("Welcome Page - Website", () => {
     beforeEach(() => {
@@ -121,5 +122,33 @@ describe("Welcome Page - Website", () => {
         expect(screen.getByPlaceholderText("How can we help?"));
         expect(screen.getByPlaceholderText("Tell us more..."));
         expect(screen.getByRole("button", {name:"Send Message"}));
+    });
+});
+
+describe("Sign in Button clicked", () => {
+    it("Navigates to sign in", () => {
+        render(
+            <MemoryRouter>
+                <Welcome/>
+            </MemoryRouter>
+        );
+
+        const link = screen.getByRole("link", {name:"Sign In"});
+
+        expect(link).toHaveAttribute("href", "/signin");
+    });
+});
+
+describe("Get started clicked", () => {
+    it("Navigates to sign in", () => {
+        render(
+            <MemoryRouter>
+                <Welcome/>
+            </MemoryRouter>
+        );
+
+        const link = screen.getByRole("link", {name:"Get Started"});
+
+        expect(link).toHaveAttribute("href", "/signin");
     });
 });

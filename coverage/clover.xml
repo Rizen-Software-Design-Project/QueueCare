@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1776630465668" clover="3.2.0">
-  <project timestamp="1776630465668" name="All files">
+<coverage generated="1776633856152" clover="3.2.0">
+  <project timestamp="1776633856152" name="All files">
     <metrics statements="2" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="1" elements="4" coveredelements="2" complexity="0" loc="2" ncloc="2" packages="2" files="4" classes="4"/>
     <package name="assets.images">
       <metrics statements="0" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
@@ -18,7 +18,7 @@
       </file>
       <file name="Welcome.jsx" path="C:\School\3rd\SD\Project\QueueCare\src\components\Welcome.jsx">
         <metrics statements="2" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="1"/>
-        <line num="23" count="14" type="stmt"/>
+        <line num="23" count="16" type="stmt"/>
         <line num="318" count="0" type="stmt"/>
       </file>
     </package>
