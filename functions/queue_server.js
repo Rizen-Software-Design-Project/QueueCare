@@ -11,22 +11,25 @@ const supabase = createClient(
 
 
 async function get_patient_id(contact_details) {
+    if (!contact_details) {
+  return { error: "Missing contact details" };
+}
   try {
     let data, error;
-    if (contact_details.includes('@')) {
+          if (contact_details.includes('@')) {
       ({ data, error } = await supabase.from('profiles').select('id').eq('email', contact_details));
     } else {
       ({ data, error } = await supabase.from('profiles').select('id').eq('phone_number', contact_details));
     }
-    if (error) throw error;
+      if (error) throw error;
 
     if (data.length == 0) {
-      return { error: "Person does not have an account." };
+          return { error: "Person does not have an account." };
     }
 
-    return { patient_id: data[0].id };
+     return { patient_id: data[0].id };
 
-  } catch (error) {
+     } catch (error) {
     return { error: error.message };
   }
 }
@@ -35,11 +38,15 @@ async function get_patient_id(contact_details) {
 //add to queue
 // add to queue
 router.post('/add_to_queue', async (req, res) => {
-    const contact_details = req.query.contact_details;
+         const contact_details = req.query.contact_details;
+const facility_id = req.query.facility_id;
 
-    // FIX: was missing await
+if (!contact_details || !facility_id) {
+  return res.status(400).json({ error: "Missing required parameters" });
+}
+    
     const result = await get_patient_id(contact_details);
-    if (result.error) {
+         if (result.error) {
         return res.status(400).json({ error: result.error });
     }
     const patient_id = result.patient_id;
@@ -47,29 +54,29 @@ router.post('/add_to_queue', async (req, res) => {
     let appointment_id;
     try {
         let { data, error } = await supabase
-            .from('appointments')
-            .select('id')
-            .eq('patient_id', patient_id)
-            .single();
-        if (error) throw error;
-        if (!data) return res.status(404).json({ error: "Don't have a booking." });
-        appointment_id = data.id;
+            .from('appointments').select('id')
+            .eq('patient_id', patient_id).eq('facility_id',facility_id);
+           
+            if (error) throw error;
+        if (data.length==0) return res.status(404).json({ error: "Don't have a booking." });
+        appointment_id = data[0].id;
 
-    } catch (error) {
+     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
 
     try {
-        // FIX: removed id (supabase generates it), added if error throw error and success response
+        
         let { data, error } = await supabase.from('virtual_queue').insert([
             {
-                status: "waiting",
-                appointment_id: appointment_id,
-                patient_id: patient_id
+                status: "Waiting",
+                  appointment_id: appointment_id,
+                patient_id: patient_id,
+                facility_id:facility_id
             }
         ]);
         if (error) throw error;
-        return res.status(200).json({ success: true });
+            return res.status(200).json({ success: true });
 
     } catch (error) {
         return res.status(500).json({ error: error.message });
@@ -80,8 +87,11 @@ router.post('/add_to_queue', async (req, res) => {
 // my queue
 router.get('/my_queue', async (req, res) => {
     const contact_details = req.query.contact_details;
-
-    const result = await get_patient_id(contact_details);
+const facility_id=req.query.facility_id;
+if (!contact_details || !facility_id) {
+  return res.status(400).json({ error: "Missing required parameters" });
+}
+     const result = await get_patient_id(contact_details);
     if (result.error) {
         return res.status(400).json({ error: result.error });
     }
@@ -101,20 +111,20 @@ router.get('/my_queue', async (req, res) => {
                     status
                 )
             `)
-            .eq('patient_id', patient_id)
+            .eq('patient_id', patient_id).eq('facility_id',facility_id)
             .not('virtual_queue', 'is', null)
-            .single();
+            
         if (error) throw error;
-        if (!data) return res.status(404).json({ error: "Not in queue." });
+        if (data.length == 0) return res.status(404).json({ error: "Not in queue." });
 
         // calculate end time
-        const { slot_time, duration_minutes } = data.appointment_slots;
+        const { slot_time, duration_minutes } = data[0].appointment_slots;
         const date = new Date(`1970-01-01T${slot_time}`);
         date.setMinutes(date.getMinutes() + duration_minutes);
-        data.appointment_slots.end_time = date.toTimeString().slice(0, 8);
+        data[0].appointment_slots.end_time = date.toTimeString().slice(0, 8);
 
         // calculate estimated wait
-        const { slot_date } = data.appointment_slots;
+        const { slot_date } = data[0].appointment_slots;
         const appointmentTime = new Date(`${slot_date}T${slot_time}`);
         const now = new Date();
         const diffMinutes = Math.round((appointmentTime - now) / 1000 / 60);
@@ -136,7 +146,7 @@ router.get('/my_queue', async (req, res) => {
         return res.status(200).json({
             data: data,
             estimated_wait: estimated_wait,
-            queue_status: data.virtual_queue?.status
+            queue_status: data[0].virtual_queue?.status
         });
 
     } catch (error) {
@@ -148,18 +158,31 @@ router.get('/my_queue', async (req, res) => {
 router.put('/queue_status', async (req, res) => {
     const contact_details = req.query.contact_details;
     const status = req.query.status;
+    const facility_id=req.query.facility_id;
 
     const result = await get_patient_id(contact_details);
     if (result.error) {
         return res.status(400).json({ error: result.error });
     }
     const patient_id = result.patient_id;
-
+//get the appointment id by using facilty id and patient id
+let appointment_id;
+try {
+    let {data,error}= await supabase.from('appointments').select('id').eq('patient_id',patient_id).eq('facility_id',facility_id);
+    if(error) throw error;
+    if(data.length==0){
+         return res.status(500).json({ error: "Patient not in queue."});
+    }
+    appointment_id=data[0].id;
+} catch (error) {
+    return res.status(500).json({error:error.message}); 
+    
+}
     try {
         let { data, error } = await supabase
             .from('virtual_queue')
             .update({ status: status })
-            .eq('patient_id', patient_id);
+            .eq('patient_id', patient_id).eq('appointment_id',appointment_id);
         if (error) throw error;
         return res.status(200).json({ success: true });
     } catch (error) {
@@ -171,6 +194,8 @@ router.put('/queue_status', async (req, res) => {
 
 router.delete('/remove_queue', async (req, res) => {
     const contact_details = req.query.contact_details;
+    const facility_id=req.query.facility_id;
+
 
     const result = await get_patient_id(contact_details);
     if (result.error) {
@@ -182,7 +207,7 @@ router.delete('/remove_queue', async (req, res) => {
         let { data, error } = await supabase
             .from('virtual_queue')
             .delete()
-            .eq('patient_id', patient_id);
+            .eq('patient_id', patient_id).eq('facility_id',facility_id);
         if (error) throw error;
         return res.status(200).json({ success: true });
     } catch (error) {
@@ -190,10 +215,13 @@ router.delete('/remove_queue', async (req, res) => {
     }
 });
 
+//This is for getting the exact patient row
+
+///__________________________________________________________________________________________________________________
 
 
 
-
+///__________________________________________________________________________________________________________________
 
 
 module.exports = router;

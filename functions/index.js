@@ -16,9 +16,11 @@ const supabase = createClient(
 
 const staffRoutes = require("./staff_server");
 const queueRoutes = require("./queue_server");
+const notifyRoutes = require("./notify_server");
 
 app.use("/staff", staffRoutes);
 app.use("/queue", queueRoutes);
+app.use("/notify",notifyRoutes);
 
 
 exports.api = functions.https.onRequest(app);
