@@ -21,7 +21,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'API is running' });
 });
 
-app.use('/', appointmentRoutes);
+app.use('/appointments', appointmentRoutes);
 app.use('/queue', queueRoutes);
 app.use('/staff', staffRoutes);
 
