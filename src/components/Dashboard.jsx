@@ -19,7 +19,7 @@ import { useNavigate } from "react-router-dom";
 import Applications from "./Applications.jsx";
 import AdminClinics from "./AdminClinics";
 import AdminStaff from "./AdminStaff.jsx";
-import { getMyQueue, removeFromQueue, notifyPatient } from "../queueApi.js";
+import { getMyQueue, removeFromQueue, notifyPatient } from "./queueApi";
 import "./Dashboard.css";
 
 import { FiGrid, FiClock, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiLogOut} from "react-icons/fi";
