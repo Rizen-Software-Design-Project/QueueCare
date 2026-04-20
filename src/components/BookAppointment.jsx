@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 import { addToQueue } from "../queueApi";
-import { FiCalendar, FiCheck, FiClock, FiArrowLeft } from "react-icons/fi";
+
 
 const supabase = createClient(
   "https://vktjtxljwzyakobkkhol.supabase.co",
