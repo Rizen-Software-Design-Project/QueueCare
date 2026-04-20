@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 import { addToQueue } from "../queueApi";
-
+import { FiArrowLeft, FiClock, FiCheck, FiCalendar } from "react-icons/fi";
 
 const supabase = createClient(
   "https://vktjtxljwzyakobkkhol.supabase.co",
@@ -480,8 +480,8 @@ export default function BookAppointment() {
               <h3><FiCheck /> Appointment Confirmed</h3>
               <p><strong>Status:</strong> {booking.status}</p>
               <p><strong>Reason:</strong> {booking.reason}</p>
-              <button onClick={() => navigate("/clinic-search")}>
-                Back to Clinic Search
+              <button onClick={() => navigate("/dashboard")}>
+                Back to Dashboard
               </button>
             </div>
           )}

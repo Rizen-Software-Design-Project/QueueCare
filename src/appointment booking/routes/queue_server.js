@@ -2,240 +2,301 @@ import express from "express";
 import { createClient } from "@supabase/supabase-js";
 
 const router = express.Router();
-const supabase = createClient(process.env.SB_URL, process.env.SB_KEY);
 
-async function get_patient_id(contact_details) {
-  if (!contact_details) return { error: "Missing contact details" };
-  try {
-    let data, error;
-    if (contact_details.includes('@')) {
-      ({ data, error } = await supabase.from('profiles').select('id').eq('email', contact_details));
-    } else {
-      ({ data, error } = await supabase.from('profiles').select('id').eq('phone_number', contact_details));
-    }
-    if (error) throw error;
-    if (data.length == 0) return { error: "Person does not have an account." };
-    return { patient_id: data[0].id };
-  } catch (error) {
-    return { error: error.message };
-  }
-}
+const supabase = createClient(
+  process.env.SB_URL,
+  process.env.SB_KEY
+);
 
-router.post('/add_to_queue', async (req, res) => {
-  const contact_details = req.query.contact_details;
-  const facility_id = req.query.facility_id;
-  if (!contact_details || !facility_id)
-    return res.status(400).json({ error: "Missing required parameters" });
+// ─────────────────────────────────────────────
+// GET MY QUEUE
+// ─────────────────────────────────────────────
 
-  const result = await get_patient_id(contact_details);
-  if (result.error) return res.status(400).json({ error: result.error });
-  const patient_id = result.patient_id;
-
-  let appointment_id;
-  try {
-    let { data, error } = await supabase
-      .from('appointments').select('id')
-      .eq('patient_id', patient_id).eq('facility_id', facility_id);
-    if (error) throw error;
-    if (data.length == 0) return res.status(404).json({ error: "Don't have a booking." });
-    appointment_id = data[0].id;
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-
-  try {
-    let { data, error } = await supabase.from('virtual_queue').insert([{
-      status: "Waiting",
-      appointment_id: appointment_id,
-      patient_id: patient_id,
-      facility_id: facility_id
-    }]);
-    if (error) throw error;
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-router.get('/my_queue', async (req, res) => {
-  const contact_details = req.query.contact_details;
-  const facility_id = req.query.facility_id;
+router.get("/my_queue", async (req, res) => {
+  const { contact_details, facility_id } = req.query;
 
   if (!contact_details || !facility_id) {
-    return res.status(400).json({ error: "Missing required parameters" });
+    return res.status(400).json({ error: "Missing parameters" });
   }
 
-  const result = await get_patient_id(contact_details);
-  if (result.error) {
-    return res.status(400).json({ error: result.error });
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .or(`email.eq.${contact_details},phone_number.eq.${contact_details}`)
+    .maybeSingle();
+
+  if (!profile) return res.status(400).json({ error: "User not found" });
+
+  const patient_id = profile.id;
+
+  // FIX: appointments is an array from Supabase join — select with limit,
+  // and don't use maybeSingle() on virtual_queues in case there are multiple
+  // (e.g. patient has been in queue before). Order by joined_at to get latest.
+  const { data: queueEntries, error: queueErr } = await supabase
+    .from("virtual_queues")
+    .select("*, appointments(id, reason, appointment_slots(slot_date, slot_time))")
+    .eq("facility_id", facility_id)
+    .eq("patient_id", patient_id)
+    .order("joined_at", { ascending: false });
+
+  if (queueErr) return res.status(500).json({ error: queueErr.message });
+
+  // No queue entry at all
+  if (!queueEntries || queueEntries.length === 0) {
+    return res.status(404).json({ error: "Not in queue." });
   }
 
-  const patient_id = result.patient_id;
+  // Use the most recent active entry; fall back to most recent overall
+  const data =
+    queueEntries.find((e) => e.status === "waiting" || e.status === "called") ||
+    queueEntries[0];
 
-  try {
-    const { data: all, error: allError } = await supabase
-      .from('appointments')
-      .select(`
-        patient_id,
-        reason,
-        appointment_slots (slot_date, slot_time, duration_minutes),
-        virtual_queue (status)
-      `)
-      .eq('facility_id', facility_id)
-      .not('virtual_queue', 'is', null);
+  // Appointment is done
+  if (data.status === "completed" || data.status === "complete") {
+    return res.json({
+      status: "completed",
+      message: "Your appointment is complete. Thank you!",
+    });
+  }
 
-    if (allError) throw allError;
+  // In consultation
+  if (data.status === "called") {
+    return res.json({
+      status: "called",
+      message: "You are currently being seen.",
+      data,
+      position: null,
+      patients_before_you: 0,
+      eta_minutes: 0,
+      time_until_appointment: "Now",
+      estimated_service_at: new Date().toISOString(),
+    });
+  }
 
-    const myEntry = all.find((e) => e.patient_id === patient_id);
+  // Fetch full waiting queue sorted by slot time for position calculation
+  const { data: waitingQueue, error: queueError } = await supabase
+    .from("virtual_queues")
+    .select("id, patient_id, appointments(appointment_slots(slot_time))")
+    .eq("facility_id", facility_id)
+    .eq("status", "waiting");
 
-    if (!myEntry) {
-      return res.status(404).json({ error: "Not in queue." });
+  if (queueError) return res.status(500).json({ error: queueError.message });
+
+  // FIX: handle appointments as array from Supabase join
+  const sorted = (waitingQueue || []).sort((a, b) => {
+    const aAppt = Array.isArray(a.appointments) ? a.appointments[0] : a.appointments;
+    const bAppt = Array.isArray(b.appointments) ? b.appointments[0] : b.appointments;
+    const aTime = aAppt?.appointment_slots?.slot_time || "";
+    const bTime = bAppt?.appointment_slots?.slot_time || "";
+    return aTime.localeCompare(bTime);
+  });
+
+  const myIndex = sorted.findIndex((q) => q.patient_id === patient_id);
+
+  if (myIndex === -1) return res.status(404).json({ error: "Not in queue." });
+
+  const AVG_SERVICE_MINUTES = 20;
+  const patientsBeforeYou = myIndex;
+  const etaMinutes = patientsBeforeYou * AVG_SERVICE_MINUTES;
+  const hours = Math.floor(etaMinutes / 60);
+  const minutes = etaMinutes % 60;
+  const timeUntilAppointment =
+    hours > 0 ? `${hours}h ${minutes}min` : `${minutes} min`;
+  const estimatedServiceTime = new Date(Date.now() + etaMinutes * 60000);
+
+  return res.json({
+    data,
+    position: myIndex + 1,
+    status: data.status,
+    patients_before_you: patientsBeforeYou,
+    eta_minutes: etaMinutes,
+    time_until_appointment: timeUntilAppointment,
+    estimated_service_at: estimatedServiceTime.toISOString(),
+  });
+});
+
+// ─────────────────────────────────────────────
+// ADD TO QUEUE
+// ─────────────────────────────────────────────
+
+router.post("/add_to_queue", async (req, res) => {
+  const { contact_details, facility_id } = req.body;
+
+  if (!contact_details || !facility_id) {
+    return res.status(400).json({ error: "Missing parameters" });
+  }
+
+  // 1. Resolve profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .or(`email.eq.${contact_details},phone_number.eq.${contact_details}`)
+    .maybeSingle();
+
+  if (!profile) {
+    return res.status(400).json({ error: "User not found" });
+  }
+
+  const patient_id = profile.id;
+
+  // 2. FIX: Use .limit(1) + array result instead of .maybeSingle()
+  // maybeSingle() throws a 500 if patient has multiple booked appointments
+  const { data: appts, error: apptErr } = await supabase
+    .from("appointments")
+    .select("id, appointment_slots!inner(facility_id, slot_date, slot_time)")
+    .eq("patient_id", patient_id)
+    .eq("appointment_slots.facility_id", facility_id)
+    .in("status", ["booked", "confirmed"]) // FIX: also accept "confirmed"
+    .order("booked_at", { ascending: false })
+    .limit(1);
+
+  if (apptErr) return res.status(500).json({ error: apptErr.message });
+
+  const appt = appts?.[0];
+
+  if (!appt) {
+    return res.status(400).json({ error: "No active appointment found" });
+  }
+
+  // 3. Check if already in queue for this specific appointment
+  const { data: existing } = await supabase
+    .from("virtual_queues")
+    .select("id, status")
+    .eq("appointment_id", appt.id)
+    .maybeSingle();
+
+  // If already in queue and not completed, don't add again
+  if (existing && existing.status !== "completed" && existing.status !== "complete") {
+    return res.json({ success: true, message: "Already in queue" });
+  }
+
+  // 4. Insert new queue entry
+  const { error: insertErr } = await supabase.from("virtual_queues").insert({
+    appointment_id: appt.id,
+    patient_id,
+    facility_id,
+    status: "waiting",
+    joined_at: new Date().toISOString(),
+  });
+
+  if (insertErr) return res.status(500).json({ error: insertErr.message });
+
+  return res.json({ success: true });
+});
+
+// ─────────────────────────────────────────────
+// REMOVE FROM QUEUE
+// ─────────────────────────────────────────────
+
+router.delete("/remove_queue", async (req, res) => {
+  const { contact_details, facility_id } = req.query;
+ 
+  if (!contact_details || !facility_id) {
+    return res.status(400).json({ error: "Missing parameters" });
+  }
+ 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .or(`email.eq.${contact_details},phone_number.eq.${contact_details}`)
+    .maybeSingle();
+ 
+  if (!profile) {
+    return res.status(400).json({ error: "User not found" });
+  }
+ 
+  await supabase
+    .from("virtual_queues")
+    .delete()
+    .eq("patient_id", profile.id)
+    .eq("facility_id", facility_id);
+ 
+  return res.json({ success: true });
+});
+
+// ─────────────────────────────────────────────
+// UPDATE QUEUE STATUS
+// ─────────────────────────────────────────────
+
+router.patch("/update_status", async (req, res) => {
+  const { contact_details, facility_id, status } = req.body;
+
+  if (!contact_details || !facility_id || !status) {
+    return res.status(400).json({ error: "Missing parameters" });
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .or(`email.eq.${contact_details},phone_number.eq.${contact_details}`)
+    .maybeSingle();
+
+  if (!profile) return res.status(400).json({ error: "User not found" });
+
+  const { error } = await supabase
+    .from("virtual_queues")
+    .update({ status })
+    .eq("patient_id", profile.id)
+    .eq("facility_id", facility_id);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  return res.json({ success: true });
+});
+
+// ─────────────────────────────────────────────
+// VIEW FULL QUEUE (for staff dashboard)
+// ─────────────────────────────────────────────
+
+router.get("/full_queue", async (req, res) => {
+  const { facility_id } = req.query;
+ 
+  if (!facility_id) return res.status(400).json({ error: "Missing facility_id" });
+ 
+  const { data, error } = await supabase
+    .from("virtual_queues")
+    .select(
+      `*,
+      profiles(name, surname, email, phone_number),
+      appointments(id, reason, appointment_slots(slot_time, slot_date, duration_minutes))`
+    )
+    .eq("facility_id", facility_id)
+    .neq("status", "completed")
+    .order("joined_at", { ascending: true });
+ 
+  if (error) return res.status(500).json({ error: error.message });
+ 
+  let waitingPosition = 0;
+ 
+  const enriched = (data || []).map((entry) => {
+    const appt = Array.isArray(entry.appointments)
+      ? entry.appointments[0]
+      : entry.appointments;
+    const slot = appt?.appointment_slots;
+ 
+    let end_time = null;
+    if (slot?.slot_time && slot?.duration_minutes) {
+      const endDate = new Date(`1970-01-01T${slot.slot_time}`);
+      endDate.setMinutes(endDate.getMinutes() + slot.duration_minutes);
+      end_time = endDate.toTimeString().slice(0, 5);
     }
-
-    const waiting = all
-      .filter((e) => e.virtual_queue?.status === "Waiting")
-      .sort((a, b) => {
-        const aTime = `${a.appointment_slots.slot_date}T${a.appointment_slots.slot_time}`;
-        const bTime = `${b.appointment_slots.slot_date}T${b.appointment_slots.slot_time}`;
-        return new Date(aTime) - new Date(bTime);
-      });
-
+ 
     let position = null;
-
-    waiting.forEach((entry, i) => {
-      if (entry.patient_id === patient_id) {
-        position = i + 1;
-      }
-    });
-
-    const { slot_date, slot_time, duration_minutes } = myEntry.appointment_slots;
-
-    // add end_time
-    const endDate = new Date(`1970-01-01T${slot_time}`);
-    endDate.setMinutes(endDate.getMinutes() + duration_minutes);
-    myEntry.appointment_slots.end_time = endDate.toTimeString().slice(0, 8);
-
-    // helper to format minutes nicely
-    function formatMinutes(totalMinutes) {
-      if (totalMinutes < 0) return "0m";
-
-      const days = Math.floor(totalMinutes / 1440);
-      const hours = Math.floor((totalMinutes % 1440) / 60);
-      const mins = totalMinutes % 60;
-
-      let out = "";
-      if (days > 0) out += `${days}d `;
-      if (hours > 0) out += `${hours}h `;
-      if (mins > 0) out += `${mins}m`;
-
-      return out.trim() || "0m";
+    if (entry.status === "waiting") {
+      waitingPosition++;
+      position = waitingPosition;
     }
-
-    // 1) live countdown from NOW until appointment
-    const appointmentDateTime = new Date(`${slot_date}T${slot_time}`);
-    const now = new Date();
-    const minutesUntilAppointment = Math.round(
-      (appointmentDateTime - now) / 1000 / 60
-    );
-
-    const time_until_appointment =
-      minutesUntilAppointment < 0
-        ? "Appointment time has passed."
-        : formatMinutes(minutesUntilAppointment);
-
-    // 2) fixed wait from clinic opening time until appointment
-    const { data: facility, error: facilityError } = await supabase
-      .from('facilities')
-      .select('operating_hours')
-      .eq('id', facility_id)
-      .single();
-
-    if (facilityError) throw facilityError;
-
-    const weekday = new Date(slot_date)
-      .toLocaleDateString('en-US', { weekday: 'long' })
-      .toLowerCase();
-
-    const dayHours = facility?.operating_hours?.[weekday];
-
-    // supports either { open, close } or { start, end }
-    const openTime = dayHours?.open || dayHours?.start || null;
-
-    let estimated_wait_from_opening = "Opening time not available.";
-
-    if (openTime) {
-      const clinicOpenDateTime = new Date(`${slot_date}T${openTime}`);
-      const minutesFromOpening = Math.round(
-        (appointmentDateTime - clinicOpenDateTime) / 1000 / 60
-      );
-
-      if (minutesFromOpening < 0) {
-        estimated_wait_from_opening = "Invalid slot before opening time.";
-      } else {
-        estimated_wait_from_opening = formatMinutes(minutesFromOpening);
-      }
-    }
-
-    return res.status(200).json({
-      data: [myEntry],
-      queue_status: myEntry.virtual_queue?.status,
+ 
+    return {
+      ...entry,
       position,
-      estimated_wait_from_opening,
-      time_until_appointment
-    });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-router.put('/queue_status', async (req, res) => {
-  const contact_details = req.query.contact_details;
-  const status = req.query.status;
-  const facility_id = req.query.facility_id;
-
-  const result = await get_patient_id(contact_details);
-  if (result.error) return res.status(400).json({ error: result.error });
-  const patient_id = result.patient_id;
-
-  let appointment_id;
-  try {
-    let { data, error } = await supabase.from('appointments').select('id')
-      .eq('patient_id', patient_id).eq('facility_id', facility_id);
-    if (error) throw error;
-    if (data.length == 0) return res.status(500).json({ error: "Patient not in queue." });
-    appointment_id = data[0].id;
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-
-  try {
-    let { data, error } = await supabase.from('virtual_queue')
-      .update({ status })
-      .eq('patient_id', patient_id).eq('appointment_id', appointment_id);
-    if (error) throw error;
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-router.delete('/remove_queue', async (req, res) => {
-  const contact_details = req.query.contact_details;
-  const facility_id = req.query.facility_id;
-
-  const result = await get_patient_id(contact_details);
-  if (result.error) return res.status(400).json({ error: result.error });
-  const patient_id = result.patient_id;
-
-  try {
-    let { data, error } = await supabase.from('virtual_queue')
-      .delete()
-      .eq('patient_id', patient_id).eq('facility_id', facility_id).eq('status', 'completed').select();
-    if (error) throw error;
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
+      appointments: appt
+        ? { ...appt, appointment_slots: slot ? { ...slot, end_time } : null }
+        : null,
+    };
+  });
+ 
+  return res.json({ data: enriched });
 });
 
 export default router;
