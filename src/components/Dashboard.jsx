@@ -9,7 +9,7 @@ import { FaStethoscope } from "react-icons/fa";
 import Applications from "./Applications.jsx";
 import AdminClinics from "./AdminClinics";
 import AdminStaff from "./AdminStaff.jsx";
-import { getMyQueue, removeFromQueue, notifyPatient, addToQueue } from "../queueApi.js";
+import { getMyQueue, removeFromQueue, addToQueue } from "../queueApi.js";
 import "./Dashboard.css";
 
 import {
