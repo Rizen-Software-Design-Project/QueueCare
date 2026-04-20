@@ -16,13 +16,16 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install root dependencies
         run: npm ci
 
       - name: Run frontend tests
+        run: npx vitest run --reporter=verbose
+
+      - name: Frontend coverage
         run: npx vitest run --coverage
 
   backend-tests:
@@ -34,7 +37,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: "src/appointment booking/package-lock.json"
 
