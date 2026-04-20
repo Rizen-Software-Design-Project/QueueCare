@@ -30,5 +30,8 @@ export default defineConfig({
     setupFiles: ["./src/tests/setup.js"],
     globals: true,
     exclude: [...configDefaults.exclude, "src/appointment booking/**"],
+    coverage: {
+      reporter: ['text', 'json-summary'],
+    },
   },
 });

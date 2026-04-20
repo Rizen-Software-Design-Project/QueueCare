@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, booking-sys]
 
+permissions:
+  contents: write
+
 jobs:
   frontend-tests:
     name: Frontend Tests (Vitest)
@@ -23,15 +26,35 @@ jobs:
         run: npm install
 
       - name: Run frontend tests with coverage
+        run: npx vitest run --coverage 2>&1 | tee vitest-output.txt
+
+      - name: Generate coverage badge
+        if: github.event_name == 'push'
         run: |
-          npx vitest run --coverage 2>&1 | tee vitest-output.txt
+          COVERAGE=$(node -e "const c = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf8')); console.log(c.total.statements.pct)")
+          if (( $(echo "$COVERAGE >= 80" | bc -l) )); then COLOR=brightgreen
+          elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then COLOR=yellow
+          else COLOR=red; fi
+          curl -s -o coverage-badge.svg "https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}"
+
+      - name: Commit coverage badge
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add coverage-badge.svg
+          git diff --cached --quiet || (git commit -m "Update coverage badge [skip ci]" && git push)
+
+      - name: Coverage summary
+        if: always()
+        run: |
           echo "## Frontend Coverage (Vitest)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          grep -A 100 "Coverage report" vitest-output.txt | head -30 >> $GITHUB_STEP_SUMMARY
+          grep -E "%|File|All files|---" vitest-output.txt | head -30 >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          grep "Test Files" vitest-output.txt >> $GITHUB_STEP_SUMMARY
-          grep "Tests " vitest-output.txt >> $GITHUB_STEP_SUMMARY
+          grep "Test Files" vitest-output.txt >> $GITHUB_STEP_SUMMARY || true
+          grep "Tests " vitest-output.txt >> $GITHUB_STEP_SUMMARY || true
 
   backend-tests:
     name: Backend Tests (Jest)
