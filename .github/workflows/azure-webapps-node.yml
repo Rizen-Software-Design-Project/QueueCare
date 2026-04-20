@@ -41,16 +41,23 @@ jobs:
           mkdir deploy
           cp -r dist deploy/dist
           cp -r "src/appointment booking" deploy/server
+          # ✅ Copy ALL backend files from the correct location
+          cp -r server deploy/server  # if your backend is in a 'server' folder at root
+          # OR copy individual files if they are scattered:
+          cp server.js deploy/server.js
+          cp app.js deploy/app.js
+          cp -r routes deploy/routes
+          cp -r middleware deploy/middleware
           cp package.json deploy/
           cp deploy-web.config deploy/web.config
           cp deploy-entry.js deploy/server.js
           echo "// deployed $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> deploy/server.js
-
-      - name: Upload deployment artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app
-          path: deploy/
+      
+            - name: Upload deployment artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: app
+                path: deploy/
 
   deploy:
     runs-on: ubuntu-latest
