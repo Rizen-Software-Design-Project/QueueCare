@@ -1,0 +1,30 @@
+name: Deploy tests branch to GitHub Pages
+
+on:
+  push:
+    branches: [ tests ]  # Triggers when you push to tests branch
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # If you want tests to pass before deploying, uncomment this:
+      # - name: Run tests first
+      #   run: npm ci && npm run coverage:all
+      
+      # Deploy your files to gh-pages branch
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./  # Your entire repository content
+          publish_branch: gh-pages  # Deploys TO this branch
+          force_orphan: true  # Clean gh-pages branch on each deploy
