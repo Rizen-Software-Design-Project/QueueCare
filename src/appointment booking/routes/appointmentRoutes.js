@@ -7,10 +7,7 @@ env.config();
 
 const router = express.Router();
 
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_KEY  // must be service_role key
-);
+const supabase = createClient(process.env.SB_URL, process.env.SB_KEY);
 
 // ── Email transporter ────────────────────────────────────────────────────────
 const transporter = nodemailer.createTransport({
@@ -169,7 +166,6 @@ const getAvailableSlots = async (req, res) => {
             .from('appointment_slots')
             .select('*')
             .eq('facility_id', facility_id)
-            .eq('is_active', true)
             .gte('slot_date', today)
             .order('slot_date', { ascending: true })
             .order('slot_time', { ascending: true });
@@ -212,16 +208,19 @@ const bookAppointment = async (req, res) => {
         // 1. Confirm slot still has capacity (prevent race condition)
         const { data: slot, error: slotError } = await supabase
             .from('appointment_slots')
-            .select('id, booked_count, total_capacity, slot_date, slot_time, is_active')
+            .select('id, booked_count, total_capacity, slot_date, slot_time, facility_id')
             .eq('id', slot_id)
-            .single();
+            .eq('facility_id', facility_id)
+            .maybeSingle();
 
-        if (slotError || !slot) {
-            return res.status(404).json({ error: 'Slot not found' });
-        }
-        if (!slot.is_active) {
-            return res.status(400).json({ error: 'This slot is no longer active' });
-        }
+            if (slotError) {
+            return res.status(500).json({ error: slotError.message });
+            }
+
+            if (!slot) {
+            return res.status(404).json({ error: 'Slot not found for this clinic' });
+            }
+        
         if (slot.booked_count >= slot.total_capacity) {
             return res.status(409).json({ error: 'This slot is fully booked. Please choose another.' });
         }
@@ -384,9 +383,7 @@ const rescheduleAppointment = async (req, res) => {
         if (slotError || !newSlot) {
             return res.status(404).json({ error: 'New slot not found' });
         }
-        if (!newSlot.is_active) {
-            return res.status(400).json({ error: 'New slot is not active' });
-        }
+        
         if (newSlot.booked_count >= newSlot.total_capacity) {
             return res.status(409).json({ error: 'New slot is fully booked. Please choose another.' });
         }
@@ -664,7 +661,7 @@ const addSlot = async (req, res) => {
                 total_capacity,
                 duration_minutes,
                 booked_count: 0,
-                is_active: true,
+               
             })
             .select()
             .single();
@@ -683,7 +680,7 @@ const addSlot = async (req, res) => {
 const updateSlot = async (req, res) => {
     try {
         const { slot_id } = req.params;
-        const { slot_time, slot_date, total_capacity, duration_minutes, is_active } = req.body;
+        const { slot_time, slot_date, total_capacity, duration_minutes } = req.body;
 
         if (!slot_id) {
             return res.status(400).json({ error: 'slot_id is required' });
@@ -702,9 +699,7 @@ const updateSlot = async (req, res) => {
         if (duration_minutes !== undefined) {
             updateData.duration_minutes = duration_minutes;
         }
-        if (is_active !== undefined) {
-            updateData.is_active = is_active;
-        }
+        
 
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({ error: 'No fields provided to update' });
@@ -745,10 +740,7 @@ const deactivateSlot = async (req, res) => {
             });
         }
 
-        const { error } = await supabase
-            .from('appointment_slots')
-            .update({ is_active: false })
-            .eq('id', slot_id);
+        
 
         if (error) {
             return res.status(400).json({ error: error.message });

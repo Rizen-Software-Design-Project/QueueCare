@@ -19,7 +19,7 @@ import {
   signInWithPhoneNumber,
   FacebookAuthProvider,
 } from "firebase/auth";
-import { auth, googleAuthProvider } from "../queueAPI";
+import { auth, googleAuthProvider } from "../firebase";
 
 // ── Supabase ────────────────────────────────────────────────────────────────
 const SUPABASE_URL  = "https://vktjtxljwzyakobkkhol.supabase.co";
