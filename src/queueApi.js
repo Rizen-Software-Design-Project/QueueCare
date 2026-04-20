@@ -1,4 +1,4 @@
-const API_BASE = "";
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
 export async function addToQueue(contactDetails, facilityId) {
   const res = await fetch(
