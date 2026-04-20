@@ -14,14 +14,13 @@ const mockPatientProfile = {
     surname: "Doe",
     email: "john@example.com",
     phone_number: "0821234567",
-    role: "patient",  // ← THIS MAKES IT PATIENT
+    role: "patient",
     dob: "1990-01-01",
 }
 
 
 
 
-// Mock Firebase
 vi.mock("../firebase", () => ({
     auth: { currentUser: null },
     onAuthStateChanged: vi.fn((auth, callback) => {
@@ -31,7 +30,6 @@ vi.mock("../firebase", () => ({
     signOut: vi.fn(() => Promise.resolve()),
 }));
 
-// Mock Supabase
 const mockSupabaseQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
