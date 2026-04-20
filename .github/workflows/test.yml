@@ -20,7 +20,7 @@ jobs:
           cache: npm
 
       - name: Install root dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run frontend tests
         run: npx vitest run --reporter=verbose
@@ -42,7 +42,7 @@ jobs:
           cache-dependency-path: "src/appointment booking/package-lock.json"
 
       - name: Install backend dependencies
-        run: npm ci
+        run: npm install
         working-directory: "src/appointment booking"
 
       - name: Run backend tests
