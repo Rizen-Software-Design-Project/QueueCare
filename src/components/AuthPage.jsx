@@ -1,16 +1,9 @@
 /**
- * AuthPage.jsx
- *
- * Responsibility: Authentication ONLY.
- * Covers: role selection → social / email / phone login → OTP verification.
- * After any successful auth, calls routeAfterLogin() exactly once, which
- * decides where the user goes next (profile completion, pending screen,
- * or straight to /dashboard).
- *
- * Profile completion and admin-onboarding live in ProfileStep.jsx.
+ * AuthPage.jsx – redesigned modern authentication flow
+ * All original logic preserved, UI/UX completely overhauled.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -47,129 +40,7 @@ function normaliseSAPhone(raw) {
   return null;
 }
 
-// ── Shared UI ────────────────────────────────────────────────────────────────
-function Err({ msg }) {
-  if (!msg) return null;
-  return <p style={s.err}>{msg}</p>;
-}
-
-function PwInput({ placeholder, value, onChange }) {
-  const [show, setShow] = useState(false);
-  return (
-    <div style={s.pwWrap}>
-      <input
-        style={s.input}
-        type={show ? "text" : "password"}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <button type="button" style={s.eyeBtn} onClick={() => setShow((v) => !v)}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          {show ? (
-            <>
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-              <line x1="1" y1="1" x2="23" y2="23" />
-            </>
-          ) : (
-            <>
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </>
-          )}
-        </svg>
-      </button>
-    </div>
-  );
-}
-
-function StrengthBar({ score }) {
-  const colors = ["#E24B4A", "#EF9F27", "#1D9E75", "#0F6E56"];
-  if (!score) return null;
-  return (
-    <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
-      {[0, 1, 2, 3].map((i) => (
-        <div key={i} style={{
-          flex: 1, height: 3, borderRadius: 2,
-          background: i < score ? colors[score - 1] : "#e2e2e2",
-        }} />
-      ))}
-    </div>
-  );
-}
-
-function OtpBoxes({ value, onChange }) {
-  const refs = [];
-  const onInput = (i, e) => {
-    const ch   = e.target.value.replace(/\D/g, "").slice(-1);
-    const next = [...value];
-    next[i]    = ch;
-    onChange(next);
-    if (ch && refs[i + 1]) refs[i + 1].focus();
-  };
-  const onKey = (i, e) => {
-    if (e.key === "Backspace" && !value[i] && refs[i - 1]) refs[i - 1].focus();
-  };
-  return (
-    <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "20px 0" }}>
-      {Array.from({ length: 6 }, (_, i) => (
-        <input key={i} ref={(el) => (refs[i] = el)} style={s.otpBox}
-          type="text" inputMode="numeric" maxLength={1} value={value[i] || ""}
-          onChange={(e) => onInput(i, e)} onKeyDown={(e) => onKey(i, e)} />
-      ))}
-    </div>
-  );
-}
-
-function SocialBtn({ icon, label, onClick, disabled }) {
-  return (
-    <button type="button" style={s.socialBtn} onClick={onClick} disabled={disabled}>
-      {icon}
-      <span style={{ fontSize: 14, fontWeight: 500 }}>{label}</span>
-    </button>
-  );
-}
-
-function Divider() {
-  return (
-    <div style={s.divider}>
-      <div style={s.divLine} />
-      <span style={s.divText}>or</span>
-      <div style={s.divLine} />
-    </div>
-  );
-}
-
-function BackBtn({ onClick }) {
-  return (
-    <button type="button" style={s.backBtn} onClick={onClick}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.5">
-        <polyline points="15 18 9 12 15 6" />
-      </svg>
-      Back
-    </button>
-  );
-}
-
-const GoogleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24">
-    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-  </svg>
-);
-
-const FacebookIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24">
-    <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
-  </svg>
-);
-
-// ── Routing helpers (pure Supabase queries, no UI) ────────────────────────────
+// ── Routing helpers (unchanged) ────────────────────────────────────────────────
 async function fetchProfile(identity) {
   const { data } = await supabase
     .from("profiles")
@@ -196,26 +67,142 @@ function isProfileComplete(profile) {
   return !!(profile?.name && profile?.surname && profile?.sex && profile?.id_number);
 }
 
+// ── Reusable UI Components ──────────────────────────────────────────────────
+const Logo = () => (
+  <div style={styles.logo}>
+    <div style={styles.logoMark}>
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="1.8">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div>
+      <h1 style={styles.logoName}>MediAccess</h1>
+      <p style={styles.logoSub}>Integrated Healthcare Management</p>
+    </div>
+  </div>
+);
+
+const LoadingSpinner = () => (
+  <div style={styles.spinner}>
+    <div style={styles.spinnerCircle} />
+  </div>
+);
+
+const StrengthMeter = ({ score }) => {
+  if (!score && score !== 0) return null;
+  const levels = ["Very weak", "Weak", "Fair", "Good", "Strong"];
+  const colors = ["#E24B4A", "#EF9F27", "#F4C542", "#1D9E75", "#0F6E56"];
+  return (
+    <div style={styles.strengthContainer}>
+      <div style={styles.strengthBarContainer}>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            style={{
+              ...styles.strengthSegment,
+              backgroundColor: i < score ? colors[score - 1] : "#E5E7EB",
+            }}
+          />
+        ))}
+      </div>
+      {score > 0 && <span style={styles.strengthLabel}>{levels[score - 1]}</span>}
+    </div>
+  );
+};
+
+const OtpInput = ({ value, onChange }) => {
+  const inputsRef = useRef([]);
+  const handleChange = (index, e) => {
+    const digit = e.target.value.replace(/\D/g, "").slice(-1);
+    const newOtp = [...value];
+    newOtp[index] = digit;
+    onChange(newOtp);
+    if (digit && index < 5) inputsRef.current[index + 1]?.focus();
+  };
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !value[index] && index > 0) {
+      inputsRef.current[index - 1]?.focus();
+    }
+  };
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const paste = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const newOtp = paste.split("");
+    while (newOtp.length < 6) newOtp.push("");
+    onChange(newOtp);
+    inputsRef.current[Math.min(5, paste.length - 1)]?.focus();
+  };
+  return (
+    <div style={styles.otpContainer}>
+      {value.map((digit, idx) => (
+        <input
+          key={idx}
+          ref={(el) => (inputsRef.current[idx] = el)}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digit}
+          onChange={(e) => handleChange(idx, e)}
+          onKeyDown={(e) => handleKeyDown(idx, e)}
+          onPaste={idx === 0 ? handlePaste : undefined}
+          style={styles.otpBox}
+          aria-label={`OTP digit ${idx + 1}`}
+        />
+      ))}
+    </div>
+  );
+};
+
+const SocialButton = ({ icon, label, onClick, disabled }) => (
+  <button type="button" style={styles.socialBtn} onClick={onClick} disabled={disabled}>
+    {icon}
+    <span>{label}</span>
+  </button>
+);
+
+const BackButton = ({ onClick }) => (
+  <button type="button" style={styles.backBtn} onClick={onClick}>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+    Back
+  </button>
+);
+
+const Divider = () => (
+  <div style={styles.divider}>
+    <div style={styles.divLine} />
+    <span style={styles.divText}>or</span>
+    <div style={styles.divLine} />
+  </div>
+);
+
+const ErrorMessage = ({ msg }) =>
+  msg ? <div style={styles.errorContainer}>⚠️ {msg}</div> : null;
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AuthPage() {
   const navigate = useNavigate();
 
   const [selectedRole, setSelectedRole] = useState(null);
-  const [page,         setPage]         = useState("role-select");
-  const [error,        setError]        = useState("");
-  const [loading,      setLoading]      = useState(false);
+  const [page, setPage] = useState("role-select");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Email state
-  const [loginEmail,  setLoginEmail]  = useState("");
-  const [loginPw,     setLoginPw]     = useState("");
-  const [isNewEmail,  setIsNewEmail]  = useState(false);
-  const [newPw,       setNewPw]       = useState("");
-  const [confirmPw,   setConfirmPw]   = useState("");
-  const [emailOtp,    setEmailOtp]    = useState(Array(6).fill(""));
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPw, setLoginPw] = useState("");
+  const [isNewEmail, setIsNewEmail] = useState(false);
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [emailOtp, setEmailOtp] = useState(Array(6).fill(""));
 
   // Phone state
-  const [phone,    setPhone]    = useState("");
+  const [phone, setPhone] = useState("");
   const [phoneOtp, setPhoneOtp] = useState(Array(6).fill(""));
+  const [resendTimer, setResendTimer] = useState(0);
 
   const go = useCallback((p) => { setError(""); setPage(p); }, []);
 
@@ -231,18 +218,14 @@ export default function AuthPage() {
     return () => { window.recaptchaVerifier = null; };
   }, []);
 
-  // ── Central routing decision after any successful auth ───────────────────
-  /**
-   * Called once, after any login method succeeds.
-   * identity = { auth_provider, provider_user_id, email, phone, name, surname }
-   *
-   * Decision tree:
-   *  1. Profile exists & complete  →  /dashboard
-   *  2. Application pending        →  pending screen
-   *  3. Application rejected       →  error on home
-   *  4. No profile yet             →  /profile-setup (ProfileStep page)
-   *     - passes role + identity as route state so ProfileStep can act standalone
-   */
+  // Resend OTP timer effect
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const interval = setInterval(() => setResendTimer((t) => t - 1), 1000);
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
+  // ── Central routing decision (unchanged) ───────────────────────────────────
   async function routeAfterLogin(identity) {
     localStorage.setItem("userIdentity", JSON.stringify(identity));
     const [profile, application] = await Promise.all([
@@ -250,13 +233,11 @@ export default function AuthPage() {
       fetchLatestApplication(identity),
     ]);
 
-    // Already fully set up
     if (profile && isProfileComplete(profile)) {
       navigate("/dashboard");
       return;
     }
 
-    // Application in progress
     if (application?.status === "pending") {
       go(application.requested_role === "admin" ? "admin-pending" : "application-pending");
       return;
@@ -268,12 +249,11 @@ export default function AuthPage() {
       return;
     }
 
-    // Needs profile completion — hand off to the dedicated page
     navigate("/profile-setup", {
       state: {
-        identity:     { ...identity, name: profile?.name || identity.name || "",
-                                     surname: profile?.surname || identity.surname || "",
-                                     sex: profile?.sex || "" },
+        identity: { ...identity, name: profile?.name || identity.name || "",
+                               surname: profile?.surname || identity.surname || "",
+                               sex: profile?.sex || "" },
         selectedRole,
       },
     });
@@ -300,7 +280,6 @@ export default function AuthPage() {
       return;
     }
 
-    // Sign-up
     if (newPw.length < 8) { setError("Password must be at least 8 characters."); setLoading(false); return; }
     if (newPw !== confirmPw) { setError("Passwords do not match."); setLoading(false); return; }
 
@@ -339,6 +318,7 @@ export default function AuthPage() {
       await window.recaptchaVerifier.render();
       window.confirmationResult = await signInWithPhoneNumber(auth, normalised, window.recaptchaVerifier);
       setLoading(false);
+      setResendTimer(30);
       go("phone-otp");
     } catch (err) {
       setLoading(false);
@@ -351,21 +331,36 @@ export default function AuthPage() {
     const code = phoneOtp.join("");
     if (code.length !== 6) { setError("Enter all 6 digits."); setLoading(false); return; }
     try {
-      const result       = await window.confirmationResult.confirm(code);
+      const result = await window.confirmationResult.confirm(code);
       const firebaseUser = result.user;
-      const normalised   = normaliseSAPhone(phone);
+      const normalised = normaliseSAPhone(phone);
       setLoading(false);
       await routeAfterLogin({
-        auth_provider:    "firebase",
+        auth_provider: "firebase",
         provider_user_id: firebaseUser.uid,
-        email:            firebaseUser.email || "",
-        phone:            normalised || firebaseUser.phoneNumber || "",
-        name:             firebaseUser.displayName?.split(" ")[0] || "",
-        surname:          firebaseUser.displayName?.split(" ").slice(1).join(" ") || "",
+        email: firebaseUser.email || "",
+        phone: normalised || firebaseUser.phoneNumber || "",
+        name: firebaseUser.displayName?.split(" ")[0] || "",
+        surname: firebaseUser.displayName?.split(" ").slice(1).join(" ") || "",
       });
     } catch {
       setLoading(false);
       setError("Wrong code. Try again.");
+    }
+  }
+
+  async function resendOtp() {
+    if (resendTimer > 0) return;
+    setError("");
+    setLoading(true);
+    try {
+      await window.recaptchaVerifier.render();
+      window.confirmationResult = await signInWithPhoneNumber(auth, normaliseSAPhone(phone), window.recaptchaVerifier);
+      setResendTimer(30);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      setError("Could not resend OTP. Try again.");
     }
   }
 
@@ -376,16 +371,16 @@ export default function AuthPage() {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, provider);
-      const u      = result.user;
+      const u = result.user;
       const [first, ...rest] = (u.displayName || "").split(" ");
       setLoading(false);
       await routeAfterLogin({
-        auth_provider:    "firebase",
+        auth_provider: "firebase",
         provider_user_id: u.uid,
-        email:            u.email || "",
-        phone:            u.phoneNumber || "",
-        name:             first || "",
-        surname:          rest.join(" ") || "",
+        email: u.email || "",
+        phone: u.phoneNumber || "",
+        name: first || "",
+        surname: rest.join(" ") || "",
       });
     } catch (err) {
       setLoading(false);
@@ -395,247 +390,547 @@ export default function AuthPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={s.root}>
-      {/* Logo */}
-      <div style={s.logo}>
-        <div style={s.logoMark}>
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-            stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-            <path d="M2 17l10 5 10-5"/>
-            <path d="M2 12l10 5 10-5"/>
-          </svg>
-        </div>
-        <div>
-          <p style={s.logoName}>MediAccess</p>
-          <p style={s.logoSub}>Integrated Healthcare Management</p>
-        </div>
-      </div>
+    <div style={styles.root}>
+      <Logo />
 
-      <div style={s.card}>
-
-        {/* ── Role select ── */}
+      <div style={styles.card}>
+        {/* Role select */}
         {page === "role-select" && (
-          <div style={s.section}>
-            <p style={s.title}>Choose account type</p>
-            <p style={s.sub}>Select how you want to continue.</p>
-            <button style={s.primaryBtn} onClick={() => chooseRole("patient")}>Continue as Patient</button>
-            <button style={s.outlineBtn} onClick={() => chooseRole("staff")}>Continue as Staff</button>
-            <button style={s.outlineBtn} onClick={() => chooseRole("admin")}>Continue as Admin</button>
+          <div style={styles.section}>
+            <h2 style={styles.title}>Welcome to MediAccess</h2>
+            <p style={styles.sub}>Select how you'd like to continue</p>
+            <button style={styles.primaryBtn} onClick={() => chooseRole("patient")}>
+              Continue as Patient
+            </button>
+            <button style={styles.outlineBtn} onClick={() => chooseRole("staff")}>
+              Continue as Staff
+            </button>
+            <button style={styles.outlineBtn} onClick={() => chooseRole("admin")}>
+              Continue as Admin
+            </button>
           </div>
         )}
 
-        {/* ── Home (login method picker) ── */}
+        {/* Login method picker */}
         {page === "home" && (
-          <div style={s.section}>
-            <BackBtn onClick={() => go("role-select")} />
-            <p style={s.title}>Welcome</p>
-            <p style={s.sub}>Continue as <strong>{selectedRole || "user"}</strong>.</p>
+          <div style={styles.section}>
+            <BackButton onClick={() => go("role-select")} />
+            <h2 style={styles.title}>Sign in to MediAccess</h2>
+            <p style={styles.sub}>Continue as <strong>{selectedRole}</strong></p>
 
-            <SocialBtn icon={<GoogleIcon />}   label="Continue with Google"
-              disabled={loading} onClick={() => handleSocialLogin(googleAuthProvider)} />
-            <SocialBtn icon={<FacebookIcon />} label="Continue with Facebook"
-              disabled={loading} onClick={() => handleSocialLogin(facebookProvider)} />
+            <SocialButton
+              icon={<GoogleIcon />}
+              label="Continue with Google"
+              onClick={() => handleSocialLogin(googleAuthProvider)}
+              disabled={loading}
+            />
+            <SocialButton
+              icon={<FacebookIcon />}
+              label="Continue with Facebook"
+              onClick={() => handleSocialLogin(facebookProvider)}
+              disabled={loading}
+            />
 
             <Divider />
 
-            <button style={s.outlineBtn} onClick={() => go("email")}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <button style={styles.outlineBtn} onClick={() => go("email")}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
               Continue with Email
             </button>
 
-            <button style={s.outlineBtn} onClick={() => go("phone")}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <button style={styles.outlineBtn} onClick={() => go("phone")}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
                 <line x1="12" y1="18" x2="12.01" y2="18"/>
               </svg>
               Continue with Phone
             </button>
 
-            <Err msg={error} />
+            <ErrorMessage msg={error} />
           </div>
         )}
 
-        {/* ── Email sign-in / sign-up ── */}
+        {/* Email sign-in / sign-up */}
         {page === "email" && (
-          <div style={s.section}>
-            <BackBtn onClick={() => go("home")} />
-            <p style={s.title}>{isNewEmail ? "Create account" : "Sign in"}</p>
-            <p style={s.sub}>Use your email address</p>
+          <div style={styles.section}>
+            <BackButton onClick={() => go("home")} />
+            <h2 style={styles.title}>{isNewEmail ? "Create account" : "Sign in"}</h2>
+            <p style={styles.sub}>Use your email address</p>
 
             <form onSubmit={handleEmailSubmit}>
-              <label style={s.label}>Email address</label>
-              <input style={s.input} type="email" placeholder="jane@example.com"
-                value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
+              <label style={styles.label}>Email address</label>
+              <input
+                style={styles.input}
+                type="email"
+                placeholder="jane@example.com"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                required
+              />
 
               {!isNewEmail && (
                 <>
-                  <label style={s.label}>Password</label>
-                  <PwInput placeholder="Enter your password" value={loginPw} onChange={setLoginPw} />
-                </>
-              )}
-              {isNewEmail && (
-                <>
-                  <label style={s.label}>New password</label>
-                  <PwInput placeholder="Create a strong password" value={newPw} onChange={setNewPw} />
-                  <StrengthBar score={strengthScore(newPw)} />
-                  <label style={s.label}>Confirm password</label>
-                  <PwInput placeholder="Repeat your password" value={confirmPw} onChange={setConfirmPw} />
+                  <label style={styles.label}>Password</label>
+                  <input
+                    style={styles.input}
+                    type="password"
+                    placeholder="Enter your password"
+                    value={loginPw}
+                    onChange={(e) => setLoginPw(e.target.value)}
+                  />
                 </>
               )}
 
-              <Err msg={error} />
-              <button style={s.primaryBtn} type="submit" disabled={loading}>
-                {loading ? "Please wait…" : isNewEmail ? "Send verification code" : "Sign in"}
+              {isNewEmail && (
+                <>
+                  <label style={styles.label}>New password</label>
+                  <input
+                    style={styles.input}
+                    type="password"
+                    placeholder="Create a strong password"
+                    value={newPw}
+                    onChange={(e) => setNewPw(e.target.value)}
+                  />
+                  <StrengthMeter score={strengthScore(newPw)} />
+                  <label style={styles.label}>Confirm password</label>
+                  <input
+                    style={styles.input}
+                    type="password"
+                    placeholder="Repeat your password"
+                    value={confirmPw}
+                    onChange={(e) => setConfirmPw(e.target.value)}
+                  />
+                </>
+              )}
+
+              <ErrorMessage msg={error} />
+              <button style={styles.primaryBtn} type="submit" disabled={loading}>
+                {loading ? <LoadingSpinner /> : (isNewEmail ? "Send verification code" : "Sign in")}
               </button>
             </form>
 
-            <button style={s.linkBtn} onClick={() => { setIsNewEmail((v) => !v); setError(""); }}>
+            <button style={styles.linkBtn} onClick={() => { setIsNewEmail(!isNewEmail); setError(""); }}>
               {isNewEmail ? "Already have an account? Sign in" : "Don't have an account? Create one"}
             </button>
           </div>
         )}
 
-        {/* ── Email OTP ── */}
+        {/* Email OTP */}
         {page === "email-otp" && (
-          <div style={s.section}>
-            <BackBtn onClick={() => go("email")} />
-            <p style={s.title}>Check your email</p>
-            <p style={s.sub}>We sent a 6-digit code to <strong>{loginEmail}</strong></p>
-            <OtpBoxes value={emailOtp} onChange={setEmailOtp} />
-            <Err msg={error} />
-            <button style={s.primaryBtn} onClick={handleEmailOtp} disabled={loading}>
-              {loading ? "Verifying…" : "Verify code"}
+          <div style={styles.section}>
+            <BackButton onClick={() => go("email")} />
+            <h2 style={styles.title}>Check your email</h2>
+            <p style={styles.sub}>We sent a 6‑digit code to <strong>{loginEmail}</strong></p>
+            <OtpInput value={emailOtp} onChange={setEmailOtp} />
+            <ErrorMessage msg={error} />
+            <button style={styles.primaryBtn} onClick={handleEmailOtp} disabled={loading}>
+              {loading ? <LoadingSpinner /> : "Verify code"}
             </button>
-            <button style={s.linkBtn}
-              onClick={() => supabase.auth.resend({ type: "signup", email: loginEmail })}>
+            <button style={styles.linkBtn} onClick={() => supabase.auth.resend({ type: "signup", email: loginEmail })}>
               Resend code
             </button>
           </div>
         )}
 
-        {/* ── Phone number entry ── */}
+        {/* Phone number entry */}
         {page === "phone" && (
-          <div style={s.section}>
-            <BackBtn onClick={() => go("home")} />
-            <p style={s.title}>Enter your number</p>
-            <p style={s.sub}>We'll send a one-time code via SMS</p>
+          <div style={styles.section}>
+            <BackButton onClick={() => go("home")} />
+            <h2 style={styles.title}>Enter your number</h2>
+            <p style={styles.sub}>We'll send a one‑time code via SMS</p>
 
             <form onSubmit={handlePhoneSubmit}>
-              <label style={s.label}>Phone number</label>
-              <div style={s.phoneWrap}>
-                <span style={s.phoneCode}>+27</span>
-                <input style={{ ...s.input, borderRadius: "0 8px 8px 0", marginBottom: 0 }}
-                  type="tel" placeholder="821234567" value={phone}
-                  onChange={(e) => setPhone(e.target.value)} required />
+              <label style={styles.label}>Phone number</label>
+              <div style={styles.phoneWrap}>
+                <span style={styles.phoneCode}>+27</span>
+                <input
+                  style={{ ...styles.input, borderRadius: "0 12px 12px 0", marginBottom: 0 }}
+                  type="tel"
+                  placeholder="821234567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
               </div>
-              <p style={s.hint}>South African numbers only</p>
-              <Err msg={error} />
-              <button style={{ ...s.primaryBtn, marginTop: 8 }} type="submit" disabled={loading}>
-                {loading ? "Sending…" : "Send OTP"}
+              <p style={styles.hint}>South African numbers only</p>
+              <ErrorMessage msg={error} />
+              <button style={{ ...styles.primaryBtn, marginTop: 8 }} type="submit" disabled={loading}>
+                {loading ? <LoadingSpinner /> : "Send OTP"}
               </button>
             </form>
           </div>
         )}
 
-        {/* ── Phone OTP ── */}
+        {/* Phone OTP */}
         {page === "phone-otp" && (
-          <div style={s.section}>
-            <BackBtn onClick={() => go("phone")} />
-            <p style={s.title}>Enter OTP</p>
-            <p style={s.sub}>Code sent to <strong>+27 {phone}</strong></p>
-            <OtpBoxes value={phoneOtp} onChange={setPhoneOtp} />
-            <Err msg={error} />
-            <button style={s.primaryBtn} onClick={handlePhoneOtp} disabled={loading}>
-              {loading ? "Verifying…" : "Verify"}
+          <div style={styles.section}>
+            <BackButton onClick={() => go("phone")} />
+            <h2 style={styles.title}>Enter OTP</h2>
+            <p style={styles.sub}>Code sent to <strong>+27 {phone}</strong></p>
+            <OtpInput value={phoneOtp} onChange={setPhoneOtp} />
+            <ErrorMessage msg={error} />
+            <button style={styles.primaryBtn} onClick={handlePhoneOtp} disabled={loading}>
+              {loading ? <LoadingSpinner /> : "Verify"}
             </button>
-            <button style={s.linkBtn} onClick={(e) => { window.confirmationResult = null; handlePhoneSubmit(e); }}>
-              Resend OTP
+            <button
+              style={{ ...styles.linkBtn, opacity: resendTimer > 0 ? 0.5 : 1 }}
+              onClick={resendOtp}
+              disabled={resendTimer > 0 || loading}
+            >
+              {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
             </button>
           </div>
         )}
 
-        {/* ── Post-submission status screens ── */}
+        {/* Pending screens (unchanged) */}
         {page === "application-pending" && (
-          <div style={s.section}>
-            <p style={s.title}>Application submitted</p>
-            <p style={s.sub}>Your staff application has been sent to the admin for approval. You'll receive a notification once it's reviewed.</p>
-            <button style={s.primaryBtn} onClick={() => go("home")}>Back to sign in</button>
+          <div style={styles.section}>
+            <h2 style={styles.title}>Application submitted</h2>
+            <p style={styles.sub}>
+              Your staff application has been sent to the admin for approval.
+              You'll receive a notification once it's reviewed.
+            </p>
+            <button style={styles.primaryBtn} onClick={() => go("home")}>Back to sign in</button>
           </div>
         )}
 
         {page === "admin-pending" && (
-          <div style={s.section}>
-            <p style={s.title}>Admin application submitted</p>
-            <p style={s.sub}>Your admin request is pending approval. You'll be able to access the admin dashboard once approved.</p>
-            <button style={s.primaryBtn} onClick={() => go("home")}>Back to sign in</button>
+          <div style={styles.section}>
+            <h2 style={styles.title}>Admin application submitted</h2>
+            <p style={styles.sub}>
+              Your admin request is pending approval. You'll be able to access
+              the admin dashboard once approved.
+            </p>
+            <button style={styles.primaryBtn} onClick={() => go("home")}>Back to sign in</button>
           </div>
         )}
-
       </div>
 
-      <section id="recaptcha-container" />
+      <div id="recaptcha-container" />
     </div>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-const s = {
+// ── Icons (unchanged) ──────────────────────────────────────────────────────
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+);
+
+const FacebookIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24">
+    <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+  </svg>
+);
+
+// ── Enhanced Styles ─────────────────────────────────────────────────────────
+const styles = {
   root: {
-    minHeight: "100vh", display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "center",
-    padding: "32px 16px", background: "#F7F6F2",
-    fontFamily: "'DM Sans', system-ui, sans-serif",
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "32px 16px",
+    background: "linear-gradient(135deg, #F6F9FC 0%, #EDF2F7 100%)",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif",
   },
-  logo:     { display: "flex", alignItems: "center", gap: 12, marginBottom: 24 },
-  logoMark: { width: 42, height: 42, borderRadius: 12, background: "#0A0A0A",
-               display: "flex", alignItems: "center", justifyContent: "center" },
-  logoName: { margin: 0, fontSize: 18, fontWeight: 700, color: "#0A0A0A", letterSpacing: "-0.4px" },
-  logoSub:  { margin: 0, fontSize: 11, color: "#888", letterSpacing: "0.2px" },
-  card:     { width: "100%", maxWidth: 420, background: "#fff", borderRadius: 16,
-               border: "1px solid #E8E7E3", boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden" },
-  section:  { padding: "28px 28px 24px" },
-  title:    { margin: "0 0 4px", fontSize: 22, fontWeight: 700, color: "#0A0A0A", letterSpacing: "-0.5px" },
-  sub:      { margin: "0 0 20px", fontSize: 14, color: "#666", lineHeight: 1.5 },
-  label:    { display: "block", fontSize: 12, fontWeight: 600, color: "#444",
-               marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.6px" },
-  input:    { display: "block", width: "100%", boxSizing: "border-box", padding: "10px 12px",
-               borderRadius: 8, border: "1.5px solid #E2E1DC", fontSize: 14, color: "#0A0A0A",
-               background: "#fff", marginBottom: 14, outline: "none" },
-  pwWrap:   { position: "relative", marginBottom: 14 },
-  eyeBtn:   { position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-               background: "none", border: "none", cursor: "pointer", color: "#888", padding: 4, display: "flex" },
-  phoneWrap: { display: "flex", marginBottom: 0 },
-  phoneCode: { display: "flex", alignItems: "center", padding: "0 12px", background: "#F3F2EE",
-                border: "1.5px solid #E2E1DC", borderRight: "none", borderRadius: "8px 0 0 8px",
-                fontSize: 14, color: "#444", whiteSpace: "nowrap" },
-  otpBox:   { width: 46, height: 52, textAlign: "center", fontSize: 20, fontWeight: 600,
-               borderRadius: 10, border: "1.5px solid #E2E1DC", background: "#FAFAF8",
-               outline: "none", color: "#0A0A0A" },
-  hint:     { margin: "-10px 0 14px", fontSize: 11, color: "#999" },
-  err:      { margin: "0 0 12px", fontSize: 13, color: "#C0392B", background: "#FEF2F2",
-               border: "1px solid #FECACA", borderRadius: 6, padding: "8px 10px" },
-  primaryBtn: { display: "block", width: "100%", padding: "12px", background: "#0A0A0A",
-                 color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
-                 cursor: "pointer", marginBottom: 10 },
-  outlineBtn: { display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                 width: "100%", padding: "11px 16px", background: "#fff", color: "#0A0A0A",
-                 border: "1.5px solid #E2E1DC", borderRadius: 10, fontSize: 14, fontWeight: 500,
-                 cursor: "pointer", marginBottom: 8 },
-  socialBtn: { display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                width: "100%", padding: "11px 16px", background: "#fff", color: "#0A0A0A",
-                border: "1.5px solid #E2E1DC", borderRadius: 10, fontSize: 14, fontWeight: 500,
-                cursor: "pointer", marginBottom: 8 },
-  linkBtn:  { display: "block", width: "100%", background: "none", border: "none", color: "#0A0A0A",
-               fontSize: 13, textDecoration: "underline", cursor: "pointer", padding: "6px 0", textAlign: "center" },
-  divider:  { display: "flex", alignItems: "center", gap: 10, margin: "16px 0" },
-  divLine:  { flex: 1, height: 1, background: "#E8E7E3" },
-  divText:  { fontSize: 12, color: "#999", fontWeight: 500 },
-  backBtn:  { display: "flex", alignItems: "center", gap: 4, background: "none", border: "none",
-               cursor: "pointer", color: "#666", fontSize: 13, padding: "0 0 16px", fontWeight: 500 },
+  logo: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 28,
+  },
+  logoMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    background: "#1B5E20",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+  },
+  logoName: {
+    margin: 0,
+    fontSize: 20,
+    fontWeight: 700,
+    color: "#1B5E20",
+    letterSpacing: "-0.3px",
+  },
+  logoSub: {
+    margin: 0,
+    fontSize: 11,
+    color: "#5B6E8C",
+    letterSpacing: "0.2px",
+  },
+  card: {
+    width: "100%",
+    maxWidth: 440,
+    background: "#FFFFFF",
+    borderRadius: 32,
+    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15)",
+    overflow: "hidden",
+    transition: "transform 0.2s ease",
+  },
+  section: {
+    padding: "32px 28px 28px",
+  },
+  title: {
+    margin: "0 0 6px",
+    fontSize: 26,
+    fontWeight: 700,
+    color: "#0F2B1D",
+    letterSpacing: "-0.5px",
+  },
+  sub: {
+    margin: "0 0 24px",
+    fontSize: 14,
+    color: "#4A5568",
+    lineHeight: 1.5,
+  },
+  label: {
+    display: "block",
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#2D3748",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+  },
+  input: {
+    display: "block",
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "12px 16px",
+    borderRadius: 12,
+    border: "1.5px solid #E2E8F0",
+    fontSize: 14,
+    color: "#1A202C",
+    background: "#FFFFFF",
+    marginBottom: 16,
+    outline: "none",
+    transition: "all 0.2s",
+    ":focus": {
+      borderColor: "#1B5E20",
+      boxShadow: "0 0 0 3px rgba(27,94,32,0.1)",
+    },
+  },
+  phoneWrap: {
+    display: "flex",
+    marginBottom: 8,
+  },
+  phoneCode: {
+    display: "flex",
+    alignItems: "center",
+    padding: "0 16px",
+    background: "#F7FAFC",
+    border: "1.5px solid #E2E8F0",
+    borderRight: "none",
+    borderRadius: "12px 0 0 12px",
+    fontSize: 14,
+    color: "#2D3748",
+    whiteSpace: "nowrap",
+  },
+  otpContainer: {
+    display: "flex",
+    gap: 10,
+    justifyContent: "center",
+    margin: "24px 0 20px",
+  },
+  otpBox: {
+    width: 52,
+    height: 56,
+    textAlign: "center",
+    fontSize: 22,
+    fontWeight: 600,
+    borderRadius: 14,
+    border: "1.5px solid #E2E8F0",
+    background: "#FFFFFF",
+    outline: "none",
+    color: "#1A202C",
+    transition: "all 0.2s",
+    ":focus": {
+      borderColor: "#1B5E20",
+      boxShadow: "0 0 0 3px rgba(27,94,32,0.1)",
+    },
+  },
+  hint: {
+    margin: "-8px 0 16px",
+    fontSize: 11,
+    color: "#718096",
+  },
+  errorContainer: {
+    margin: "16px 0 12px",
+    fontSize: 13,
+    color: "#C53030",
+    background: "#FFF5F5",
+    border: "1px solid #FED7D7",
+    borderRadius: 12,
+    padding: "10px 14px",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  primaryBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    width: "100%",
+    padding: "12px 20px",
+    background: "#1B5E20",
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: 14,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s",
+    ":hover": {
+      background: "#144C18",
+      transform: "scale(0.98)",
+    },
+    ":disabled": {
+      opacity: 0.6,
+      cursor: "not-allowed",
+    },
+  },
+  outlineBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    width: "100%",
+    padding: "11px 16px",
+    background: "#FFFFFF",
+    color: "#1A202C",
+    border: "1.5px solid #E2E8F0",
+    borderRadius: 14,
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: "pointer",
+    marginBottom: 10,
+    transition: "all 0.2s",
+    ":hover": {
+      background: "#F7FAFC",
+      borderColor: "#CBD5E0",
+    },
+  },
+  socialBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    width: "100%",
+    padding: "11px 16px",
+    background: "#FFFFFF",
+    color: "#1A202C",
+    border: "1.5px solid #E2E8F0",
+    borderRadius: 14,
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: "pointer",
+    marginBottom: 10,
+    transition: "all 0.2s",
+    ":hover": {
+      background: "#F7FAFC",
+      transform: "translateY(-1px)",
+    },
+  },
+  linkBtn: {
+    display: "block",
+    width: "100%",
+    background: "none",
+    border: "none",
+    color: "#1B5E20",
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer",
+    padding: "8px 0",
+    textAlign: "center",
+    transition: "opacity 0.2s",
+    ":hover": {
+      textDecoration: "underline",
+    },
+  },
+  divider: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    margin: "20px 0",
+  },
+  divLine: {
+    flex: 1,
+    height: 1,
+    background: "#E2E8F0",
+  },
+  divText: {
+    fontSize: 12,
+    color: "#A0AEC0",
+    fontWeight: 500,
+  },
+  backBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    color: "#4A5568",
+    fontSize: 13,
+    fontWeight: 500,
+    padding: "0 0 20px",
+    transition: "color 0.2s",
+    ":hover": {
+      color: "#1B5E20",
+    },
+  },
+  strengthContainer: {
+    marginTop: -8,
+    marginBottom: 16,
+  },
+  strengthBarContainer: {
+    display: "flex",
+    gap: 6,
+    marginBottom: 6,
+  },
+  strengthSegment: {
+    flex: 1,
+    height: 4,
+    borderRadius: 4,
+    transition: "background-color 0.2s",
+  },
+  strengthLabel: {
+    fontSize: 11,
+    color: "#718096",
+  },
+  spinner: {
+    display: "inline-block",
+    width: 18,
+    height: 18,
+  },
+  spinnerCircle: {
+    width: "100%",
+    height: "100%",
+    border: "2px solid rgba(255,255,255,0.3)",
+    borderTopColor: "#FFFFFF",
+    borderRadius: "50%",
+    animation: "spin 0.8s linear infinite",
+  },
 };
+
+// Inject keyframes for spinner animation
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin { to { transform: rotate(360deg); } }
+  button:hover, .social-btn:hover { transform: translateY(-1px); }
+`;
+document.head.appendChild(styleSheet);
