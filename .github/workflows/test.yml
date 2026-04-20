@@ -5,6 +5,7 @@ on:
     branches: [ tests ]
   pull_request:
     branches: [ tests ]
+  workflow_dispatch:  # Allows manual trigger
 
 jobs:
   test:
@@ -20,9 +21,16 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install  # Changed from npm ci to avoid lock file issues
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: npm run coverage:all
         env:
           CI: true
+      
+      - name: Upload test coverage (optional)
+        uses: actions/upload-artifact@v4
+        if: always()  # Upload even if tests fail
+        with:
+          name: coverage-report
+          path: coverage/  # If your tests generate a coverage folder
