@@ -14,8 +14,8 @@
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "test": "firebase emulators:exec --only auth \"vitest run\"",
+    "coverage": "firebase emulators:exec --only auth \"vitest run --coverage\""
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.2.0",

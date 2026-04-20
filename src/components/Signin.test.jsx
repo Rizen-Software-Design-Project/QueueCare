@@ -17,36 +17,31 @@ import userEvent from "@testing-library/user-event";
 
 
 //mocks
-vi.mock("firebase/auth", () => {
-  class GoogleAuthProvider {
-    constructor() {
-      this.addScope = vi.fn();
-    }
-  }
+const signInWithPopupSpy = vi.spyOn(
+  await import("firebase/auth"),
+  "signInWithPopup"
+).mockResolvedValue({
+  user: { uid: "123", email: "test@example.com", displayName: "Test User" },
+});
 
-  class FacebookAuthProvider {
-    constructor() {
-      this.addScope = vi.fn();
-    }
-  }
+const signInWithPhoneNumberSpy = vi.spyOn(
+  await import("firebase/auth"),
+  "signInWithPhoneNumber"
+).mockResolvedValue({
+  confirm: vi.fn().mockResolvedValue({
+    user: { uid: "456", email: null, phoneNumber: "+27820000000" },
+  }),
+});
 
-  class RecaptchaVerifier {
-    constructor() {
-      this.render = vi.fn();
-      this.clear = vi.fn();
-    }
-  }
 
+vi.mock("firebase/auth", async (importOriginal) => {
+  const actual = await importOriginal();  // no TypeScript generic
   return {
-    getAuth: vi.fn(() => ({})),
-
-    GoogleAuthProvider,
-    FacebookAuthProvider,
-    RecaptchaVerifier,
-
-    signInWithPopup: vi.fn(),
-
-    signInWithPhoneNumber: vi.fn(),
+    ...actual,
+    RecaptchaVerifier: class {
+      render = vi.fn().mockResolvedValue(undefined);
+      clear  = vi.fn();
+    },
   };
 });
 
@@ -55,18 +50,16 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
 
+
 const signInWithPasswordMock = vi.hoisted(() =>
   vi.fn(() => Promise.resolve({ error: null }))
 );
-
 const signUpWithEmailPassMock = vi.hoisted(() =>
   vi.fn(() => Promise.resolve({ error: null }))
 );
-
 const resendMock = vi.hoisted(() =>
   vi.fn(() => Promise.resolve({ error: null }))
 );
-
 const verifyOtpMock = vi.hoisted(() =>
   vi.fn(() => Promise.resolve({ error: null }))
 );
@@ -75,8 +68,8 @@ const mockQuery = {
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
   ilike: vi.fn().mockReturnThis(),
-  upsert: vi.fn().mockReturnThis(),
-  maybeSingle: vi.fn().mockReturnThis()
+  upsert: vi.fn(() => Promise.resolve({ error: null })),
+  maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
 };
 
 vi.mock("@supabase/supabase-js", () => ({
@@ -86,7 +79,6 @@ vi.mock("@supabase/supabase-js", () => ({
       signUp: signUpWithEmailPassMock,
       resend: resendMock,
       verifyOtp: verifyOtpMock,
-      
       getUser: vi.fn(() =>
         Promise.resolve({
           data: { user: { id: "12345678", email: "test@rizen.com" } },
@@ -97,6 +89,15 @@ vi.mock("@supabase/supabase-js", () => ({
     from: vi.fn(() => mockQuery),
   }),
 }));
+
+
+afterEach(async () => {
+  // Clears all emulator users between tests — prevents state leaking
+  await fetch(
+    "http://127.0.0.1:9099/emulator/v1/projects/demo-test/accounts",
+    { method: "DELETE" }
+  );
+});
 
 
 
