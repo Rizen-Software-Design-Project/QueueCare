@@ -2,9 +2,9 @@ name: Login and Create account frontend tests
 
 on:
   push:
-    branches: [ frontend-tests ]
+    branches: [ tests ]
   pull_request:
-    branches: [frontend-tests ]
+    branches: [ tests ]
 
 jobs:
   test:
