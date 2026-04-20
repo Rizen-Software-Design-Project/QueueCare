@@ -3,6 +3,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
+import "./BookAppointment.css";
+import { addToQueue } from "../queueApi";
 import { FiCalendar, FiCheck, FiClock, FiArrowLeft } from "react-icons/fi";
 
 const supabase = createClient(
@@ -26,6 +28,7 @@ export default function BookAppointment() {
   });
   const [booking, setBooking] = useState(null);
   const [patientId, setPatientId] = useState(null);
+  const [profile,   setProfile]   = useState(null);
 
   useEffect(() => {
     let unsub = null;
@@ -57,7 +60,7 @@ export default function BookAppointment() {
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, email, phone_number")
           .eq("auth_provider", authProvider)
           .eq("provider_user_id", providerUserId)
           .maybeSingle();
@@ -71,6 +74,7 @@ export default function BookAppointment() {
         }
 
         setPatientId(profile.id);
+        setProfile(profile);
       });
     }
 
@@ -148,55 +152,70 @@ export default function BookAppointment() {
     setSelectedSlotId(slotId);
   };
 
-  const handleBook = async () => {
-    if (!selectedSlotId) {
-      setStatus({
-        type: "error",
-        message: "Please select a time slot first.",
-      });
-      return;
+  async function handleBook() {
+  if (!selectedSlotId) {
+    setStatus({
+      type: "error",
+      message: "Please select a time slot first.",
+    });
+    return;
+  }
+
+  if (!reason.trim()) {
+    setStatus({
+      type: "error",
+      message: "Please enter a reason for the appointment.",
+    });
+    return;
+  }
+
+  setStatus({ type: "loading", message: "Booking appointment..." });
+
+  try {
+    // ✅ Step 1: Book appointment
+    const res = await fetch("/appointments/book", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patient_id: patientId,
+        facility_id: Number(clinicId),
+        slot_id: selectedSlotId,
+        reason: reason.trim(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Booking failed.");
     }
 
-    if (!reason.trim()) {
-      setStatus({
-        type: "error",
-        message: "Please enter a reason for the appointment.",
-      });
-      return;
-    }
+    // ✅ Step 2: Update UI
+    setBooking(data.appointment);
+    setStatus({
+      type: "success",
+      message: "Appointment booked successfully",
+    });
 
-    setStatus({ type: "loading", message: "Booking appointment..." });
+    // ✅ Step 3: Add to queue (THIS is your integration)
+    const contactDetails = profile?.email || profile?.phone_number;
 
-    try {
-      const res = await fetch("/appointments/book", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patient_id: patientId,
-          facility_id: Number(clinicId),
-          slot_id: selectedSlotId,
-          reason: reason.trim(),
-        }),
-      });
+    if (contactDetails && clinicId) {
+      const queueResult = await addToQueue(contactDetails, clinicId);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Booking failed.");
+      if (queueResult?.error) {
+        console.warn("Queue add failed:", queueResult.error);
       }
-
-      setBooking(data.appointment);
-      setStatus({
-        type: "success",
-        message: "Appointment booked successfully",
-      });
-    } catch (err) {
-      setStatus({
-        type: "error",
-        message: `Booking failed: ${err.message}`,
-      });
     }
-  };
+
+  } catch (err) {
+    setStatus({
+      type: "error",
+      message: `Booking failed: ${err.message}`,
+    });
+  }
+}
+  
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
