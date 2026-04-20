@@ -13,7 +13,24 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "test": "firebase emulators:exec --only auth \"vitest run\"",
+    "coverage": "firebase emulators:exec --only auth \"vitest run --coverage\"",
+
+    "test:authpage": "firebase emulators:exec --only auth \"vitest run src/components/AuthPage.test.jsx\"",
+    "coverage:authpage": "firebase emulators:exec --only auth \"vitest run --coverage src/components/AuthPage.test.jsx\"",
+
+    "test:dashboard": "firebase emulators:exec --only auth \"vitest run src/components/Dashboard.test.jsx\"",
+    "coverage:dashboard": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Dashboard.test.jsx\"",
+    
+    "coverage:welcome": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Welcome.test.jsx\"",
+    "test:welcome": "firebase emulators:exec --only auth \"vitest run src/components/Welcome.test.jsx\"",
+
+    "test:clinicsearch": "firebase emulators:exec --only auth \"vitest run src/components/Clinic_search.test.jsx\"",
+    "coverage:clinicsearch": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Clinic_search.test.jsx\"",
+
+    "test:all": "firebase emulators:exec --only auth \"vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx\"",
+    "coverage:all": "firebase emulators:exec --only auth \"vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx\""
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
@@ -33,16 +50,23 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.4",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "gh-pages": "^6.1.1",
     "globals": "^17.4.0",
+    "jsdom": "^29.0.2",
     "nodemon": "^3.1.14",
-    "vite": "^8.0.1"
+    "supertest": "^7.2.2",
+    "vite": "^8.0.1",
+    "vitest": "^4.1.4"
   }
 }
