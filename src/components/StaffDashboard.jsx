@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
-import { viewFullQueue, updateQueueStatus } from "../queueAPI";
+import { viewFullQueue, updateQueueStatus } from "../queueApi";
 import "./StaffDashboard.css";
 
 const SUPABASE_URL = "https://vktjtxljwzyakobkkhol.supabase.co";

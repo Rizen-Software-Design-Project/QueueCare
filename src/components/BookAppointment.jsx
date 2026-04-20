@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
-import "./BookAppointment.css";
 import { addToQueue } from "../queueApi";
 import { FiCalendar, FiCheck, FiClock, FiArrowLeft } from "react-icons/fi";
 
