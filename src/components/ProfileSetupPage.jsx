@@ -1,19 +1,6 @@
 /**
- * ProfileSetupPage.jsx
- *
- * Responsibility: Profile completion after auth.
- * This is a STANDALONE PAGE (registered in your router as /profile-setup).
- *
- * It receives { identity, selectedRole } via React Router location.state,
- * which AuthPage.jsx sets before navigating here.
- *
- * Flow:
- *  Patient  →  ProfileStep  →  /dashboard
- *  Staff    →  Applications (apply mode)  →  "pending" screen
- *  Admin    →  ProfileStep  →  AdminOnboardingStep  →  "pending" screen
- *
- * Nothing in this file talks directly to Firebase auth; it uses the identity
- * object (auth_provider + provider_user_id) that AuthPage already resolved.
+ * ProfileSetupPage.jsx – redesigned with #1B5E20 primary color
+ * All original logic preserved, UI/UX completely overhauled.
  */
 
 import { useState, useEffect } from "react";
@@ -21,12 +8,12 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import Applications from "./Applications";
 
-// ── Supabase ────────────────────────────────────────────────────────────────
+// ── Supabase (unchanged) ────────────────────────────────────────────────────
 const SUPABASE_URL  = "https://vktjtxljwzyakobkkhol.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ── Utilities ────────────────────────────────────────────────────────────────
+// ── Utilities (unchanged) ───────────────────────────────────────────────────
 async function sha256Hex(value) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -34,37 +21,35 @@ async function sha256Hex(value) {
 
 function dobFromSAId(id) {
   if (!/^\d{13}$/.test(id)) return null;
-
   const yy = parseInt(id.slice(0, 2), 10);
   const mm = parseInt(id.slice(2, 4), 10);
   const dd = parseInt(id.slice(4, 6), 10);
-
   const yyyy = yy <= 25 ? 2000 + yy : 1900 + yy;
-
   const date = new Date(yyyy, mm - 1, dd);
-  const isValid =
-    date.getFullYear() === yyyy &&
-    date.getMonth() === mm - 1 &&
-    date.getDate() === dd;
-
+  const isValid = date.getFullYear() === yyyy && date.getMonth() === mm - 1 && date.getDate() === dd;
   if (!isValid) return null;
-
   return `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
 }
 
-
-
-// ── Shared micro-components ──────────────────────────────────────────────────
+// ── Shared micro-components (enhanced) ──────────────────────────────────────
 function Err({ msg }) {
   if (!msg) return null;
-  return <p style={s.err}>{msg}</p>;
+  return (
+    <div style={styles.errorContainer}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <span>{msg}</span>
+    </div>
+  );
 }
 
 function BackBtn({ onClick }) {
   return (
-    <button type="button" style={s.backBtn} onClick={onClick}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.5">
+    <button type="button" style={styles.backBtn} onClick={onClick}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
         <polyline points="15 18 9 12 15 6" />
       </svg>
       Back
@@ -74,43 +59,49 @@ function BackBtn({ onClick }) {
 
 function Dots({ step, total = 2 }) {
   return (
-    <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 20 }}>
+    <div style={styles.dotsContainer}>
       {Array.from({ length: total }, (_, i) => (
-        <div key={i} style={{
-          width: i + 1 === step ? 20 : 8, height: 8, borderRadius: 4,
-          background: i + 1 < step ? "#1D9E75" : i + 1 === step ? "#0A0A0A" : "#ddd",
-          transition: "all .25s",
-        }} />
+        <div
+          key={i}
+          style={{
+            ...styles.dot,
+            width: i + 1 === step ? 28 : 8,
+            backgroundColor: i + 1 <= step ? "#1B5E20" : "#E2E8F0",
+            boxShadow: i + 1 === step ? "0 0 0 3px rgba(27,94,32,0.15)" : "none",
+          }}
+        />
       ))}
     </div>
   );
 }
 
 function StrengthBar({ score }) {
-  const colors = ["#E24B4A", "#EF9F27", "#1D9E75", "#0F6E56"];
+  const colors = ["#DC2626", "#F59E0B", "#1B5E20", "#0F3B1A"];
   if (!score) return null;
   return (
-    <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+    <div style={styles.strengthContainer}>
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} style={{
-          flex: 1, height: 3, borderRadius: 2,
-          background: i < score ? colors[score - 1] : "#e2e2e2",
-        }} />
+        <div
+          key={i}
+          style={{
+            ...styles.strengthSegment,
+            backgroundColor: i < score ? colors[score - 1] : "#E2E8F0",
+          }}
+        />
       ))}
     </div>
   );
 }
 
-// ── ProfileStep ──────────────────────────────────────────────────────────────
-/**
- * Collects name, gender, SA ID, optional contact details.
- * Writes to `profiles` (patient) or kicks off admin onboarding.
- * Staff users never reach this component — they go straight to Applications.
- *
- * onComplete(result):
- *   { status: "approved", role: "patient" }        → navigate /dashboard
- *   { status: "admin-onboarding", adminProfile }    → show AdminOnboardingStep
- */
+function LoadingSpinner() {
+  return (
+    <div style={styles.spinner}>
+      <div style={styles.spinnerCircle} />
+    </div>
+  );
+}
+
+// ── ProfileStep (enhanced UI, logic unchanged) ──────────────────────────────
 function ProfileStep({ identity, selectedRole, onComplete }) {
   const [firstName, setFirstName] = useState(identity?.name    || "");
   const [surname,   setSurname]   = useState(identity?.surname  || "");
@@ -134,7 +125,7 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
     const hashed = await sha256Hex(idNumber).catch(() => null);
     if (!hashed) { setError("Could not hash ID. Please try again."); setLoading(false); return; }
 
-    // --- Duplicate-ID check ---
+    // Duplicate ID check
     const { data: existingId } = await supabase
       .from("profiles").select("id, auth_provider, provider_user_id")
       .eq("id_number", hashed).maybeSingle();
@@ -148,35 +139,35 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
     }
 
     const normalizedEmail = (email || identity.email || "").trim().toLowerCase();
-
-    // --- Duplicate-email check ---
     const normalizedPhone = (phone || identity.phone || "").trim();
 
-if (normalizedPhone) {
-  const { data: existingPhone } = await supabase
-    .from("profiles")
-    .select("id, auth_provider, provider_user_id")
-    .eq("phone_number", normalizedPhone)
-    .maybeSingle();
+    if (normalizedPhone) {
+      const { data: existingPhone } = await supabase
+        .from("profiles")
+        .select("id, auth_provider, provider_user_id")
+        .eq("phone_number", normalizedPhone)
+        .maybeSingle();
 
-  if (
-    existingPhone &&
-    !(
-      existingPhone.auth_provider === identity.auth_provider &&
-      existingPhone.provider_user_id === identity.provider_user_id
-    )
-  ) {
-    setError("An account with this phone number already exists.");
-    setLoading(false);
-    return;
-  }
-}
-    const dob = dobFromSAId(idNumber);
-      if (!dob) {
-        setError("The SA ID number does not contain a valid date of birth.");
+      if (
+        existingPhone &&
+        !(
+          existingPhone.auth_provider === identity.auth_provider &&
+          existingPhone.provider_user_id === identity.provider_user_id
+        )
+      ) {
+        setError("An account with this phone number already exists.");
         setLoading(false);
         return;
       }
+    }
+
+    const dob = dobFromSAId(idNumber);
+    if (!dob) {
+      setError("The SA ID number does not contain a valid date of birth.");
+      setLoading(false);
+      return;
+    }
+
     const commonProfile = {
       auth_provider:    identity.auth_provider,
       provider_user_id: identity.provider_user_id,
@@ -189,7 +180,6 @@ if (normalizedPhone) {
       phone_number: normalizedPhone || null,
     };
 
-    // ── Patient: write profile, done ────────────────────────────────────────
     if (selectedRole === "patient") {
       const { error: err } = await supabase.from("profiles").upsert(
         { ...commonProfile, role: "patient" },
@@ -206,7 +196,6 @@ if (normalizedPhone) {
       return;
     }
 
-    // ── Admin: pass profile data to AdminOnboardingStep ─────────────────────
     if (selectedRole === "admin") {
       setLoading(false);
       onComplete({ status: "admin-onboarding", adminProfile: commonProfile });
@@ -220,71 +209,99 @@ if (normalizedPhone) {
   const totalDots = selectedRole === "admin" ? 3 : 2;
 
   return (
-    <div style={s.section}>
+    <div style={styles.section}>
       <Dots step={2} total={totalDots} />
-      <p style={s.title}>Complete your profile</p>
-      <p style={s.sub}>We need a few more details to get you started.</p>
+      <h2 style={styles.title}>Complete your profile</h2>
+      <p style={styles.sub}>We need a few more details to get you started.</p>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+        <div style={styles.twoColumnGrid}>
           <div>
-            <label style={s.label}>First name</label>
-            <input style={s.input} value={firstName} placeholder="Jane"
-              onChange={(e) => setFirstName(e.target.value)} required />
+            <label style={styles.label}>First name</label>
+            <input
+              style={styles.input}
+              value={firstName}
+              placeholder="Jane"
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+            />
           </div>
           <div>
-            <label style={s.label}>Surname</label>
-            <input style={s.input} value={surname} placeholder="Dlamini"
-              onChange={(e) => setSurname(e.target.value)} required />
+            <label style={styles.label}>Surname</label>
+            <input
+              style={styles.input}
+              value={surname}
+              placeholder="Dlamini"
+              onChange={(e) => setSurname(e.target.value)}
+              required
+            />
           </div>
         </div>
 
-        <label style={s.label}>Gender</label>
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        <label style={styles.label}>Gender</label>
+        <div style={styles.pillGroup}>
           {["male", "female", "other"].map((g) => (
-            <button key={g} type="button"
-              style={{ ...s.pill, ...(sex === g ? s.pillActive : {}) }}
-              onClick={() => setSex(g)}>
+            <button
+              key={g}
+              type="button"
+              style={{
+                ...styles.pill,
+                ...(sex === g ? styles.pillActive : {}),
+              }}
+              onClick={() => setSex(g)}
+            >
               {g.charAt(0).toUpperCase() + g.slice(1)}
             </button>
           ))}
         </div>
 
-        <label style={s.label}>SA ID Number</label>
-        <input style={s.input} value={idNumber} maxLength={13} placeholder="13 digits"
-          onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, ""))} required />
-        <p style={s.hint}>Date of birth will be extracted automatically.</p>
+        <label style={styles.label}>SA ID Number</label>
+        <input
+          style={styles.input}
+          value={idNumber}
+          maxLength={13}
+          placeholder="13 digits"
+          onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, ""))}
+          required
+        />
+        <p style={styles.hint}>Date of birth will be extracted automatically.</p>
 
         {!identity?.email && (
           <>
-            <label style={s.label}>Email (optional)</label>
-            <input style={s.input} type="email" value={email} placeholder="jane@example.com"
-              onChange={(e) => setEmail(e.target.value)} />
+            <label style={styles.label}>Email (optional)</label>
+            <input
+              style={styles.input}
+              type="email"
+              value={email}
+              placeholder="jane@example.com"
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </>
         )}
 
         {!identity?.phone && (
           <>
-            <label style={s.label}>Phone (optional)</label>
-            <input style={s.input} type="tel" value={phone} placeholder="0821234567"
-              onChange={(e) => setPhone(e.target.value)} />
+            <label style={styles.label}>Phone (optional)</label>
+            <input
+              style={styles.input}
+              type="tel"
+              value={phone}
+              placeholder="0821234567"
+              onChange={(e) => setPhone(e.target.value)}
+            />
           </>
         )}
 
         <Err msg={error} />
-        <button style={s.primaryBtn} type="submit" disabled={loading}>
-          {loading ? "Saving…" : "Save & continue"}
+        <button style={styles.primaryBtn} type="submit" disabled={loading}>
+          {loading ? <LoadingSpinner /> : "Save & continue"}
         </button>
       </form>
     </div>
   );
 }
 
-// ── AdminOnboardingStep ──────────────────────────────────────────────────────
-/**
- * Collects admin-specific fields and writes a role_application row with
- * requested_role = "admin" and status = "pending".
- */
+// ── AdminOnboardingStep (enhanced UI) ───────────────────────────────────────
 function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
   const [professionalId, setProfessionalId] = useState("");
   const [licenseNumber,  setLicenseNumber]  = useState("");
@@ -304,12 +321,12 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
     if (!professionalId.trim()) { setError("Please enter your employee or admin ID."); return; }
     if (!motivation.trim())     { setError("Please provide a short motivation.");       return; }
     if (!cvUrl.trim()) {
-        setError("Please provide your CV link.");
-        return;
-      }
+      setError("Please provide your CV link.");
+      return;
+    }
+
     setLoading(true);
-    
-    
+
     const { error: err } = await supabase.from("role_applications").upsert(
       {
         auth_provider:    adminProfile.auth_provider,
@@ -340,76 +357,89 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
   }
 
   return (
-    <div style={s.section}>
+    <div style={styles.section}>
       <BackBtn onClick={onBack} />
       <Dots step={3} total={3} />
-      <p style={s.title}>Admin verification</p>
-      <p style={s.sub}>Provide your credentials to request admin access.</p>
+      <h2 style={styles.title}>Admin verification</h2>
+      <p style={styles.sub}>Provide your credentials to request admin access.</p>
 
       <form onSubmit={handleSubmit}>
-        <label style={s.label}>Employee / Admin ID</label>
-        <input style={s.input} value={professionalId}
+        <label style={styles.label}>Employee / Admin ID</label>
+        <input
+          style={styles.input}
+          value={professionalId}
           onChange={(e) => setProfessionalId(e.target.value)}
-          placeholder="Enter your employee ID" required />
+          placeholder="Enter your employee ID"
+          required
+        />
 
-        <label style={s.label}>License Number (optional)</label>
-        <input style={s.input} value={licenseNumber}
+        <label style={styles.label}>License Number (optional)</label>
+        <input
+          style={styles.input}
+          value={licenseNumber}
           onChange={(e) => setLicenseNumber(e.target.value)}
-          placeholder="Professional or license number" />
+          placeholder="Professional or license number"
+        />
 
-        <label style={s.label}>Clinic / Department (optional)</label>
-        <input style={s.input} value={clinicName}
+        <label style={styles.label}>Clinic / Department (optional)</label>
+        <input
+          style={styles.input}
+          value={clinicName}
           onChange={(e) => setClinicName(e.target.value)}
-          placeholder="Clinic or department name" />
+          placeholder="Clinic or department name"
+        />
 
-        <label style={s.label}>CV Link </label>
-        <input style={s.input} value={cvUrl}
+        <label style={styles.label}>CV Link</label>
+        <input
+          style={styles.input}
+          value={cvUrl}
           onChange={(e) => setCvUrl(e.target.value)}
-          placeholder="Paste a link to your CV" />
+          placeholder="Paste a link to your CV"
+        />
 
-        <label style={s.label}>Motivation</label>
-        <textarea style={s.textarea} rows={4} value={motivation}
+        <label style={styles.label}>Motivation</label>
+        <textarea
+          style={styles.textarea}
+          rows={4}
+          value={motivation}
           onChange={(e) => setMotivation(e.target.value)}
-          placeholder="Explain why admin access is needed" required />
+          placeholder="Explain why admin access is needed"
+          required
+        />
 
         <Err msg={error} />
-        <button style={s.primaryBtn} type="submit" disabled={loading}>
-          {loading ? "Submitting…" : "Submit admin application"}
+        <button style={styles.primaryBtn} type="submit" disabled={loading}>
+          {loading ? <LoadingSpinner /> : "Submit admin application"}
         </button>
       </form>
     </div>
   );
 }
 
-// ── ProfileSetupPage (the exported page component) ───────────────────────────
+// ── ProfileSetupPage (main exported component) ──────────────────────────────
 export default function ProfileSetupPage() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
-  // Pull the values AuthPage set before navigating here
   const { identity, selectedRole } = location.state || {};
 
   const [step,             setStep]             = useState(
-    // Staff skip ProfileStep entirely; go straight to the application form
     selectedRole === "staff" ? "staff-application" : "profile"
   );
   const [adminProfile,     setAdminProfile]     = useState(null);
-  
 
-  // Guard: if we land here without state (e.g. direct URL hit), go back
-      useEffect(() => {
-      if (!identity || !selectedRole) {
-        navigate("/signin", { replace: true });
-      }
-    }, [identity, selectedRole, navigate]);
-
+  useEffect(() => {
     if (!identity || !selectedRole) {
-      return null;
+      navigate("/signin", { replace: true });
     }
+  }, [identity, selectedRole, navigate]);
+
+  if (!identity || !selectedRole) {
+    return null;
+  }
 
   function handleProfileComplete(result) {
     if (result?.status === "approved") {
-      // Patient done — straight to dashboard
       navigate("/dashboard");
       return;
     }
@@ -424,26 +454,27 @@ export default function ProfileSetupPage() {
   }
 
   return (
-    <div style={s.root}>
+    <div style={styles.root}>
+      {/* Animated background gradient */}
+      <div style={styles.bgGradient} />
+      <div style={styles.bgBlob} />
+
       {/* Logo */}
-      <div style={s.logo}>
-        <div style={s.logoMark}>
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-            stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <div style={styles.logo}>
+        <div style={styles.logoMark}>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="1.8">
             <path d="M12 2L2 7l10 5 10-5-10-5z"/>
             <path d="M2 17l10 5 10-5"/>
             <path d="M2 12l10 5 10-5"/>
           </svg>
         </div>
         <div>
-          <p style={s.logoName}>MediAccess</p>
-          <p style={s.logoSub}>Integrated Healthcare Management</p>
+          <h1 style={styles.logoName}>MediAccess</h1>
+          <p style={styles.logoSub}>Integrated Healthcare Management</p>
         </div>
       </div>
 
-      <div style={s.card}>
-
-        {/* ── Patient / Admin: collect profile fields ── */}
+      <div style={styles.card}>
         {step === "profile" && (
           <ProfileStep
             identity={identity}
@@ -452,7 +483,6 @@ export default function ProfileSetupPage() {
           />
         )}
 
-        {/* ── Admin: second step — credentials + motivation ── */}
         {step === "admin-onboarding" && (
           <AdminOnboardingStep
             adminProfile={adminProfile}
@@ -461,7 +491,6 @@ export default function ProfileSetupPage() {
           />
         )}
 
-        {/* ── Staff: full application form from Applications.jsx ── */}
         {step === "staff-application" && (
           <Applications
             mode="apply"
@@ -472,73 +501,336 @@ export default function ProfileSetupPage() {
           />
         )}
 
-        {/* ── Post-submission status screens ── */}
         {step === "staff-pending" && (
-          <div style={s.section}>
-            <p style={s.title}>Application submitted</p>
-            <p style={s.sub}>
+          <div style={styles.section}>
+            <div style={styles.successIcon}>✓</div>
+            <h2 style={styles.title}>Application submitted</h2>
+            <p style={styles.sub}>
               Your staff application has been sent to the admin for approval.
               You'll receive a notification once it's reviewed.
             </p>
-            <button style={s.primaryBtn} onClick={() => navigate("/signin")}>
+            <button style={styles.primaryBtn} onClick={() => navigate("/signin")}>
               Back to sign in
             </button>
           </div>
         )}
 
         {step === "admin-pending" && (
-          <div style={s.section}>
-            <p style={s.title}>Admin application submitted</p>
-            <p style={s.sub}>
+          <div style={styles.section}>
+            <div style={styles.successIcon}>✓</div>
+            <h2 style={styles.title}>Admin application submitted</h2>
+            <p style={styles.sub}>
               Your request is pending approval. You'll be able to access the
               admin dashboard once an existing admin has reviewed it.
             </p>
-            <button style={s.primaryBtn} onClick={() => navigate("/signin")}>
+            <button style={styles.primaryBtn} onClick={() => navigate("/signin")}>
               Back to sign in
             </button>
           </div>
         )}
-
       </div>
     </div>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-const s = {
+// ── Enhanced Styles (primary #1B5E20) ───────────────────────────────────────
+const styles = {
   root: {
-    minHeight: "100vh", display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "center",
-    padding: "32px 16px", background: "#F7F6F2",
-    fontFamily: "'DM Sans', system-ui, sans-serif",
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "32px 16px",
+    background: "#F8FAF8",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    position: "relative",
+    overflow: "hidden",
   },
-  logo:     { display: "flex", alignItems: "center", gap: 12, marginBottom: 24 },
-  logoMark: { width: 42, height: 42, borderRadius: 12, background: "#0A0A0A",
-               display: "flex", alignItems: "center", justifyContent: "center" },
-  logoName: { margin: 0, fontSize: 18, fontWeight: 700, color: "#0A0A0A", letterSpacing: "-0.4px" },
-  logoSub:  { margin: 0, fontSize: 11, color: "#888", letterSpacing: "0.2px" },
-  card:     { width: "100%", maxWidth: 420, background: "#fff", borderRadius: 16,
-               border: "1px solid #E8E7E3", boxShadow: "0 2px 12px rgba(0,0,0,.06)", overflow: "hidden" },
-  section:  { padding: "28px 28px 24px" },
-  title:    { margin: "0 0 4px", fontSize: 22, fontWeight: 700, color: "#0A0A0A", letterSpacing: "-0.5px" },
-  sub:      { margin: "0 0 20px", fontSize: 14, color: "#666", lineHeight: 1.5 },
-  label:    { display: "block", fontSize: 12, fontWeight: 600, color: "#444",
-               marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.6px" },
-  input:    { display: "block", width: "100%", boxSizing: "border-box", padding: "10px 12px",
-               borderRadius: 8, border: "1.5px solid #E2E1DC", fontSize: 14, color: "#0A0A0A",
-               background: "#fff", marginBottom: 14, outline: "none" },
-  textarea: { display: "block", width: "100%", boxSizing: "border-box", padding: "10px 12px",
-               borderRadius: 8, border: "1.5px solid #E2E1DC", fontSize: 14, color: "#0A0A0A",
-               background: "#fff", marginBottom: 14, outline: "none", resize: "vertical" },
-  hint:     { margin: "-10px 0 14px", fontSize: 11, color: "#999" },
-  err:      { margin: "0 0 12px", fontSize: 13, color: "#C0392B", background: "#FEF2F2",
-               border: "1px solid #FECACA", borderRadius: 6, padding: "8px 10px" },
-  primaryBtn: { display: "block", width: "100%", padding: "12px", background: "#0A0A0A",
-                 color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
-                 cursor: "pointer", marginBottom: 10 },
-  backBtn:  { display: "flex", alignItems: "center", gap: 4, background: "none", border: "none",
-               cursor: "pointer", color: "#666", fontSize: 13, padding: "0 0 16px", fontWeight: 500 },
-  pill:     { padding: "7px 16px", borderRadius: 20, border: "1.5px solid #E2E1DC",
-               background: "#fff", fontSize: 13, cursor: "pointer", fontWeight: 500, color: "#444" },
-  pillActive: { background: "#0A0A0A", borderColor: "#0A0A0A", color: "#fff" },
+  bgGradient: {
+    position: "absolute",
+    top: "-30%",
+    right: "-10%",
+    width: "500px",
+    height: "500px",
+    borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(27,94,32,0.08) 0%, transparent 70%)",
+    pointerEvents: "none",
+    zIndex: 0,
+  },
+  bgBlob: {
+    position: "absolute",
+    bottom: "-20%",
+    left: "-10%",
+    width: "400px",
+    height: "400px",
+    borderRadius: "50%",
+    background: "radial-gradient(circle, rgba(27,94,32,0.05) 0%, transparent 70%)",
+    pointerEvents: "none",
+    zIndex: 0,
+  },
+  logo: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 32,
+    position: "relative",
+    zIndex: 1,
+  },
+  logoMark: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    background: "#1B5E20",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 8px 20px rgba(27,94,32,0.25)",
+    transition: "transform 0.2s ease",
+  },
+  logoName: {
+    margin: 0,
+    fontSize: 22,
+    fontWeight: 700,
+    background: "linear-gradient(135deg, #1B5E20, #2E7D32)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    letterSpacing: "-0.5px",
+  },
+  logoSub: {
+    margin: 0,
+    fontSize: 12,
+    color: "#558B2F",
+    fontWeight: 500,
+    letterSpacing: "0.3px",
+  },
+  card: {
+    width: "100%",
+    maxWidth: 480,
+    background: "#FFFFFF",
+    borderRadius: 32,
+    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15), 0 0 0 1px rgba(27,94,32,0.05)",
+    overflow: "hidden",
+    position: "relative",
+    zIndex: 1,
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+  },
+  section: {
+    padding: "40px 36px 36px",
+    "@media (max-width: 480px)": {
+      padding: "28px 20px 24px",
+    },
+  },
+  title: {
+    margin: "0 0 8px",
+    fontSize: 28,
+    fontWeight: 700,
+    color: "#1B5E20",
+    letterSpacing: "-0.6px",
+  },
+  sub: {
+    margin: "0 0 28px",
+    fontSize: 15,
+    color: "#5B6E8C",
+    lineHeight: 1.5,
+    fontWeight: 400,
+  },
+  label: {
+    display: "block",
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#1B5E20",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: "0.6px",
+  },
+  input: {
+    display: "block",
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "12px 16px",
+    borderRadius: 14,
+    border: "1.5px solid #E2E8F0",
+    fontSize: 14,
+    color: "#1A202C",
+    background: "#FFFFFF",
+    marginBottom: 16,
+    outline: "none",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit",
+    ":focus": {
+      borderColor: "#1B5E20",
+      boxShadow: "0 0 0 3px rgba(27,94,32,0.1)",
+    },
+  },
+  textarea: {
+    display: "block",
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "12px 16px",
+    borderRadius: 14,
+    border: "1.5px solid #E2E8F0",
+    fontSize: 14,
+    color: "#1A202C",
+    background: "#FFFFFF",
+    marginBottom: 16,
+    outline: "none",
+    resize: "vertical",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit",
+    ":focus": {
+      borderColor: "#1B5E20",
+      boxShadow: "0 0 0 3px rgba(27,94,32,0.1)",
+    },
+  },
+  hint: {
+    margin: "-12px 0 18px",
+    fontSize: 12,
+    color: "#718096",
+    fontWeight: 400,
+  },
+  twoColumnGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 14,
+    marginBottom: 4,
+  },
+  pillGroup: {
+    display: "flex",
+    gap: 12,
+    marginBottom: 20,
+    flexWrap: "wrap",
+  },
+  pill: {
+    padding: "8px 20px",
+    borderRadius: 40,
+    border: "1.5px solid #E2E8F0",
+    background: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    color: "#2D3748",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit",
+    ":hover": {
+      borderColor: "#1B5E20",
+      background: "#F0FDF4",
+    },
+  },
+  pillActive: {
+    background: "#1B5E20",
+    borderColor: "#1B5E20",
+    color: "#FFFFFF",
+    boxShadow: "0 4px 12px rgba(27,94,32,0.25)",
+  },
+  primaryBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    width: "100%",
+    padding: "14px 20px",
+    background: "#1B5E20",
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: 16,
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    boxShadow: "0 4px 12px rgba(27,94,32,0.3)",
+    fontFamily: "inherit",
+    ":hover": {
+      background: "#144C18",
+      transform: "scale(0.98)",
+    },
+    ":disabled": {
+      opacity: 0.6,
+      cursor: "not-allowed",
+      transform: "none",
+    },
+  },
+  backBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    color: "#558B2F",
+    fontSize: 13,
+    fontWeight: 600,
+    padding: "0 0 20px",
+    transition: "color 0.2s ease",
+    fontFamily: "inherit",
+    ":hover": {
+      color: "#1B5E20",
+    },
+  },
+  errorContainer: {
+    margin: "16px 0 20px",
+    fontSize: 13,
+    color: "#C53030",
+    background: "#FFF5F5",
+    border: "1px solid #FED7D7",
+    borderRadius: 14,
+    padding: "10px 14px",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontWeight: 500,
+  },
+  dotsContainer: {
+    display: "flex",
+    gap: 10,
+    justifyContent: "center",
+    marginBottom: 28,
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+  },
+  strengthContainer: {
+    display: "flex",
+    gap: 6,
+    marginTop: -8,
+    marginBottom: 18,
+  },
+  strengthSegment: {
+    flex: 1,
+    height: 4,
+    borderRadius: 4,
+    transition: "background-color 0.2s ease",
+  },
+  spinner: {
+    display: "inline-block",
+    width: 18,
+    height: 18,
+  },
+  spinnerCircle: {
+    width: "100%",
+    height: "100%",
+    border: "2px solid rgba(255,255,255,0.3)",
+    borderTopColor: "#FFFFFF",
+    borderRadius: "50%",
+    animation: "spin 0.8s linear infinite",
+  },
+  successIcon: {
+    fontSize: 52,
+    color: "#1B5E20",
+    margin: "0 0 20px",
+    textAlign: "center",
+    fontWeight: 700,
+    animation: "pulse 0.6s ease-out",
+  },
 };
+
+// Inject keyframes for animations
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  input:focus, textarea:focus, button:focus { outline: none; }
+`;
+document.head.appendChild(styleSheet);
