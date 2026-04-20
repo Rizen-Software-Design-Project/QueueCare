@@ -1,0 +1,81 @@
+{
+  "name": "community-clinic-appointment-and-queue-management-system",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "homepage": "https://Rizen-Software-Design-Project.github.io/QueueCare",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "vite",
+    "dev:backend": "cd \"src/appointment booking\" && node servers/server.js",
+    "start": "cd \"src/appointment booking\" && node servers/server.js",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
+
+    "test:authpage": "vitest run src/components/AuthPage.test.jsx",
+    "coverage:authpage": "vitest run --coverage src/components/AuthPage.test.jsx",
+
+    "test:dashboard": "vitest run src/components/Dashboard.test.jsx",
+    "coverage:dashboard": "vitest run --coverage src/components/Dashboard.test.jsx",
+
+    "coverage:welcome": "vitest run --coverage src/components/Welcome.test.jsx",
+    "test:welcome": "vitest run src/components/Welcome.test.jsx",
+
+    "test:clinicsearch": "vitest run src/components/Clinic_search.test.jsx",
+    "coverage:clinicsearch": "vitest run --coverage src/components/Clinic_search.test.jsx",
+
+    "test:adminclinics": "vitest run src/components/AdminClinics.test.jsx",
+    "coverage:adminclinics": "vitest run --coverage src/components/AdminClinics.test.jsx",
+
+    "test:adminstaff": "vitest run src/components/AdminStaff.test.jsx",
+    "coverage:adminstaff": "vitest run --coverage src/components/AdminStaff.test.jsx",
+
+    "test:applications": "vitest run src/components/Applications.test.jsx",
+    "coverage:applications": "vitest run --coverage src/components/Applications.test.jsx",
+
+
+    "test:all": "vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx",
+    "coverage:all": "vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx"
+
+    
+
+  },
+  "dependencies": {
+    "@fortawesome/free-brands-svg-icons": "^7.2.0",
+    "@fortawesome/free-solid-svg-icons": "^7.2.0",
+    "@fortawesome/react-fontawesome": "^3.3.0",
+    "@supabase/supabase-js": "^2.103.0",
+    "dotenv": "^17.4.2",
+    "firebase": "^12.12.0",
+    "lucide-react": "^1.8.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-icons": "^5.6.0",
+    "react-router-dom": "^7.14.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.4",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "gh-pages": "^6.1.1",
+    "globals": "^17.4.0",
+    "jsdom": "^29.0.2",
+    "supertest": "^7.2.2",
+    "vite": "^8.0.1",
+    "vitest": "^4.1.4"
+  }
+}
