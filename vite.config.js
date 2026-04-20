@@ -7,7 +7,7 @@ export default defineConfig({
   base: '/QueueCare/',  //Remove this line if you want to deploy to azure  change to ./
   test: {
     environment: 'jsdom',
-    setupFiles: './src/tests/setup.js',
+    setupFiles: ["./src/tests/vitest.setup.js"],
     globals: true,
   },
 })
