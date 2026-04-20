@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { configDefaults } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
@@ -28,6 +29,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ["./src/tests/setup.js"],
     globals: true,
-    exclude: ["src/appointment booking/**", "node_modules/**"],
+    exclude: [...configDefaults.exclude, "src/appointment booking/**"],
   },
 });
