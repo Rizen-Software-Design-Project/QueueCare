@@ -1,10 +1,20 @@
-const API_BASE = "";
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+
+//
+// ─────────────────────────────────────────────
+// LIVE QUEUE (virtual_queues)
+// ─────────────────────────────────────────────
+//
 
 export async function addToQueue(contactDetails, facilityId) {
-  const res = await fetch(
-    `${API_BASE}/queue/add_to_queue?contact_details=${encodeURIComponent(contactDetails)}&facility_id=${facilityId}`,
-    { method: "POST" }
-  );
+  const res = await fetch(`${API_BASE}/queue/add_to_queue`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contact_details: contactDetails,
+      facility_id: facilityId,
+    }),
+  });
   return res.json();
 }
 
@@ -15,6 +25,7 @@ export async function getMyQueue(contactDetails, facilityId) {
   return res.json();
 }
 
+// FIX: backend DELETE reads from req.query, not req.body — use query params
 export async function removeFromQueue(contactDetails, facilityId) {
   const res = await fetch(
     `${API_BASE}/queue/remove_queue?contact_details=${encodeURIComponent(contactDetails)}&facility_id=${facilityId}`,
@@ -23,20 +34,64 @@ export async function removeFromQueue(contactDetails, facilityId) {
   return res.json();
 }
 
-export async function viewFullQueue(facilityId) {
+//
+// ─────────────────────────────────────────────
+// HISTORY (queue_entries)
+// ─────────────────────────────────────────────
+//
+
+export async function getQueueHistory(contactDetails, facilityId) {
   const res = await fetch(
-    `${API_BASE}/staff/view_queue?facility_id=${facilityId}`
+    `${API_BASE}/queue/history?contact_details=${encodeURIComponent(contactDetails)}&facility_id=${facilityId}`
   );
   return res.json();
 }
 
-export async function updateQueueStatus(contactDetails, facilityId, status) {
+//
+// ─────────────────────────────────────────────
+// STAFF VIEW (LIVE FULL QUEUE)
+// ─────────────────────────────────────────────
+//
+
+// FIX: was hitting /staff/view_queue which doesn't return position data
+// now correctly hits /queue/full_queue
+export async function viewFullQueue(facilityId) {
   const res = await fetch(
-    `${API_BASE}/queue/queue_status?contact_details=${encodeURIComponent(contactDetails)}&facility_id=${facilityId}&status=${encodeURIComponent(status)}`,
-    { method: "PUT" }
+    `${API_BASE}/queue/full_queue?facility_id=${facilityId}`
   );
   return res.json();
 }
+
+//
+// ─────────────────────────────────────────────
+// STATUS UPDATE (LIVE ONLY)
+// ─────────────────────────────────────────────
+//
+
+// FIX: added API_BASE prefix (was using relative URL which breaks in some envs)
+export async function updateQueueStatus(contactDetails, facilityId, newStatus) {
+  try {
+    const res = await fetch(`${API_BASE}/queue/update_status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contact_details: contactDetails,
+        facility_id: facilityId,
+        status: newStatus,
+      }),
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+//
+// ─────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────
+//
 
 export async function notifyPatient(email, facilityId) {
   const res = await fetch(

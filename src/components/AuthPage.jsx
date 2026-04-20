@@ -2,7 +2,6 @@
  * AuthPage.jsx – redesigned modern authentication flow
  * All original logic preserved, UI/UX completely overhauled.
  */
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
@@ -11,8 +10,9 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   FacebookAuthProvider,
+  GoogleAuthProvider,   // ← add this
 } from "firebase/auth";
-import { auth, googleAuthProvider } from "../firebase";
+import { auth } from "../firebase";
 
 // ── Supabase ────────────────────────────────────────────────────────────────
 const SUPABASE_URL  = "https://vktjtxljwzyakobkkhol.supabase.co";
@@ -21,7 +21,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const facebookProvider = new FacebookAuthProvider();
 facebookProvider.addScope("email");
-
+const googleAuthProvider = new GoogleAuthProvider();
+googleAuthProvider.addScope("email");
+googleAuthProvider.addScope("profile");
 // ── Utilities ────────────────────────────────────────────────────────────────
 function strengthScore(pw) {
   let s = 0;
