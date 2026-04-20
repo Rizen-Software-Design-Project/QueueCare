@@ -75,8 +75,10 @@ const mockQuery = {
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
   ilike: vi.fn().mockReturnThis(),
+  in: vi.fn().mockReturnThis(),
+  order: vi.fn().mockReturnThis(),
   upsert: vi.fn().mockReturnThis(),
-  maybeSingle: vi.fn().mockReturnThis()
+  maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null }))
 };
 
 vi.mock("@supabase/supabase-js", () => ({

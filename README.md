@@ -1,5 +1,7 @@
 # React + Vite
 
+![Tests](https://github.com/Rizen-Software-Design-Project/QueueCare/actions/workflows/test.yml/badge.svg?branch=test-from-sommy)
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -28,5 +28,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ["./src/tests/setup.js"],
     globals: true,
+    exclude: ["src/appointment booking/**", "node_modules/**"],
   },
 });

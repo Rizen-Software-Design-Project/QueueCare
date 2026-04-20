@@ -1,28 +1,47 @@
-name: Login and Create account frontend tests
+name: Run Tests
 
 on:
   push:
-    branches: [ frontend-tests ]
+    branches: ["*"]
   pull_request:
-    branches: [frontend-tests ]
+    branches: [main, booking-sys]
 
 jobs:
-  test:
+  frontend-tests:
+    name: Frontend Tests (Vitest)
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
+          cache: npm
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm run coverage:all
-        env:
-          CI: true
+      - name: Run frontend tests
+        run: npx vitest run --coverage
+
+  backend-tests:
+    name: Backend Tests (Jest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: "src/appointment booking/package-lock.json"
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: "src/appointment booking"
+
+      - name: Run backend tests
+        run: npm test
+        working-directory: "src/appointment booking"

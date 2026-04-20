@@ -740,7 +740,10 @@ const deactivateSlot = async (req, res) => {
             });
         }
 
-        
+        const { error } = await supabase
+            .from('appointment_slots')
+            .update({ is_active: false })
+            .eq('id', slot_id);
 
         if (error) {
             return res.status(400).json({ error: error.message });

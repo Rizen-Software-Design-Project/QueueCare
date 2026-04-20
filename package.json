@@ -14,23 +14,14 @@
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "test": "firebase emulators:exec --only auth \"vitest run\"",
-    "coverage": "firebase emulators:exec --only auth \"vitest run --coverage\"",
-
-    "test:authpage": "firebase emulators:exec --only auth \"vitest run src/components/AuthPage.test.jsx\"",
-    "coverage:authpage": "firebase emulators:exec --only auth \"vitest run --coverage src/components/AuthPage.test.jsx\"",
-
-    "test:dashboard": "firebase emulators:exec --only auth \"vitest run src/components/Dashboard.test.jsx\"",
-    "coverage:dashboard": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Dashboard.test.jsx\"",
-    
-    "coverage:welcome": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Welcome.test.jsx\"",
-    "test:welcome": "firebase emulators:exec --only auth \"vitest run src/components/Welcome.test.jsx\"",
-
-    "test:clinicsearch": "firebase emulators:exec --only auth \"vitest run src/components/Clinic_search.test.jsx\"",
-    "coverage:clinicsearch": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Clinic_search.test.jsx\"",
-
-    "test:all": "firebase emulators:exec --only auth \"vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx\"",
-    "coverage:all": "firebase emulators:exec --only auth \"vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx\""
+    "test": "vitest run --coverage && cd \"src/appointment booking\" && npm test",
+    "test:frontend": "vitest run --coverage",
+    "test:backend": "cd \"src/appointment booking\" && npm test",
+    "coverage": "vitest run --coverage",
+    "test:authpage": "vitest run src/components/AuthPage.test.jsx",
+    "test:dashboard": "vitest run src/components/Dashboard.test.jsx",
+    "test:welcome": "vitest run src/components/Welcome.test.jsx",
+    "test:clinicsearch": "vitest run src/components/Clinic_search.test.jsx"
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
@@ -44,8 +35,8 @@
     "lucide-react": "^1.8.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-icons": "^5.6.0",
     "react-router-dom": "^7.14.0",
-    "react-icons": "^5.6.0" ,
     "resend": "^6.12.0"
   },
   "devDependencies": {

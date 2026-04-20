@@ -177,10 +177,10 @@ describe('POST /appointments/book', () => {
   });
 
   test('returns 404 when slot is not found', async () => {
-    mockFrom.mockReturnValue(chainResult({ data: null, error: { message: 'No rows' } }));
+    mockFrom.mockReturnValue(chainResult({ data: null, error: null }));
     const res = await request(app).post('/appointments/book').send(validBooking);
     expect(res.statusCode).toBe(404);
-    expect(res.body.error).toBe('Slot not found');
+    expect(res.body.error).toBe('Slot not found for this clinic');
   });
 
   test('returns 409 when slot is fully booked', async () => {

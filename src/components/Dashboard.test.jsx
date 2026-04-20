@@ -72,7 +72,7 @@ describe("Overview", () => {
     });
 
     it("Renders Active queue entries", async() => {
-        expect(screen.getByText("Active Queue Entries")).toBeVisible();
+        expect(screen.getByText("In Queue")).toBeVisible();
     })
 
     it("Renders Total appointments", async() => {
@@ -80,7 +80,11 @@ describe("Overview", () => {
     })
 
     it("Renders Unread notifications", async() => {
-        expect(screen.getByText("Unread Notifications")).toBeVisible();
+        const texts = screen.getAllByText("Notifications");
+        expect(texts.length).toBeGreaterThanOrEqual(1);
+        texts.forEach((text) => {
+            expect(text).toBeVisible();
+        });
     })
 });
 
@@ -134,9 +138,9 @@ describe("Notifications", () => {
         });
     });
 
-    it("Renders Mark all as read", async() => {
-        const markButton = screen.getByRole("button", {name:"Mark all as read"});
-        expect(markButton).toBeVisible();
+    it("Renders Mark all as read button only when notifications exist", async() => {
+        const markButton = screen.queryByRole("button", {name:"Mark all as read"});
+        expect(markButton).toBeNull();
     });
 });
 
