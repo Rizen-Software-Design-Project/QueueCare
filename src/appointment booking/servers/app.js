@@ -19,7 +19,7 @@ app.use('/', appointmentRoutes);
 app.use(express.static(distPath));
 
 // Catch-all for React Router — must be after API routes
-app.get('*', (req, res, next) => {
+app.get('/{*splat}', (req, res, next) => {
   res.sendFile(path.join(distPath, 'index.html'), (err) => {
     if (err) next(err);  // pass error to errorHandler, not next route
   });
