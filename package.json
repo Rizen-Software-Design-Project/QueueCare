@@ -14,23 +14,36 @@
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "test": "firebase emulators:exec --only auth \"vitest run\"",
-    "coverage": "firebase emulators:exec --only auth \"vitest run --coverage\"",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage",
 
-    "test:authpage": "firebase emulators:exec --only auth \"vitest run src/components/AuthPage.test.jsx\"",
-    "coverage:authpage": "firebase emulators:exec --only auth \"vitest run --coverage src/components/AuthPage.test.jsx\"",
+    "test:authpage": "vitest run src/components/AuthPage.test.jsx",
+    "coverage:authpage": "vitest run --coverage src/components/AuthPage.test.jsx",
 
-    "test:dashboard": "firebase emulators:exec --only auth \"vitest run src/components/Dashboard.test.jsx\"",
-    "coverage:dashboard": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Dashboard.test.jsx\"",
+    "test:dashboard": "vitest run src/components/Dashboard.test.jsx",
+    "coverage:dashboard": "vitest run --coverage src/components/Dashboard.test.jsx",
+
+    "coverage:welcome": "vitest run --coverage src/components/Welcome.test.jsx",
+    "test:welcome": "vitest run src/components/Welcome.test.jsx",
+
+    "test:clinicsearch": "vitest run src/components/Clinic_search.test.jsx",
+    "coverage:clinicsearch": "vitest run --coverage src/components/Clinic_search.test.jsx",
+
+    "test:adminclinics": "vitest run src/components/AdminClinics.test.jsx",
+    "coverage:adminclinics": "vitest run --coverage src/components/AdminClinics.test.jsx",
+
+    "test:adminstaff": "vitest run src/components/AdminStaff.test.jsx",
+    "coverage:adminstaff": "vitest run --coverage src/components/AdminStaff.test.jsx",
+
+    "test:applications": "vitest run src/components/Applications.test.jsx",
+    "coverage:applications": "vitest run --coverage src/components/Applications.test.jsx",
+
+
+    "test:all": "vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx",
+    "coverage:all": "vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx"
+
     
-    "coverage:welcome": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Welcome.test.jsx\"",
-    "test:welcome": "firebase emulators:exec --only auth \"vitest run src/components/Welcome.test.jsx\"",
 
-    "test:clinicsearch": "firebase emulators:exec --only auth \"vitest run src/components/Clinic_search.test.jsx\"",
-    "coverage:clinicsearch": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Clinic_search.test.jsx\"",
-
-    "test:all": "firebase emulators:exec --only auth \"vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx\"",
-    "coverage:all": "firebase emulators:exec --only auth \"vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx\""
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
