@@ -1,0 +1,14 @@
+name: Simple Test
+
+on:
+  push:
+    branches: [ tests ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Tests are running!"
+      - run: node --version
+      - run: npm --version
