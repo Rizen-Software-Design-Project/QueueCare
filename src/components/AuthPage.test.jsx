@@ -1,6 +1,6 @@
 import {render, screen, waitFor} from "@testing-library/react";
 import {describe, it, expect, vi, beforeEach } from "vitest";
-import Signin from "./Signin";
+import AuthPage from "./AuthPage";
 import {signInWithEmailAndPassword, signInWithPopup, signInWithPhoneNumber} from "firebase/auth";
 import userEvent from "@testing-library/user-event";
 
@@ -328,7 +328,7 @@ async function backButtonClicked(){
 //navigate to page ...
 async function navigateToEmailSignIn(){
   const user = userEvent.setup();
-  render(<Signin />);
+  render(<AuthPage/>);
   
   const emailButton = screen.getByRole("button", { name: "Continue with Email" });
   await user.click(emailButton);
@@ -338,7 +338,7 @@ async function navigateToEmailSignIn(){
 
 async function navigateToEmailCreateAccount(){
   const user = userEvent.setup();
-  render(<Signin/>);
+  render(<AuthPage/>);
     
   const emailButton = screen.getByRole("button", {name:"Continue with Email"});
   await user.click(emailButton);
@@ -351,7 +351,7 @@ async function navigateToEmailCreateAccount(){
 
 async function navigateToPhoneSignIn(){
   const user = userEvent.setup();
-  render(<Signin/>);
+  render(<AuthPage/>);
   
   const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
   await user.click(phoneButton);
@@ -447,7 +447,7 @@ async function fillSubmitCompleteProfile() {
 //Sign in -> Continue with Google, Continue with Facebook... PAGE
 describe("Sign in - Welcome PAGE", () => {
   beforeEach(async() => {
-    render(<Signin/>);
+    render(<AuthPage/>);
   });
 
   openSignInWelcomePage();
@@ -456,7 +456,7 @@ describe("Sign in - Welcome PAGE", () => {
 describe("Continue with Google button clicked", () => {
   it("Triggers Firebase", async() => {
     const user = userEvent.setup();
-    render(<Signin/>);
+    render(<AuthPage/>);
 
     const googleButton = screen.getByRole("button" , {name:"Continue with Google"});
     await user.click(googleButton);
@@ -472,7 +472,7 @@ describe("Continue with Google button clicked", () => {
 describe("Continue with Facebook button clicked", () => {
   it("Triggers Firebase", async() => {
     const user = userEvent.setup();
-    render(<Signin/>);
+    render(<AuthPage/>);
 
     const facebookButton = screen.getByRole("button" , {name:"Continue with Facebook"});
     await user.click(facebookButton);
@@ -488,7 +488,7 @@ describe("Continue with Facebook button clicked", () => {
 describe("Continue with Email button clicked", () => {
   beforeEach(async() => {
     const user = userEvent.setup();
-    render(<Signin/>);
+    render(<AuthPage/>);
 
     const emailButton = screen.getByRole("button" , {name:"Continue with Email"});
     await user.click(emailButton);
@@ -500,7 +500,7 @@ describe("Continue with Email button clicked", () => {
 describe("Continue with Phone button clicked", () => {
   beforeEach(async() => {
     const user = userEvent.setup();
-    render(<Signin/>);
+    render(<AuthPage/>);
 
     const continueWithPhoneButton = screen.getByRole("button", {name: "Continue with Phone"});
     await user.click(continueWithPhoneButton);
@@ -675,7 +675,7 @@ describe("Back button clicked from Phone OTP page", () => {
 // describe("Verify button clicked", () => {
 //   beforeEach(async() => { 
 //     const user = userEvent.setup();
-//     render(<Signin/>);
+//     render(<AuthPage/>);
 
 //     const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
 //     await user.click(phoneButton);

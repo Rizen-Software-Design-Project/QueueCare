@@ -15,7 +15,16 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "test": "firebase emulators:exec --only auth \"vitest run\"",
-    "coverage": "firebase emulators:exec --only auth \"vitest run --coverage\""
+    "coverage": "firebase emulators:exec --only auth \"vitest run --coverage\"",
+
+    "test:authpage": "firebase emulators:exec --only auth \"vitest run src/components/AuthPage.test.jsx\"",
+    "coverage:authpage": "firebase emulators:exec --only auth \"vitest run --coverage src/components/AuthPage.test.jsx\"",
+
+    "test:dashboard": "firebase emulators:exec --only auth \"vitest run src/components/Dashboard.test.jsx\"",
+    "coverage:dashboard": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Dashboard.test.jsx\"",
+    
+    "coverage:welcome": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Welcome.test.jsx\"",
+    "test:welcome": "firebase emulators:exec --only auth \"vitest run src/components/Welcome.test.jsx\""
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
