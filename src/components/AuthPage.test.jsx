@@ -76,6 +76,8 @@ const mockQuery = {
   eq: vi.fn().mockReturnThis(),
   ilike: vi.fn().mockReturnThis(),
   upsert: vi.fn().mockReturnThis(),
+  in: vi.fn().mockReturnThis(),        // ← ADD THIS LINE
+  order: vi.fn().mockReturnThis(),     // ← ADD THIS LINE (you might need it too)
   maybeSingle: vi.fn().mockReturnThis()
 };
 
