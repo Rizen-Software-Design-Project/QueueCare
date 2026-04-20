@@ -1,4 +1,4 @@
-const API_BASE = "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
+const API_BASE = "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net" || "http://localhost:5000";
 
 //
 // ─────────────────────────────────────────────
