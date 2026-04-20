@@ -23,6 +23,6 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm run coverage src/components/Welcome.test.jsx src/components/Signin.test.jsx
+        run: npm run coverage:all
         env:
           CI: true

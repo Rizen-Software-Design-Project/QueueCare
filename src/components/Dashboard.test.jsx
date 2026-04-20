@@ -4,10 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import Dashboard from "./Dashboard";
 
-
-
-
-
 const mockPatientProfile = {
     id: "profile-123",
     name: "John",
@@ -17,9 +13,6 @@ const mockPatientProfile = {
     role: "patient",
     dob: "1990-01-01",
 }
-
-
-
 
 vi.mock("../firebase", () => ({
     auth: { currentUser: null },
@@ -44,7 +37,7 @@ vi.mock("@supabase/supabase-js", () => ({
         auth: {
             getUser: vi.fn(() => Promise.resolve({ data: { user: { id: "supabase-user-123" } } })),
             signOut: vi.fn(() => Promise.resolve()),
-            },
+        },
         from: vi.fn(() => mockSupabaseQuery),
     })),
 }));
@@ -58,9 +51,10 @@ vi.mock("react-router-dom", async () => {
 
 
 
+
 describe("Overview", () => {
     beforeEach(async() => {
-        render(<Dashboard/>);
+        render(<Dashboard />);
     });
 
     it("Renders Overview", async() => {
@@ -90,11 +84,10 @@ describe("Overview", () => {
     })
 });
 
-
 describe("Appointments", () => {
     beforeEach(async() => {
         const user = userEvent.setup();
-        render(<Dashboard/>);
+        render(<Dashboard />);
 
         const appointmentsButton = screen.getByRole("button", { name: /appointments/i });
         await user.click(appointmentsButton);
@@ -111,7 +104,7 @@ describe("Appointments", () => {
 describe("My Queue", () => {
     beforeEach(async() => {
         const user = userEvent.setup();
-        render(<Dashboard/>);
+        render(<Dashboard />);
 
         const myQueueButton = screen.getByRole("button", { name: /my queue/i });
         await user.click(myQueueButton);
@@ -128,7 +121,7 @@ describe("My Queue", () => {
 describe("Notifications", () => {
     beforeEach(async() => {
         const user = userEvent.setup();
-        render(<Dashboard/>);
+        render(<Dashboard />);
 
         const notificationButton = screen.getByRole("button", { name: /notifications/i });
         await user.click(notificationButton);
@@ -150,7 +143,7 @@ describe("Notifications", () => {
 describe("Profile", () => {
     beforeEach(async() => {
         const user = userEvent.setup();
-        render(<Dashboard/>);
+        render(<Dashboard />);
 
         const profileButton = screen.getByRole("button", { name: /profile/i });
         await user.click(profileButton);
@@ -178,11 +171,10 @@ describe("Profile", () => {
     });
 });
 
-
 describe("Service policy", () => {
     beforeEach(async() => {
         const user = userEvent.setup();
-        render(<Dashboard/>);
+        render(<Dashboard />);
 
         const policyButton = screen.getByRole("button", { name: /service policy/i });
         await user.click(policyButton);
@@ -196,11 +188,10 @@ describe("Service policy", () => {
     });
 });
 
-
 describe("Settings", () => {
     beforeEach(async() => {
         const user = userEvent.setup();
-        render(<Dashboard/>);
+        render(<Dashboard />);
 
         const settingsButton = screen.getByRole("button", { name: /settings/i });
         await user.click(settingsButton);
@@ -214,11 +205,10 @@ describe("Settings", () => {
     });
 });
 
-
 describe("Click Edit profile", () => {
     beforeEach(async() => {
         const user = userEvent.setup();
-        render(<Dashboard/>);
+        render(<Dashboard />);
 
         const profileButton = screen.getByRole("button", { name: /profile/i });
         await user.click(profileButton);
@@ -251,7 +241,7 @@ describe("Click Edit profile", () => {
 describe("Cancel clicked", () => {
     beforeEach(async() => {
         const user = userEvent.setup();
-        render(<Dashboard/>);
+        render(<Dashboard />);
 
         const profileButton = screen.getByRole("button", { name: /profile/i });
         await user.click(profileButton);
@@ -285,55 +275,162 @@ describe("Cancel clicked", () => {
     });
 });
 
-// describe("Save Clicked", () => {
-//     beforeEach(async() => {
-//         const user = userEvent.setup();
-//         render(<Dashboard/>);
 
-//         const profileButton = screen.getByRole("button", { name: /profile/i });
-//         await user.click(profileButton);
+describe("Dashboard, Sidebar Navigation Buttons", () => {
+    beforeEach(async() => {
+        render(<Dashboard />);
+    });
 
-//         const editProfileButton = screen.getByRole("button", { name: "Edit Profile"});
-//         await user.click(editProfileButton);
+    it("Renders all patient navigation buttons", async() => {
+        const expectedButtons = [
+            "Overview",
+            "Appointments",
+            "My Queue",
+            "Notifications",
+            "Profile",
+            "Find a Clinic",
+            "Service Policy",
+            "Settings"
+        ];
 
-//         const name = screen.getByPlaceholderText("First name");
-//         const surname = screen.getByPlaceholderText("Surname");
-//         const phoneNumber = screen.getByPlaceholderText("Phone number");
-//         const date = screen.getByPlaceholderText("Date of Birth");
+        for (const buttonName of expectedButtons) {
+            const button = screen.getByRole("button", { name: new RegExp(buttonName, "i") });
+            expect(button).toBeVisible();
+        }
+    });
+
+    it("Renders Logout button", async() => {
+        const logoutButton = screen.getByRole("button", { name: /logout/i });
+        expect(logoutButton).toBeVisible();
+    });
+
+    it("Renders QueueCare brand in sidebar", async() => {
+        const brand = screen.getByText("QueueCare");
+        expect(brand).toBeVisible();
+    });
+});
+
+
+describe("Dashboard Tab Switching", () => {
+    beforeEach(async() => {
+        render(<Dashboard />);
+    });
+
+    it("Switches to Appointments tab when clicked", async() => {
+        const user = userEvent.setup();
+        const appointmentsButton = screen.getByRole("button", { name: /appointments/i });
+        await user.click(appointmentsButton);
         
-//         user.type(name, "abc");
-//         user.type(surname, "xyz");
-//         user.type(phoneNumber, "0820000000");
-//         user.type(date, "1990-01-01")
+        const topBarTexts = screen.getAllByText("Appointments");
+        expect(topBarTexts[0]).toBeVisible();
+    });
 
-//         const saveButton = screen.getByRole("button", { name: /save/i });
-//         await user.click(saveButton);
+    it("Switches to My Queue tab when clicked", async() => {
+        const user = userEvent.setup();
+        const queueButton = screen.getByRole("button", { name: /my queue/i });
+        await user.click(queueButton);
+        
+        const topBarTexts = screen.getAllByText("My Queue");
+        expect(topBarTexts[0]).toBeVisible();
+    });
 
-//         await waitFor(() => {
-//             expect
-//         });
-//     });
+    it("Switches to Notifications tab when clicked", async() => {
+        const user = userEvent.setup();
+        const notificationsButton = screen.getByRole("button", { name: /notifications/i });
+        await user.click(notificationsButton);
+        
+        const topBarTexts = screen.getAllByText("Notifications");
+        expect(topBarTexts[0]).toBeVisible();
+    });
 
-//     it("Renders Name", async() => {
-//         expect(screen.getByText("Name:")).toBeVisible();
-//     });
-//     it("Renders Email", async() => {
-//         expect(screen.getByText("Email:")).toBeVisible();
-//     });
-//     it("Renders Phone", async() => {
-//         expect(screen.getByText("Phone:")).toBeVisible();
-//     });
-//     it("Renders Date of Birth", async() => {
-//         expect(screen.getByText("Date of Birth:")).toBeVisible();
-//     });
-//     it("Renders Role", async() => {
-//         expect(screen.getByText("Role:")).toBeVisible();
-//     });
+    it("Switches to Profile tab when clicked", async() => {
+        const user = userEvent.setup();
+        const profileButton = screen.getByRole("button", { name: /profile/i });
+        await user.click(profileButton);
+        
+        const topBarTexts = screen.getAllByText("Profile");
+        expect(topBarTexts[0]).toBeVisible();
+    });
 
-//     it("Renders Edit profile", async() => {
-//         const editProfileButton = screen.getByRole("button", { name: "Edit Profile"});
-//         expect(editProfileButton).toBeVisible();
-//     });
-// });
+    it("Switches to Service Policy tab when clicked", async() => {
+        const user = userEvent.setup();
+        const policyButton = screen.getByRole("button", { name: /service policy/i });
+        await user.click(policyButton);
+        
+        const topBarTexts = screen.getAllByText("Service Policy");
+        expect(topBarTexts[0]).toBeVisible();
+    });
+
+    it("Switches to Settings tab when clicked", async() => {
+        const user = userEvent.setup();
+        const settingsButton = screen.getByRole("button", { name: /settings/i });
+        await user.click(settingsButton);
+        
+        const topBarTexts = screen.getAllByText("Settings");
+        expect(topBarTexts[0]).toBeVisible();
+    });
+});
 
 
+describe("Dashboard Edit Profile Form Validation", () => {
+    beforeEach(async() => {
+        const user = userEvent.setup();
+        render(<Dashboard />);
+
+        const profileButton = screen.getByRole("button", { name: /profile/i });
+        await user.click(profileButton);
+
+        const editProfileButton = screen.getByRole("button", { name: /Edit profile/i });
+        await user.click(editProfileButton);
+    });
+
+    it("Allows typing in First name field", async() => {
+        const user = userEvent.setup();
+        const firstNameInput = screen.getByPlaceholderText("First name");
+        await user.type(firstNameInput, "Test");
+        expect(firstNameInput).toHaveValue("Test");
+    });
+
+    it("Allows typing in Surname field", async() => {
+        const user = userEvent.setup();
+        const surnameInput = screen.getByPlaceholderText("Surname");
+        await user.type(surnameInput, "User");
+        expect(surnameInput).toHaveValue("User");
+    });
+
+    it("Allows typing in Phone number field", async() => {
+        const user = userEvent.setup();
+        const phoneInput = screen.getByPlaceholderText("Phone number");
+        await user.type(phoneInput, "0821234567");
+        expect(phoneInput).toHaveValue("0821234567");
+    });
+
+    it("Allows selecting date in Date of Birth field", async() => {
+        const user = userEvent.setup();
+        const dobInput = screen.getByPlaceholderText("Date of Birth");
+        await user.type(dobInput, "1990-01-01");
+        expect(dobInput).toHaveValue("1990-01-01");
+    });
+});
+
+describe("Dashboard - Find a Clinic Navigation", () => {
+    it("Find a Clinic button exists and is clickable", async() => {
+        const user = userEvent.setup();
+        render(<Dashboard />);
+        
+        const findClinicButton = screen.getByRole("button", { name: /find a clinic/i });
+        expect(findClinicButton).toBeVisible();
+        await user.click(findClinicButton);
+    });
+});
+
+describe("Dashboard Sidebar Visibility", () => {
+    beforeEach(async() => {
+        render(<Dashboard />);
+    });
+
+    it("Sidebar is visible", async() => {
+        const sidebar = document.querySelector(".db-sidebar");
+        expect(sidebar).toBeVisible();
+    });
+});

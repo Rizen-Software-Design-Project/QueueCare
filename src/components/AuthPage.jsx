@@ -139,6 +139,7 @@ const OtpInput = ({ value, onChange }) => {
       {value.map((digit, idx) => (
         <input
           key={idx}
+          data-testid={`otp-input-${idx}`} // To help with testing
           ref={(el) => (inputsRef.current[idx] = el)}
           type="text"
           inputMode="numeric"

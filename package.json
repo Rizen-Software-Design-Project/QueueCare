@@ -27,8 +27,10 @@
     "test:welcome": "firebase emulators:exec --only auth \"vitest run src/components/Welcome.test.jsx\"",
 
     "test:clinicsearch": "firebase emulators:exec --only auth \"vitest run src/components/Clinic_search.test.jsx\"",
-    "coverage:clinicsearch": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Clinic_search.test.jsx\""
+    "coverage:clinicsearch": "firebase emulators:exec --only auth \"vitest run --coverage src/components/Clinic_search.test.jsx\"",
 
+    "test:all": "firebase emulators:exec --only auth \"vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx\"",
+    "coverage:all": "firebase emulators:exec --only auth \"vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx\""
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
