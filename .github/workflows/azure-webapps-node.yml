@@ -44,7 +44,7 @@ jobs:
           cp package.json deploy/
           cp package-lock.json deploy/
           cp .env deploy/ 2>/dev/null || true
-          cp web.config deploy/ 2>/dev/null || true
+          cp web.config deploy/ 
           
           echo "Deployment ready:"
           ls -la deploy/

@@ -30,7 +30,7 @@ app.use('/staff', staffRoutes);
 app.use(express.static(path.join(__dirname, '../../..', 'dist')));
 
 // Catch-all for React routing (BEFORE error handlers)
-app.get('*', (req, res) => {
+app.all(/.*/, (req, res) => {
   const indexPath = path.join(__dirname, '../../..', 'dist', 'index.html');
   
   if (!fs.existsSync(indexPath)) {
@@ -39,6 +39,8 @@ app.get('*', (req, res) => {
   
   res.sendFile(indexPath);
 });
+  
+
 
 app.use(notFound);
 app.use(errorHandler);
