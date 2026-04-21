@@ -1,7 +1,8 @@
 import env from 'dotenv';
 env.config();
 
-import app from './servers/app.js'; 
+import app from './src/appointment-booking/servers/app.js';
+ 
 
 const port = process.env.PORT || 3000;
 

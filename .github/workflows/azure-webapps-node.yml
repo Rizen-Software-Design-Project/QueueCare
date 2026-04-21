@@ -26,47 +26,30 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install frontend dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Build frontend
         run: npm run build
 
-      - name: Install backend dependencies
-        working-directory: "src/appointment booking"
-        run: npm ci --omit=dev
-
-      - name: Prepare deployment package
+      - name: Create deployment package
         run: |
-          # Create deployment directory
-          mkdir -p deploy/server
+          # Create deploy directory
+          mkdir -p deploy
           
-          # Copy built frontend
-          cp -r dist deploy/dist
+          # Copy everything needed
+          cp -r dist deploy/
+          cp -r src deploy/
+          cp server.js deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp .env deploy/ 2>/dev/null || true
+          cp web.config deploy/ 2>/dev/null || true
           
-          # Copy ALL backend files from src/appointment booking
-          cp -r "src/appointment booking"/* deploy/server/
-          
-          # Copy any additional backend files if they exist at root level
-          cp -r routes deploy/server/routes 2>/dev/null || true
-          cp -r middleware deploy/server/middleware 2>/dev/null || true
-          cp server.js deploy/server.js 2>/dev/null || true
-          cp app.js deploy/app.js 2>/dev/null || true
-          
-          # Copy configuration files
-          cp package.json deploy/ 2>/dev/null || true
-          cp deploy-web.config deploy/web.config 2>/dev/null || true
-          cp deploy-entry.js deploy/server.js 2>/dev/null || true
-          
-          # Add deployment timestamp
-          echo "// deployed $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> deploy/server.js
-          
-          # List deployment contents for debugging
-          echo "Deployment package contents:"
+          echo "Deployment ready:"
           ls -la deploy/
-          ls -la deploy/server/
 
-      - name: Upload deployment artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
@@ -95,4 +78,4 @@ jobs:
           package: .
 
       - name: Restart App Service
-        run: az webapp restart --name $AZURE_WEBAPP_NAME --resource-group $AZURE_RESOURCE_GROUP
+        run: az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
