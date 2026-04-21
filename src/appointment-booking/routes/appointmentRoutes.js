@@ -868,17 +868,17 @@ const remindPatientsOfUpcomingAppointments = async (req, res) => {
 };
 
 
-router.get('/appointments/:id',                         getAppointmentById);
-router.get('/appointments/my/:patient_id',              getMyAppointments);
+router.get('/:id',                         getAppointmentById);
+router.get('/my/:patient_id',              getMyAppointments);
 router.post('/slots/available',                         getAvailableSlots);
-router.post('/appointments/book',                       bookAppointment);
-router.patch('/appointments/:appointment_id/cancel',    cancelAppointment);
-router.patch('/appointments/:appointment_id/reschedule', rescheduleAppointment);
+router.post('/book',                                    bookAppointment);
+router.patch('/:appointment_id/cancel',    cancelAppointment);
+router.patch('/:appointment_id/reschedule', rescheduleAppointment);
 router.post('/queue/walk-in',                           joinWalkInQueue);
 
 
-router.post('/appointments/send-confirmation',          sendConfirmationEmail);
-router.post('/appointments/remind',                     remindPatientsOfUpcomingAppointments);
+router.post('/send-confirmation',          sendConfirmationEmail);
+router.post('/remind',                     remindPatientsOfUpcomingAppointments);
 
 
 router.get('/staff/appointments',                       getAppointmentsForFacility);
