@@ -13,7 +13,7 @@ async function sendEmail(to, text) {
   });
 }
 
-router.get('/notify_patient', async (req, res) => {
+/*router.get('/notify_patient', async (req, res) => {
   const { email, facility_id } = req.query;
   if (!email || !facility_id)
     return res.status(400).json({ error: "Missing email or facility_id" });
@@ -46,5 +46,5 @@ router.get('/notify_patient', async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-
+*/
 export default router;
