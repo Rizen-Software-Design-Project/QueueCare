@@ -16,32 +16,45 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(cors());
 app.use(express.json());
 
-// Health check
+// =====================
+// HEALTH CHECK
+// =====================
 app.get('/health', (req, res) => {
   res.json({ status: 'API is running' });
 });
 
-// API routes
+// =====================
+// API ROUTES (IMPORTANT: must come BEFORE frontend catch-all)
+// =====================
 app.use('/appointments', appointmentRoutes);
 app.use('/queue', queueRoutes);
 app.use('/staff', staffRoutes);
 
-// Serve static React build
-app.use(express.static(path.join(__dirname, '../../..', 'dist')));
+// =====================
+// SERVE FRONTEND (React build)
+// =====================
+const distPath = path.join(__dirname, '../../..', 'dist');
 
-// Catch-all for React routing (BEFORE error handlers)
-app.all(/.*/, (req, res) => {
-  const indexPath = path.join(__dirname, '../../..', 'dist', 'index.html');
-  
-  if (!fs.existsSync(indexPath)) {
-    return res.status(404).json({ error: 'Frontend not found' });
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+}
+
+// =====================
+// React ROUTE HANDLER (ONLY for non-API routes)
+// =====================
+app.get(/^\/(?!api|appointments|queue|staff).*/, (req, res) => {
+  const indexPath = path.join(distPath, 'index.html');
+
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ error: 'Frontend build not found' });
   }
-  
-  res.sendFile(indexPath);
 });
-  
 
-
+// =====================
+// ERROR HANDLERS (must be last)
+// =====================
 app.use(notFound);
 app.use(errorHandler);
 
