@@ -26,34 +26,22 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      # Install ALL dependencies (frontend + backend)
       - name: Install dependencies
         run: npm ci
 
+      # Build React frontend (Vite)
       - name: Build frontend
         run: npm run build
 
-      - name: Create deployment package
-        run: |
-          # Create deploy directory
-          mkdir -p deploy
-          
-          # Copy everything needed
-          cp -r dist deploy/
-          cp -r src deploy/
-          cp server.js deploy/
-          cp package.json deploy/
-          cp package-lock.json deploy/
-          cp .env deploy/ 2>/dev/null || true
-          cp web.config deploy/ 
-          
-          echo "Deployment ready:"
-          ls -la deploy/
+      # IMPORTANT: remove manual deploy folder (it breaks Azure)
+      # We deploy the full project instead
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: deploy/
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -71,11 +59,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Deploy entire app correctly (NO custom folder)
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: .
 
+      # Restart ensures fresh deployment
       - name: Restart App Service
         run: az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
