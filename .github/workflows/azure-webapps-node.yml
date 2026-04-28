@@ -20,7 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # CLEAN INSTALL (no cache issues)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -32,23 +31,17 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      # CLEAN PACKAGE (THIS FIXES YOUR ERROR)
-      - name: Create clean deployment package
+      # Create clean deploy folder
+      - name: Create deployment package
         run: |
           mkdir deploy
-
-          # backend only essentials
           cp server.js deploy/
           cp package.json deploy/
           cp package-lock.json deploy/
           cp -r src deploy/
-
-          # frontend build output
           cp -r dist deploy/
 
-          echo "Clean deploy contents:"
-          ls -la deploy
-
+      # IMPORTANT: upload artifact correctly
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -64,19 +57,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app
-          path: .
+          path: app
 
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # IMPORTANT FIX: deploy ONLY clean folder
+      # FIX: point to correct folder
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: deploy
+          package: app
 
       - name: Restart App Service
         run: az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
