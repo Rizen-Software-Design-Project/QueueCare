@@ -10,7 +10,9 @@ const SUPABASE_KEY =
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // FIX: use API_BASE consistently for all fetch calls
-const API_BASE = "http://localhost:5000";
+
+const API_BASE = import.meta.env.VITE_API_BASE 
+  || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
 
 const STATUS_OPTIONS = ["booked", "complete", "cancelled"];
 
