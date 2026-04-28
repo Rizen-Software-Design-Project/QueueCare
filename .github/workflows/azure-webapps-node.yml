@@ -44,6 +44,7 @@ jobs:
           cp web.config deploy/  
           # ONLY production-needed files
           cp -r dist deploy/
+          cp -r src deploy/    
 
           echo "Deploy contents:"
           ls -R deploy
