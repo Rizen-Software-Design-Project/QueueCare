@@ -868,9 +868,10 @@ const remindPatientsOfUpcomingAppointments = async (req, res) => {
 };
 
 
-router.get('/:id',                         getAppointmentById);
+
 router.get('/my/:patient_id',              getMyAppointments);
 router.post('/slots/available',                         getAvailableSlots);
+router.get('/:id',                         getAppointmentById);
 router.post('/book',                                    bookAppointment);
 router.patch('/:appointment_id/cancel',    cancelAppointment);
 router.patch('/:appointment_id/reschedule', rescheduleAppointment);
