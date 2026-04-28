@@ -41,18 +41,22 @@ jobs:
           cp server.js deploy/
           cp package.json deploy/
           cp package-lock.json deploy/
-
+          cp web.config deploy/  
           # ONLY production-needed files
           cp -r dist deploy/
 
           echo "Deploy contents:"
           ls -R deploy
-
+      - name: Install production dependencies in deploy folder
+        run: |
+          cd deploy
+          npm ci --omit=dev
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
           path: deploy
+      
 
   deploy:
     runs-on: ubuntu-latest
