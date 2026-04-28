@@ -10,6 +10,9 @@ const supabase = createClient(
   "https://vktjtxljwzyakobkkhol.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA"
 );
+const API_BASE = import.meta.env.VITE_API_BASE 
+  || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
+
 
 export default function BookAppointment() {
   const [searchParams] = useSearchParams();
@@ -172,7 +175,7 @@ export default function BookAppointment() {
 
   try {
     // ✅ Step 1: Book appointment
-    const res = await fetch("/appointments/book", {
+    const res = await fetch(`${API_BASE}/appointments/book`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
