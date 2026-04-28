@@ -20,28 +20,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # CLEAN INSTALL (no cache issues)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
-      # Install ALL dependencies (frontend + backend)
       - name: Install dependencies
         run: npm ci
 
-      # Build React frontend (Vite)
       - name: Build frontend
         run: npm run build
 
-      # IMPORTANT: remove manual deploy folder (it breaks Azure)
-      # We deploy the full project instead
+      # CLEAN PACKAGE (THIS FIXES YOUR ERROR)
+      - name: Create clean deployment package
+        run: |
+          mkdir deploy
+
+          # backend only essentials
+          cp server.js deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp -r src deploy/
+
+          # frontend build output
+          cp -r dist deploy/
+
+          echo "Clean deploy contents:"
+          ls -la deploy
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: .
+          path: deploy
 
   deploy:
     runs-on: ubuntu-latest
@@ -59,13 +71,12 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Deploy entire app correctly (NO custom folder)
+      # IMPORTANT FIX: deploy ONLY clean folder
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: .
+          package: deploy
 
-      # Restart ensures fresh deployment
       - name: Restart App Service
         run: az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
