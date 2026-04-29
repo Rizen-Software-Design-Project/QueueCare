@@ -7,7 +7,7 @@ import BookAppointment  from "./components/BookAppointment";
 import AuthPage         from "./components/AuthPage.jsx";
 import ProfileSetupPage from "./components/ProfileSetupPage.jsx";
 import StaffDashboard from "./components/StaffDashboard";
-import Walkin from "./components/Walkin.jsx";
+import WalkIn from "./components/Walkin.jsx";
 import "./App.css";
 
 

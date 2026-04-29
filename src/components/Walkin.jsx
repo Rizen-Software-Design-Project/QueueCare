@@ -105,88 +105,76 @@ export default function WalkIn() {
 
   // ── Step 2: queue today or book future ────────────────────────────────────
   async function handleSubmit(e) {
-    e.preventDefault();
-    if (!profile || !slotId) return;
+  e.preventDefault();
+  if (!profile || !slotId) return;
 
-    setSubmitting(true);
-    setSubmitMsg({ type: "", text: "" });
+  setSubmitting(true);
+  setSubmitMsg({ type: "", text: "" });
 
-    const identity = JSON.parse(localStorage.getItem("userIdentity") || "{}");
+  // Book appointment via backend (uses service role — no RLS issues)
+  const bookRes = await fetch(`${API_BASE}/appointments/book-walkin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      profile: {
+        id:           profile.id,
+        name:         profile.name,
+        surname:      profile.surname,
+        email:        profile.email,
+        phone_number: profile.phone_number,
+      },
+      reason:      reason,
+      slot_id: slotId|| null,
+      facility_id: facilityId,
+    }),
+  });
 
-    // Always create an appointment first (links slot → patient)
-    const { data: bookData, error: bookError } = await supabase.rpc(
-      "book_appointment_for_patient",
-      {
-        p_auth_provider: identity.auth_provider,
-        p_provider_user_id: identity.provider_user_id,
-        p_name: profile.name,
-        p_surname: profile.surname,
-        p_phone_number: profile.phone_number || "",
-        p_email: profile.email || "",
-        p_sex: profile.sex || "",
-        p_dob: profile.dob || null,
-        p_id_number: "",
-        p_reason: reason || (activeTab === "queue" ? "Walk-in" : "Scheduled booking"),
-        p_slot_id: Number(slotId),
-      }
-    );
+  const bookData = await bookRes.json();
 
-    if (bookError || bookData?.error) {
-      setSubmitMsg({
-        type: "error",
-        text: bookError?.message || bookData?.error || "Failed to create appointment.",
-      });
+  if (!bookRes.ok || bookData.error) {
+    setSubmitMsg({ type: "error", text: bookData.error || "Failed to create appointment." });
+    setSubmitting(false);
+    return;
+  }
+
+  // For "queue now" — also add to the live queue immediately
+  if (activeTab === "queue") {
+    const qRes = await fetch(`${API_BASE}/queue/add_to_queue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contact_details: profile.email || profile.phone_number,
+        facility_id:     facilityId,
+      }),
+    });
+    const qData = await qRes.json();
+
+    if (!qRes.ok || qData.error) {
+      setSubmitMsg({ type: "error", text: qData.error || "Appointment created but failed to add to queue." });
       setSubmitting(false);
       return;
     }
 
-    // For "queue now" — also add to the live queue immediately
-    if (activeTab === "queue") {
-      try {
-        const res = await fetch(`${API_BASE}/queue/add_to_queue`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contact_details: profile.email || profile.phone_number,
-            facility_id: facilityId,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          setSubmitMsg({
-            type: "error",
-            text: data.error || "Appointment created but failed to add to queue.",
-          });
-          setSubmitting(false);
-          return;
-        }
-      } catch (err) {
-        setSubmitMsg({ type: "error", text: err.message });
-        setSubmitting(false);
-        return;
-      }
-
-      setSubmitMsg({
-        type: "success",
-        text: `✅ ${profile.name} ${profile.surname} has been booked and added to today's queue.`,
-      });
-    } else {
-      setSubmitMsg({
-        type: "success",
-        text: `✅ Appointment booked for ${profile.name} ${profile.surname} on ${formatDate(slots.find((s) => String(s.id) === String(slotId))?.slot_date)}.`,
-      });
-    }
-
-    // Reset for next patient
-    setProfile(null);
-    setContact("");
-    setSlotId("");
-    setReason("");
-    setSearchMsg({ type: "", text: "" });
-    if (facilityId) fetchSlots(facilityId);
-    setSubmitting(false);
+    setSubmitMsg({
+      type: "success",
+      text: `✅ ${profile.name} ${profile.surname} booked and added to today's queue.`,
+    });
+  } else {
+    setSubmitMsg({
+      type: "success",
+      text: `✅ Appointment booked for ${profile.name} ${profile.surname} on ${formatDate(slots.find((s) => String(s.id) === String(slotId))?.slot_date)}.`,
+    });
   }
 
+  // Reset for next patient
+  setProfile(null);
+  setContact("");
+  setSlotId("");
+  setReason("");
+  setSearchMsg({ type: "", text: "" });
+  if (facilityId) fetchSlots(facilityId);
+  setSubmitting(false);
+}
   // ── Load facility & slots on mount ────────────────────────────────────────
   useEffect(() => {
     async function load() {

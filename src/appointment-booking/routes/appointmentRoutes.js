@@ -867,6 +867,50 @@ const remindPatientsOfUpcomingAppointments = async (req, res) => {
     }
 };
 
+router.post("/book-walkin", async (req, res) => {
+console.log("book-walkin body:", req.body);
+  const { profile, reason, slot_id, facility_id } = req.body;
+
+  if (!profile || !slot_id || !facility_id) {
+    return res.status(400).json({ error: "Missing parameters" });
+  }
+
+  // Check slot exists and has capacity
+  const { data: slot } = await supabase
+    .from("appointment_slots")
+    .select("id, total_capacity, booked_count")
+    .eq("id", slot_id)
+    .maybeSingle();
+
+  if (!slot) return res.status(400).json({ error: "Slot not found" });
+  if ((slot.booked_count ?? 0) >= (slot.total_capacity ?? 0)) {
+    return res.status(400).json({ error: "Slot is full" });
+  }
+
+  // Create the appointment
+  const { data: appt, error: apptErr } = await supabase
+    .from("appointments")
+    .insert({
+      patient_id:  profile.id,
+      slot_id,
+      facility_id,
+      reason:      reason || "Walk-in",
+      status:      "booked",
+      booked_at:   new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (apptErr) return res.status(500).json({ error: apptErr.message });
+
+  // Increment booked_count on the slot
+  await supabase
+    .from("appointment_slots")
+    .update({ booked_count: (slot.booked_count ?? 0) + 1 })
+    .eq("id", slot_id);
+
+  return res.json({ success: true, appointment: appt });
+});
 
 
 router.get('/my/:patient_id',              getMyAppointments);

@@ -53,20 +53,6 @@ export default function StaffDashboard() {
   const [queueList, setQueueList] = useState([]);
   const [queueLoading, setQueueLoading] = useState(false);
 
-  const [patientName, setPatientName] = useState("");
-  const [patientSurname, setPatientSurname] = useState("");
-  const [patientPhone, setPatientPhone] = useState("");
-  const [patientEmail, setPatientEmail] = useState("");
-  const [patientSex, setPatientSex] = useState("");
-  const [patientDob, setPatientDob] = useState("");
-  const [patientIdNumber, setPatientIdNumber] = useState("");
-  const [bookingReason, setBookingReason] = useState("");
-  const [selectedSlotId, setSelectedSlotId] = useState("");
-  const [bookingPatient, setBookingPatient] = useState(false);
-  const [bookingMsg, setBookingMsg] = useState({ type: "", text: "" });
-  const [addQueueContact, setAddQueueContact] = useState("");
-  const [addingToQueue, setAddingToQueue] = useState(false);
-  const [addQueueMsg, setAddQueueMsg] = useState({ type: "", text: "" });
 
   // Reschedule state
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
@@ -259,7 +245,7 @@ export default function StaffDashboard() {
     }
 
     pollQueue();
-    const interval = setInterval(pollQueue, 3000);
+    const interval = setInterval(pollQueue, 5000);
     return () => clearInterval(interval);
   }, [facilityId]);
 
@@ -288,27 +274,45 @@ export default function StaffDashboard() {
   }
 
   async function handleQueueStatusUpdate(contactDetails, newStatus) {
-    const result = await updateQueueStatus(contactDetails, facilityId, newStatus);
+  const result = await updateQueueStatus(contactDetails, facilityId, newStatus);
 
-    if (result.error) {
-      alert("Failed to update queue: " + result.error);
-      return;
-    }
-
-    if (newStatus === "completed") {
-      await removeFromQueueSilent(contactDetails);
-      return;
-    }
-
-    setQueueList((prev) =>
-      prev.map((entry) =>
-        entry.profiles?.email === contactDetails ||
-        entry.profiles?.phone_number === contactDetails
-          ? { ...entry, status: newStatus }
-          : entry
-      )
-    );
+  if (result.error) {
+    alert("Failed to update queue: " + result.error);
+    return;
   }
+
+  if (newStatus === "completed") {
+    // Also update the appointment status to "complete"
+    const entry = queueList.find(
+      (e) =>
+        e.profiles?.email === contactDetails ||
+        e.profiles?.phone_number === contactDetails
+    );
+
+    const appt = Array.isArray(entry?.appointments)
+      ? entry.appointments[0]
+      : entry?.appointments;
+
+    if (appt?.id) {
+      await supabase
+        .from("appointments")
+        .update({ status: "complete" })
+        .eq("id", appt.id);
+    }
+
+    await removeFromQueueSilent(contactDetails);
+    return;
+  }
+
+  setQueueList((prev) =>
+    prev.map((entry) =>
+      entry.profiles?.email === contactDetails ||
+      entry.profiles?.phone_number === contactDetails
+        ? { ...entry, status: newStatus }
+        : entry
+    )
+  );
+}
 
   async function handleRemoveFromQueue(contactDetails) {
     if (!confirm("Remove this patient from the queue?")) return;
@@ -338,97 +342,7 @@ export default function StaffDashboard() {
     );
   }
 
-  async function handleBookForPatient(e) {
-    e.preventDefault();
-    setBookingMsg({ type: "", text: "" });
-    setBookingPatient(true);
-
-    const identity = JSON.parse(localStorage.getItem("userIdentity") || "{}");
-
-    const { data, error } = await supabase.rpc("book_appointment_for_patient", {
-      p_auth_provider: identity.auth_provider,
-      p_provider_user_id: identity.provider_user_id,
-      p_name: patientName,
-      p_surname: patientSurname,
-      p_phone_number: patientPhone,
-      p_email: patientEmail,
-      p_sex: patientSex,
-      p_dob: patientDob || null,
-      p_id_number: patientIdNumber,
-      p_reason: bookingReason,
-      p_slot_id: Number(selectedSlotId),
-    });
-
-    setBookingPatient(false);
-
-    if (error) {
-      setBookingMsg({
-        type: "error",
-        text: error.message || "Failed to book appointment.",
-      });
-      return;
-    }
-
-    if (data?.error) {
-      setBookingMsg({ type: "error", text: data.error });
-      return;
-    }
-
-    setBookingMsg({
-      type: "success",
-      text: data?.message || "Appointment booked successfully.",
-    });
-
-    setPatientName("");
-    setPatientSurname("");
-    setPatientPhone("");
-    setPatientEmail("");
-    setPatientSex("");
-    setPatientDob("");
-    setPatientIdNumber("");
-    setBookingReason("");
-    setSelectedSlotId("");
-
-    if (facilityId) {
-      fetchAppointments(facilityId);
-      fetchSlots(facilityId);
-    }
-  }
-
-  // FIX: use API_BASE — was using relative URL which misses the backend port
-  async function handleAddToQueue(e) {
-    e.preventDefault();
-    setAddingToQueue(true);
-    setAddQueueMsg({ type: "", text: "" });
-
-    try {
-      const res = await fetch(`${API_BASE}/queue/add_to_queue`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contact_details: addQueueContact,
-          facility_id: facilityId,
-        }),
-      });
-      const data = await res.json();
-      console.log("add_to_queue response:", data);
-
-      if (!res.ok || data.error) {
-        setAddQueueMsg({
-          type: "error",
-          text: data.error || "Failed to add to queue.",
-        });
-      } else {
-        setAddQueueMsg({ type: "success", text: "Patient added to queue." });
-        setAddQueueContact("");
-      }
-    } catch (err) {
-      setAddQueueMsg({ type: "error", text: err.message });
-    }
-
-    setAddingToQueue(false);
-  }
-
+ 
   async function handleCreateSlot(e) {
     e.preventDefault();
     setCreateSlotMsg({ type: "", text: "" });
@@ -658,150 +572,7 @@ const availableSlotsForBooking = slots.filter((slot) => {
       </header>
 
       <div className="staff-dash-grid">
-        {/* Book Appointment For Patient */}
-        <section className="staff-card">
-          <h2>Book Appointment For Patient</h2>
 
-          <form onSubmit={handleBookForPatient} className="staff-form">
-            <label>
-              Name
-              <input
-                type="text"
-                value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              Surname
-              <input
-                type="text"
-                value={patientSurname}
-                onChange={(e) => setPatientSurname(e.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              Phone Number
-              <input
-                type="text"
-                value={patientPhone}
-                onChange={(e) => setPatientPhone(e.target.value)}
-              />
-            </label>
-
-            <label>
-              Email
-              <input
-                type="email"
-                value={patientEmail}
-                onChange={(e) => setPatientEmail(e.target.value)}
-              />
-            </label>
-
-            <label>
-              ID Number
-              <input
-                type="text"
-                value={patientIdNumber}
-                onChange={(e) => setPatientIdNumber(e.target.value)}
-              />
-            </label>
-
-            <label>
-              Sex
-              <select
-                value={patientSex}
-                onChange={(e) => setPatientSex(e.target.value)}
-              >
-                <option value="">Select sex</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </label>
-
-            <label>
-              Date of Birth
-              <input
-                type="date"
-                value={patientDob}
-                onChange={(e) => setPatientDob(e.target.value)}
-              />
-            </label>
-
-            <label>
-              Reason
-              <input
-                type="text"
-                value={bookingReason}
-                onChange={(e) => setBookingReason(e.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              Select Slot
-              <select
-                value={selectedSlotId}
-                onChange={(e) => setSelectedSlotId(e.target.value)}
-                required
-              >
-                <option value="">Choose a slot</option>
-                {availableSlotsForBooking.map((slot) => (
-                  <option key={slot.id} value={slot.id}>
-                    {formatDate(slot.slot_date)} - {formatTime(slot.slot_time)} (
-                    {(slot.total_capacity ?? 0) - (slot.booked_count ?? 0)} available)
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <button type="submit" disabled={bookingPatient || !facilityId}>
-              {bookingPatient ? "Booking..." : "Book Appointment"}
-            </button>
-          </form>
-
-          {bookingMsg.text && (
-            <p
-              className={
-                bookingMsg.type === "error" ? "staff-error" : "staff-success"
-              }
-            >
-              {bookingMsg.text}
-            </p>
-          )}
-        </section>
-
-        {/* Add Patient to Queue */}
-        <section className="staff-card">
-          <h2>Add Patient to Queue</h2>
-          <form onSubmit={handleAddToQueue} className="staff-form">
-            <label>
-              Patient Email or Phone
-              <input
-                type="text"
-                value={addQueueContact}
-                onChange={(e) => setAddQueueContact(e.target.value)}
-                placeholder="email@example.com or 0821234567"
-                required
-              />
-            </label>
-            <button type="submit" disabled={addingToQueue || !facilityId}>
-              {addingToQueue ? "Adding..." : "Add to Queue"}
-            </button>
-          </form>
-          {addQueueMsg.text && (
-            <p
-              className={
-                addQueueMsg.type === "error" ? "staff-error" : "staff-success"
-              }
-            >
-              {addQueueMsg.text}
-            </p>
-          )}
-        </section>
 
         {/* Appointments Table */}
         <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
