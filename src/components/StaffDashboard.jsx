@@ -168,7 +168,15 @@ export default function StaffDashboard() {
       return;
     }
 
-    setSlots(data || []);
+    const now = new Date();
+
+  // Filter out slots whose date+time has already passed
+  const active = (data || []).filter((s) => {
+    const slotDateTime = new Date(`${s.slot_date}T${s.slot_time}`);
+    return slotDateTime > now;
+  });
+
+  setSlots(active);
   }
 
   useEffect(() => {
@@ -614,16 +622,20 @@ export default function StaffDashboard() {
     return true;
   });
 
-  const availableSlotsForBooking = slots.filter(
-    (slot) => (slot.total_capacity ?? 0) > (slot.booked_count ?? 0)
-  );
+  const now = new Date();
+const availableSlotsForBooking = slots.filter((slot) => {
+  const hasCapacity = (slot.total_capacity ?? 0) > (slot.booked_count ?? 0);
+  const isFuture    = new Date(`${slot.slot_date}T${slot.slot_time}`) > now;
+  return hasCapacity && isFuture;
+});
 
   // NEW: Filter available slots for rescheduling (exclude current slot)
-  const availableSlotsForRescheduling = slots.filter(
-    (slot) =>
-      (slot.total_capacity ?? 0) > (slot.booked_count ?? 0) &&
-      slot.id !== rescheduleAppointment?.slot_id
-  );
+  const availableSlotsForRescheduling = slots.filter((slot) => {
+  const hasCapacity  = (slot.total_capacity ?? 0) > (slot.booked_count ?? 0);
+  const isFuture     = new Date(`${slot.slot_date}T${slot.slot_time}`) > now;
+  const isDifferent  = slot.id !== rescheduleAppointment?.slot_id;
+  return hasCapacity && isFuture && isDifferent;
+});
 
   return (
     <div className="staff-dash">

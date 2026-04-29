@@ -110,10 +110,18 @@ export default function BookAppointment() {
           });
           return;
         }
+        const now = new Date();
 
-        let available = data.filter(
-          (s) => (s.booked_count || 0) < (s.total_capacity || 1)
-        );
+        let available = data.filter((s) => {
+      // Filter 1: slot must not be full
+      const hasCapacity = (s.booked_count || 0) < (s.total_capacity || 1);
+
+      // Filter 2: slot datetime must be in the future
+      const slotDateTime = new Date(`${s.slot_date}T${s.slot_time}`);
+      const isFuture = slotDateTime > now;
+
+      return hasCapacity && isFuture;
+    });
 
         const { data: existing } = await supabase
           .from("appointments")
@@ -134,7 +142,12 @@ export default function BookAppointment() {
           });
           return;
         }
-
+        available.sort((a, b) => {
+      const aDateTime = `${a.slot_date}T${a.slot_time}`;
+      const bDateTime = `${b.slot_date}T${b.slot_time}`;
+      return aDateTime.localeCompare(bDateTime);
+    });
+    
         setSlots(available);
         setStatus({
           type: "count",

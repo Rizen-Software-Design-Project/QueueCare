@@ -1,9 +1,18 @@
 import express from "express";
 import { supabase } from "../../lib/supabaseAdmin.js";
 
-
 const router = express.Router();
 
+// ── Shared sort helper ────────────────────────────────────────────────────────
+function sortBySlotDateTime(entries) {
+  return [...entries].sort((a, b) => {
+    const aAppt = Array.isArray(a.appointments) ? a.appointments[0] : a.appointments;
+    const bAppt = Array.isArray(b.appointments) ? b.appointments[0] : b.appointments;
+    const aDateTime = `${aAppt?.appointment_slots?.slot_date || ""}T${aAppt?.appointment_slots?.slot_time || ""}`;
+    const bDateTime = `${bAppt?.appointment_slots?.slot_date || ""}T${bAppt?.appointment_slots?.slot_time || ""}`;
+    return aDateTime.localeCompare(bDateTime);
+  });
+}
 
 // ─────────────────────────────────────────────
 // Helper: format minutes into readable string
@@ -32,7 +41,7 @@ async function getPatientId(contact_details) {
     .or(`email.eq.${contact_details},phone_number.eq.${contact_details}`)
     .maybeSingle();
 
-  if (error) return { error: error.message };
+  if (error)    return { error: error.message };
   if (!profile) return { error: "Person does not have an account." };
 
   return { patient_id: profile.id };
@@ -52,7 +61,7 @@ router.get("/is_booked", async (req, res) => {
       .from("appointments")
       .select("id")
       .eq("patient_id", result.patient_id)
-      .eq("status", "booked"); // only count active bookings
+      .eq("status", "booked");
 
     if (error) throw error;
 
@@ -63,7 +72,7 @@ router.get("/is_booked", async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
-// View queue (staff view of today's queue)
+// View queue (staff view — today only)
 // ─────────────────────────────────────────────
 router.get("/view_queue", async (req, res) => {
   const { facility_id } = req.query;
@@ -92,31 +101,27 @@ router.get("/view_queue", async (req, res) => {
         ),
         profiles (name, surname, sex, email, phone_number, dob)
       `)
-      .eq("facility_id", facility_id)
-      .order("joined_at", { ascending: true });
+      .eq("facility_id", facility_id);
 
     if (error) throw error;
 
-    // Filter to today's slots only and add computed fields
-    // In view_queue, replace the filter line:
-const todayEntries = (data || [])
-  .filter(entry => {
-    const appt = Array.isArray(entry.appointments) ? entry.appointments[0] : entry.appointments;
-    return appt?.appointment_slots?.slot_date === today;
-  })
-  .sort((a, b) => {
-    const aAppt = Array.isArray(a.appointments) ? a.appointments[0] : a.appointments;
-    const bAppt = Array.isArray(b.appointments) ? b.appointments[0] : b.appointments;
-    const aTime = aAppt?.appointment_slots?.slot_time || "";
-    const bTime = bAppt?.appointment_slots?.slot_time || "";
-    return aTime.localeCompare(bTime);
-  });
+    // Filter to today, then sort by date + time
+    const todayEntries = sortBySlotDateTime(
+      (data || []).filter((entry) => {
+        const appt = Array.isArray(entry.appointments)
+          ? entry.appointments[0]
+          : entry.appointments;
+        return appt?.appointment_slots?.slot_date === today;
+      })
+    );
 
     let waitingPosition = 0;
 
     const enriched = todayEntries.map((entry) => {
-  const appt = Array.isArray(entry.appointments) ? entry.appointments[0] : entry.appointments;
-  const slot = appt?.appointment_slots;
+      const appt = Array.isArray(entry.appointments)
+        ? entry.appointments[0]
+        : entry.appointments;
+      const slot = appt?.appointment_slots;
 
       let end_time = null;
       if (slot?.slot_time && slot?.duration_minutes) {
@@ -134,10 +139,9 @@ const todayEntries = (data || [])
       return {
         ...entry,
         position,
-        appointments: {
-          ...entry.appointments,
-          appointment_slots: slot ? { ...slot, end_time } : null,
-        },
+        appointments: appt
+          ? { ...appt, appointment_slots: slot ? { ...slot, end_time } : null }
+          : null,
       };
     });
 
@@ -176,10 +180,12 @@ router.get("/estimated_time", async (req, res) => {
     if (!slot) return res.status(500).json({ error: "Missing slot data." });
 
     const appointmentTime = new Date(`${slot.slot_date}T${slot.slot_time}`);
-    const diffMinutes = Math.round((appointmentTime - new Date()) / 60000);
+    const diffMinutes     = Math.round((appointmentTime - new Date()) / 60000);
 
     return res.status(200).json({
-      estimated_wait: diffMinutes < 0 ? "Appointment time has passed." : formatMinutes(diffMinutes),
+      estimated_wait: diffMinutes < 0
+        ? "Appointment time has passed."
+        : formatMinutes(diffMinutes),
       minutes: diffMinutes,
     });
   } catch (err) {
@@ -203,21 +209,15 @@ router.get("/queue_position", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("virtual_queues")
-      .select("patient_id, appointments(appointment_slots(slot_time))")
+      .select("patient_id, appointments(appointment_slots(slot_date, slot_time))")
       .eq("facility_id", facility_id)
       .eq("status", "waiting");
 
     if (error) throw error;
 
-    const sorted = (data || []).sort((a, b) => {
-  const aAppt = Array.isArray(a.appointments) ? a.appointments[0] : a.appointments;
-  const bAppt = Array.isArray(b.appointments) ? b.appointments[0] : b.appointments;
-  const aTime = aAppt?.appointment_slots?.slot_time || "";
-  const bTime = bAppt?.appointment_slots?.slot_time || "";
-  return aTime.localeCompare(bTime);
-});
-
-    const index = sorted.findIndex(e => e.patient_id === result.patient_id);
+    // Sort by date + time AFTER error check
+    const sorted = sortBySlotDateTime(data || []);
+    const index  = sorted.findIndex((e) => e.patient_id === result.patient_id);
 
     if (index === -1) {
       return res.status(404).json({ error: "Patient not found in queue." });
@@ -228,11 +228,15 @@ router.get("/queue_position", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+// ─────────────────────────────────────────────
+// Full queue (staff dashboard)
+// ─────────────────────────────────────────────
 router.get("/full_queue", async (req, res) => {
   const { facility_id } = req.query;
- 
+
   if (!facility_id) return res.status(400).json({ error: "Missing facility_id" });
- 
+
   const { data, error } = await supabase
     .from("virtual_queues")
     .select(
@@ -241,32 +245,34 @@ router.get("/full_queue", async (req, res) => {
       appointments(id, reason, appointment_slots(slot_time, slot_date, duration_minutes))`
     )
     .eq("facility_id", facility_id)
-    .neq("status", "completed")
-    .order("joined_at", { ascending: true });
- 
+    .neq("status", "completed");
+
   if (error) return res.status(500).json({ error: error.message });
- 
+
+  // Sort by date + time AFTER error check
+  const sorted = sortBySlotDateTime(data || []);
+
   let waitingPosition = 0;
- 
-  const enriched = (data || []).map((entry) => {
+
+  const enriched = sorted.map((entry) => {
     const appt = Array.isArray(entry.appointments)
       ? entry.appointments[0]
       : entry.appointments;
     const slot = appt?.appointment_slots;
- 
+
     let end_time = null;
     if (slot?.slot_time && slot?.duration_minutes) {
       const endDate = new Date(`1970-01-01T${slot.slot_time}`);
       endDate.setMinutes(endDate.getMinutes() + slot.duration_minutes);
       end_time = endDate.toTimeString().slice(0, 5);
     }
- 
+
     let position = null;
     if (entry.status === "waiting") {
       waitingPosition++;
       position = waitingPosition;
     }
- 
+
     return {
       ...entry,
       position,
@@ -275,7 +281,8 @@ router.get("/full_queue", async (req, res) => {
         : null,
     };
   });
- 
+
   return res.json({ data: enriched });
 });
+
 export default router;
