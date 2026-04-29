@@ -1,6 +1,6 @@
 import express from 'express';
 import nodemailer from 'nodemailer';
-import { supabase } from "../../lib/supabase.js";
+import { supabase } from "../../lib/supabaseAdmin.js";
 import env from 'dotenv';
 
 env.config();
