@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase"; 
 import { useNavigate } from "react-router-dom";
 import { FiCalendar, FiClock, FiLogOut } from "react-icons/fi";
 import { FaStethoscope } from "react-icons/fa";
@@ -20,11 +20,6 @@ import {
   OverviewPanel, AppointmentsPanel, PatientQueuePanel,
   NotificationsPanel, ProfilePanel,
 } from "./DashboardPanels";
-
-const supabase = createClient(
-  "https://vktjtxljwzyakobkkhol.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA"
-);
 
 // FIX: shared helper to pick the soonest upcoming active appointment
 function getSoonestActiveAppointment(appointments) {
@@ -250,14 +245,14 @@ export default function Dashboard() {
       }
     }, 2000);
 
-    const notifyInterval = setInterval(async () => {
+    /*const notifyInterval = setInterval(async () => {
       if (profile.email) await notifyPatient(profile.email, facilityId);
     }, 60000);
 
     return () => {
       clearInterval(queueInterval);
       clearInterval(notifyInterval);
-    };
+    };*/
   }, [profile, appointments]);
 
   // ── In-app appointment reminders with sound ───────────────────────────────

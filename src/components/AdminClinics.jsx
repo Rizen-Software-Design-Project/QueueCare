@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";  
 import { FiGrid, FiCreditCard, FiMap, FiSearch, FiClock, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiLogOut, FiMapPin} from "react-icons/fi";
 import { FaHospital } from "react-icons/fa";
 
-const SUPABASE_URL = "https://vktjtxljwzyakobkkhol.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ================= DATA =================
 const districtsByProvince = {
@@ -74,11 +70,11 @@ export default function AdminClinics() {
   async function applyFilters() {
     setStatus({ type: "loading", message: "🔍 Searching..." });
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_clinics_admin`, {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/search_clinics_admin`, {
         method: "POST",
         headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_KEY,
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

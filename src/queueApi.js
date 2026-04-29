@@ -93,9 +93,9 @@ export async function updateQueueStatus(contactDetails, facilityId, newStatus) {
 // ─────────────────────────────────────────────
 //
 
-/*export async function notifyPatient(email, facilityId) {
+export async function notifyPatient(email, facilityId) {
   const res = await fetch(
     `${API_BASE}/notify/notify_patient?email=${encodeURIComponent(email)}&facility_id=${facilityId}`
   );
   return res.json();
-}*/
+}

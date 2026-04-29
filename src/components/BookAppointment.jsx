@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";  
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 import { addToQueue } from "../queueApi";
 import { FiArrowLeft, FiClock, FiCheck, FiCalendar } from "react-icons/fi";
 
-const supabase = createClient(
-  "https://vktjtxljwzyakobkkhol.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA"
-);
+
 const API_BASE = import.meta.env.VITE_API_BASE 
   || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
 

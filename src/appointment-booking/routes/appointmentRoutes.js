@@ -1,13 +1,13 @@
 import express from 'express';
 import nodemailer from 'nodemailer';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from "../lib/supabase";
 import env from 'dotenv';
 
 env.config();
 
 const router = express.Router();
 
-const supabase = createClient(process.env.SB_URL, process.env.SB_KEY);
+
 
 // ── Email transporter ────────────────────────────────────────────────────────
 const transporter = nodemailer.createTransport({

@@ -1,12 +1,8 @@
 import express from "express";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabaseAdmin.js"; 
 
 const router = express.Router();
 
-const supabase = createClient(
-  process.env.SB_URL,
-  process.env.SB_KEY
-);
 
 // ─────────────────────────────────────────────
 // GET MY QUEUE

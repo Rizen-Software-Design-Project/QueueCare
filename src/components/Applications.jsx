@@ -15,11 +15,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const SUPABASE_URL  = "https://vktjtxljwzyakobkkhol.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+import { supabase } from "../lib/supabase";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function formatDateTime(value) {
