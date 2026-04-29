@@ -33,6 +33,7 @@ app.use('/staff', staffRoutes);
 // =====================
 // SERVE FRONTEND (React build)
 // =====================
+const __filename = fileURLToPath(import.meta.url);
 const distPath = path.join(__dirname, '../../..', 'dist');
 
 if (fs.existsSync(distPath)) {
@@ -42,7 +43,7 @@ if (fs.existsSync(distPath)) {
 // =====================
 // React ROUTE HANDLER (ONLY for non-API routes)
 // =====================
-app.get(/^\/(?!api|appointments|queue|staff).*/, (req, res) => {
+app.get(/^\/(?!(health|appointments|queue|staff|notify)(\/|$)).*/, (req, res) => {
   const indexPath = path.join(distPath, 'index.html');
 
   if (fs.existsSync(indexPath)) {
