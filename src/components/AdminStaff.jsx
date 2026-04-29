@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { FiGrid,FiUsers,FiRefreshCw,FiTrash2, FiCreditCard, FiMap, FiSearch, FiClock, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiLogOut, FiMapPin} from "react-icons/fi";
 import { FaHospital } from "react-icons/fa";
-import { supabase } from "../lib/supabase";
+import { supabase } from "#lib/supabase";  
+
 
 
 const STAFF_ROLES = ["doctor", "nurse", "receptionist", "admin"];

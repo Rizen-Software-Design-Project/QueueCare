@@ -5,7 +5,8 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "../lib/supabase"; 
+import { supabase } from "#lib/supabase";  
+
 import Applications from "./Applications";
 
 

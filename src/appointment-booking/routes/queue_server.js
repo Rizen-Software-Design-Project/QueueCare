@@ -1,5 +1,6 @@
 import express from "express";
-import { supabase } from "../lib/supabaseAdmin.js"; 
+import { supabase } from "../../lib/supabaseAdmin.js";
+ 
 
 const router = express.Router();
 

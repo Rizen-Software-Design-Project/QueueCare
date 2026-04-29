@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../firebase";
-import { supabase } from "../lib/supabase"; 
+import { supabase } from "#lib/supabase";  
+
 import { useNavigate } from "react-router-dom";
 import { FiCalendar, FiClock, FiLogOut } from "react-icons/fi";
 import { FaStethoscope } from "react-icons/fa";
