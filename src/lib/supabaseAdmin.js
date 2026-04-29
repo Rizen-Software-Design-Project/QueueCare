@@ -1,8 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
-export const supabase = createClient(
-  // eslint-disable-next-line no-undef
-  process.env.SB_URL,
-  // eslint-disable-next-line no-undef
-  process.env.SB_KEY  // secret service role key — never expose to frontend
-);
+const url = process.env.SB_URL;
+const key = process.env.SB_KEY;
+
+if (!url || !key) {
+  throw new Error(`Missing Supabase env vars — SB_URL: ${!!url}, SB_KEY: ${!!key}`);
+}
+
+export const supabase = createClient(url, key);
