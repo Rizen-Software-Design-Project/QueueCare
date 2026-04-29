@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { FiGrid, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText } from "react-icons/fi";
+import { FiGrid, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiUserPlus } from "react-icons/fi";
 import { FaHospital } from "react-icons/fa";
 
 // ── Navigation configs ────────────────────────────────────────────────────────
@@ -19,6 +19,7 @@ export const STAFF_NAV = [
   { id: "overview",           icon: <FiGrid />,     label: "Overview" },
   { id: "staff-appointments", icon: <FiCalendar />, label: "Clinic Appointments" },
   { id: "staff-queue",        icon: <FiHash />,     label: "Patient Queue" },
+  { id: "walk-in",            icon: <FiUserPlus />,            label: "Walk-In Patients" }, 
   { id: "patients",           icon: <FiUser />,     label: "Patients" },
   { id: "notifications",      icon: <FiBell />,     label: "Notifications" },
   { id: "profile",            icon: <FiUser />,     label: "Profile" },

@@ -409,6 +409,7 @@ export default function Dashboard() {
   function goTo(id) {
     setSidebarOpen(false);
     if (id === "find-clinic") { navigate("/clinic-search"); return; }
+    if (id === "walk-in") { navigate("/walk-in"); return; }
     if (["staff-appointments", "patients", "staff-queue"].includes(id)) { navigate("/staff-dashboard"); return; }
     setActiveTab(id);
   }
