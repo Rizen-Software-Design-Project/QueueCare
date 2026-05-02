@@ -173,7 +173,7 @@ export default function Dashboard() {
               .limit(20);
 
             const { data: queueEntries } = await supabase
-              .from("queue_entries")
+              .from("virtual_queues")
               .select("*, facilities(name, district)")
               .eq("patient_id", prof.id)
               .order("joined_at", { ascending: false })
@@ -248,14 +248,19 @@ useEffect(() => {
     if (!facilityId) return;
 
     const queueInterval = setInterval(async () => {
-      const data = await getMyQueue(contactDetails, facilityId);
-      if (!data.error) {
-        setQueueData(data);
-        if (data.status === "complete" || data.status === "completed") {
-          clearInterval(queueInterval);
-        }
-      }
-    }, 2000);
+  const data = await getMyQueue(contactDetails, facilityId);
+
+  // Stop hammering if route is broken or patient not in queue
+  if (data.error) {
+    clearInterval(queueInterval);
+    return;
+  }
+
+  setQueueData(data);
+  if (data.status === "complete" || data.status === "completed") {
+    clearInterval(queueInterval);
+  }
+}, 2000);
 
     return () => clearInterval(queueInterval); // ✅ inside the useEffect, after the interval
 }, [profile, appointments]);

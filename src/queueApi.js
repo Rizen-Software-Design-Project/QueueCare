@@ -19,10 +19,21 @@ export async function addToQueue(contactDetails, facilityId) {
 }
 
 export async function getMyQueue(contactDetails, facilityId) {
-  const res = await fetch(
-    `${API_BASE}/queue/my_queue?contact_details=${encodeURIComponent(contactDetails)}&facility_id=${facilityId}`
-  );
-  return res.json();
+   try {
+    const res = await fetch(
+      `${API_BASE}/queue/my_queue?contact_details=${encodeURIComponent(contactDetails)}&facility_id=${facilityId}`
+    );
+
+    // If not in queue or route issue, return a clean error instead of throwing
+    if (!res.ok) {
+      return { error: true, status: res.status, data: null };
+    }
+
+    return res.json();
+  } catch (err) {
+    return { error: true, message: err.message, data: null };
+  }
+
 }
 
 // FIX: backend DELETE reads from req.query, not req.body — use query params
