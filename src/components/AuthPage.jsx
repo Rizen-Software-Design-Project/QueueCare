@@ -359,7 +359,7 @@ export default function AuthPage() {
       window.confirmationResult = await signInWithPhoneNumber(auth, normaliseSAPhone(phone), window.recaptchaVerifier);
       setResendTimer(30);
       setLoading(false);
-    } catch {
+    } catch (err) {
       setLoading(false);
       setError("Could not resend OTP. Try again.");
     }

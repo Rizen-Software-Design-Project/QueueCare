@@ -82,7 +82,7 @@ export default function BookAppointment() {
     return () => {
       if (unsub) unsub();
     };
-  });
+  }, []);
 
   useEffect(() => {
     if (!clinicId || !patientId) {

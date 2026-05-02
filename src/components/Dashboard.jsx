@@ -46,7 +46,7 @@ export default function Dashboard() {
   const [profile, setProfile]                   = useState(null);
   const [appointments, setAppointments]         = useState([]);
   // FIX: removed separate liveQueue state — queueData is the single source of truth
-  const [setQueueHistory]         = useState([]);
+  const [queueHistory, setQueueHistory]         = useState([]);
   const [notifications, setNotifications]       = useState([]);
   const [staffAssignments, setStaffAssignments] = useState([]);
   const [loading, setLoading]                   = useState(true);
