@@ -339,30 +339,37 @@ useEffect(() => {
   }
 
   async function cancelAppointment(appt) {
-    if (!confirm("Are you sure you want to cancel this appointment?")) return;
-    try {
-      const res  = await fetch(`${API_BASE}/appointments/${appt.id}/cancel`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patient_id: profile.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) { alert("Failed to cancel: " + (data.error || "Unknown error")); return; }
+  if (!confirm("Are you sure you want to cancel this appointment?")) return;
+  try {
+    const res = await fetch(`${API_BASE}/appointments/${appt.id}/cancel`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient_id: profile.id }),
+    });
+    const data = await res.json();
+    if (!res.ok) { alert("Failed to cancel: " + (data.error || "Unknown error")); return; }
 
-      setAppointments((prev) =>
-        prev.map((a) => a.id === appt.id ? { ...a, status: "cancelled" } : a)
-      );
+    setAppointments((prev) =>
+      prev.map((a) => a.id === appt.id ? { ...a, status: "cancelled" } : a)
+    );
 
+    // ✅ Only remove from queue if the cancelled appointment is
+    // the same one the patient is currently queued for (today's)
+    const activeAppt = getSoonestActiveAppointment(appointments);
+    const isCancellingActiveAppt = activeAppt?.id === appt.id;
+
+    if (isCancellingActiveAppt) {
       const contactDetails = profile.email || profile.phone_number;
-      const facilityId     = appt.appointment_slots?.facility_id;
+      const facilityId = appt.appointment_slots?.facility_id;
       if (contactDetails && facilityId) {
-        // FIX: removeFromQueue now uses query params to match backend req.query
         await removeFromQueue(contactDetails, facilityId);
         setQueueData(null);
       }
-    } catch (err) {
-      alert("Failed to cancel: " + err.message);
     }
+
+  } catch (err) {
+    alert("Failed to cancel: " + err.message);
   }
+}
 
   async function openReschedule(appt) {
     setRescheduleAppt(appt);
@@ -475,6 +482,10 @@ useEffect(() => {
         alert(res.error);
         return;
       }
+      const updated = await getMyQueue(contactDetails, facilityId);
+      if (!updated.error) {
+        setQueueData(updated);
+      }
       fetch(`${API_BASE}/appointments/queue/send-status-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -482,14 +493,11 @@ useEffect(() => {
         patient_id: profile.id,
         status: 'waiting',
         facility_id: facilityId,
-        position: res.position, // depends on what addToQueue returns
+        position: updated.position, // depends on what addToQueue returns
       }),
     }).catch(err => console.warn('Join queue email failed:', err.message));
       // FIX: refresh queueData only (single source of truth)
-      const updated = await getMyQueue(contactDetails, facilityId);
-      if (!updated.error) {
-        setQueueData(updated);
-      }
+      
     } catch (err) {
       console.error(err);
       alert("Failed to join queue");
