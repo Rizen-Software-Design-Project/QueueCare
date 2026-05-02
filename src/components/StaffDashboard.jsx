@@ -11,7 +11,7 @@ import "./StaffDashboard.css";
 const API_BASE = import.meta.env.VITE_API_BASE 
   || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
 
-const STATUS_OPTIONS = ["booked", "complete", "cancelled"];
+const STATUS_OPTIONS = ["booked", "confirmed", "complete", "cancelled", "no_show"];
 
 const QUEUE_STATUS_OPTIONS = [
   { value: "waiting", label: "Waiting" },
@@ -280,6 +280,25 @@ export default function StaffDashboard() {
     alert("Failed to update queue: " + result.error);
     return;
   }
+  const entry = queueList.find(
+    (e) =>
+      e.profiles?.email === contactDetails ||
+      e.profiles?.phone_number === contactDetails
+  );
+
+  // Fire status email — fire-and-forget
+  if (entry?.patient_id) {
+    fetch(`${API_BASE}/appointments/queue/send-status-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_id: entry.patient_id,
+        status: newStatus,
+        facility_id: facilityId,
+        position: entry.position,
+      }),
+    }).catch(err => console.warn('Queue status email failed:', err.message));
+  }
 
   if (newStatus === "completed") {
     // Also update the appointment status to "complete"
@@ -529,7 +548,8 @@ export default function StaffDashboard() {
       return (
         isUpcomingAppointment(slotDate) &&
         a.status !== "cancelled" &&
-        a.status !== "complete"
+        a.status !== "complete" &&
+        a.status !== "no_show" 
       );
     }
 
@@ -693,7 +713,7 @@ const availableSlotsForBooking = slots.filter((slot) => {
                         </span>
                       </td>
                       <td>
-                        {a.status === "complete" || a.status === "cancelled" ? (
+                        {a.status === "complete" || a.status === "cancelled" || a.status==="no_show"? (
                           <span style={{ color: "#9ca3af", fontSize: 12 }}>—</span>
                         ) : (
                           <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>

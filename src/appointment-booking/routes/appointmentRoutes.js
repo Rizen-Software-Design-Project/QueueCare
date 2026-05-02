@@ -779,6 +779,82 @@ const sendConfirmationEmail = async (req, res) => {
         return res.status(500).json({ error: err.message });
     }
 };
+// add after sendConfirmationEmail
+
+const queueStatusEmailHtml = (patientName, status, facilityName, position) => {
+    const configs = {
+        called: {
+            icon: '🩺',
+            heading: "It's Your Turn",
+            message: "Please make your way to the consultation room. The doctor is ready for you.",
+            color: '#1d4ed8',
+        },
+        waiting: {
+            icon: '⏳',
+            heading: 'Queue Update',
+            message: `You are currently at position <strong>#${position}</strong> in the queue. We'll notify you when it's your turn.`,
+            color: '#0F6E56',
+        },
+        completed: {
+            icon: '✅',
+            heading: 'Visit Complete',
+            message: 'Your consultation is complete. Thank you for visiting us today.',
+            color: '#16a34a',
+        },
+    };
+
+    const cfg = configs[status] || configs.waiting;
+
+    return `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background: ${cfg.color}; padding: 24px;">
+            <h2 style="color: #ffffff; margin: 0;">${cfg.icon} ${cfg.heading}</h2>
+        </div>
+        <div style="padding: 24px;">
+            <p>Hi ${patientName},</p>
+            <p>${cfg.message}</p>
+            <p style="color: #555;">📍 ${facilityName}</p>
+            <p style="color: #aaa; font-size: 12px;">— QueueCare Team</p>
+        </div>
+    </div>`;
+};
+
+const sendQueueStatusEmail = async (req, res) => {
+    try {
+        const { patient_id, status, facility_id, position } = req.body;
+
+        if (!patient_id || !status || !facility_id) {
+            return res.status(400).json({ error: 'patient_id, status, and facility_id are required' });
+        }
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('email, name')
+            .eq('id', patient_id)
+            .single();
+
+        const { data: facility } = await supabase
+            .from('facilities')
+            .select('name')
+            .eq('id', facility_id)
+            .single();
+
+        if (!profile?.email) {
+            return res.status(200).json({ message: 'No email found for patient, skipped' });
+        }
+
+        await transporter.sendMail({
+            from: `"QueueCare" <queuecare.noreply@gmail.com>`,
+            to: profile.email,
+            subject: `Queue Update – ${facility?.name || 'your clinic'}`,
+            html: queueStatusEmailHtml(profile.name, status, facility?.name || 'the clinic', position),
+        });
+
+        return res.status(200).json({ message: 'Queue status email sent' });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
 
 const remindPatientsOfUpcomingAppointments = async (req, res) => {
     try {
@@ -868,48 +944,48 @@ const remindPatientsOfUpcomingAppointments = async (req, res) => {
 };
 
 router.post("/book-walkin", async (req, res) => {
-console.log("book-walkin body:", req.body);
-  const { profile, reason, slot_id, facility_id } = req.body;
+        console.log("book-walkin body:", req.body);
+        const { profile, reason, slot_id, facility_id } = req.body;
 
-  if (!profile || !slot_id || !facility_id) {
-    return res.status(400).json({ error: "Missing parameters" });
-  }
+        if (!profile || !slot_id || !facility_id) {
+            return res.status(400).json({ error: "Missing parameters" });
+        }
 
-  // Check slot exists and has capacity
-  const { data: slot } = await supabase
-    .from("appointment_slots")
-    .select("id, total_capacity, booked_count")
-    .eq("id", slot_id)
-    .maybeSingle();
+        // Check slot exists and has capacity
+        const { data: slot } = await supabase
+            .from("appointment_slots")
+            .select("id, total_capacity, booked_count")
+            .eq("id", slot_id)
+            .maybeSingle();
 
-  if (!slot) return res.status(400).json({ error: "Slot not found" });
-  if ((slot.booked_count ?? 0) >= (slot.total_capacity ?? 0)) {
-    return res.status(400).json({ error: "Slot is full" });
-  }
+        if (!slot) return res.status(400).json({ error: "Slot not found" });
+        if ((slot.booked_count ?? 0) >= (slot.total_capacity ?? 0)) {
+            return res.status(400).json({ error: "Slot is full" });
+        }
 
-  // Create the appointment
-  const { data: appt, error: apptErr } = await supabase
-    .from("appointments")
-    .insert({
-      patient_id:  profile.id,
-      slot_id,
-      facility_id,
-      reason:      reason || "Walk-in",
-      status:      "booked",
-      booked_at:   new Date().toISOString(),
-    })
-    .select()
-    .single();
+        // Create the appointment
+        const { data: appt, error: apptErr } = await supabase
+            .from("appointments")
+            .insert({
+            patient_id:  profile.id,
+            slot_id,
+            facility_id,
+            reason:      reason || "Walk-in",
+            status:      "booked",
+            booked_at:   new Date().toISOString(),
+            })
+            .select()
+            .single();
 
-  if (apptErr) return res.status(500).json({ error: apptErr.message });
+        if (apptErr) return res.status(500).json({ error: apptErr.message });
 
-  // Increment booked_count on the slot
-  await supabase
-    .from("appointment_slots")
-    .update({ booked_count: (slot.booked_count ?? 0) + 1 })
-    .eq("id", slot_id);
+        // Increment booked_count on the slot
+        await supabase
+            .from("appointment_slots")
+            .update({ booked_count: (slot.booked_count ?? 0) + 1 })
+            .eq("id", slot_id);
 
-  return res.json({ success: true, appointment: appt });
+        return res.json({ success: true, appointment: appt });
 });
 
 
@@ -924,7 +1000,7 @@ router.post('/queue/walk-in',                           joinWalkInQueue);
 
 router.post('/send-confirmation',          sendConfirmationEmail);
 router.post('/remind',                     remindPatientsOfUpcomingAppointments);
-
+router.post('/queue/send-status-email',    sendQueueStatusEmail);
 
 router.get('/staff/appointments',                       getAppointmentsForFacility);
 router.patch('/staff/appointments/:appointment_id',     updateAppointmentStatus);

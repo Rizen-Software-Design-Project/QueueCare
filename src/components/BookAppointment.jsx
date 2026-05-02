@@ -4,7 +4,6 @@ import { supabase } from "#lib/supabase";
  
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
-import { addToQueue } from "../queueApi";
 import { FiArrowLeft, FiClock, FiCheck, FiCalendar } from "react-icons/fi";
 
 
@@ -28,7 +27,7 @@ export default function BookAppointment() {
   });
   const [booking, setBooking] = useState(null);
   const [patientId, setPatientId] = useState(null);
-  const [profile,   setProfile]   = useState(null);
+  const [setProfile]   = useState(null);
 
   useEffect(() => {
     let unsub = null;
@@ -83,7 +82,7 @@ export default function BookAppointment() {
     return () => {
       if (unsub) unsub();
     };
-  }, []);
+  });
 
   useEffect(() => {
     if (!clinicId || !patientId) {
@@ -202,7 +201,7 @@ export default function BookAppointment() {
     if (!res.ok) {
       throw new Error(data.error || "Booking failed.");
     }
-
+   
     // ✅ Step 2: Update UI
     setBooking(data.appointment);
     setStatus({
@@ -210,18 +209,20 @@ export default function BookAppointment() {
       message: "Appointment booked successfully",
     });
 
-    // ✅ Step 3: Add to queue (THIS is your integration)
-    const contactDetails = profile?.email || profile?.phone_number;
+    fetch(`${API_BASE}/appointments/send-confirmation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      patient_id: patientId,
+      facility_id: Number(clinicId),
+      slot_id: selectedSlotId,
+      reason: reason.trim(),
+    }),
+  }).catch(err => console.warn("Confirmation email failed:", err.message));
 
-    if (contactDetails && clinicId) {
-      const queueResult = await addToQueue(contactDetails, clinicId);
-
-      if (queueResult?.error) {
-        console.warn("Queue add failed:", queueResult.error);
-      }
-    }
-
-  } catch (err) {
+  } 
+  
+  catch (err) {
     setStatus({
       type: "error",
       message: `Booking failed: ${err.message}`,

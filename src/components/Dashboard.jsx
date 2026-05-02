@@ -22,6 +22,10 @@ import {
   NotificationsPanel, ProfilePanel,
 } from "./DashboardPanels";
 
+
+const API_BASE = import.meta.env.VITE_API_BASE 
+  || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
+
 // FIX: shared helper to pick the soonest upcoming active appointment
 function getSoonestActiveAppointment(appointments) {
   const today = new Date().toISOString().split("T")[0];
@@ -42,7 +46,7 @@ export default function Dashboard() {
   const [profile, setProfile]                   = useState(null);
   const [appointments, setAppointments]         = useState([]);
   // FIX: removed separate liveQueue state — queueData is the single source of truth
-  const [queueHistory, setQueueHistory]         = useState([]);
+  const [setQueueHistory]         = useState([]);
   const [notifications, setNotifications]       = useState([]);
   const [staffAssignments, setStaffAssignments] = useState([]);
   const [loading, setLoading]                   = useState(true);
@@ -179,6 +183,16 @@ export default function Dashboard() {
             setQueueHistory(queueEntries || []);
             setStaffAssignments([]);
 
+            const reminderKey = `reminders_sent_${prof.id}_${new Date().toISOString().slice(0, 10)}`;
+            if (!sessionStorage.getItem(reminderKey)) {
+              sessionStorage.setItem(reminderKey, 'true');
+
+              fetch(`${API_BASE}/appointments/remind`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patient_id: prof.id }),
+              }).catch(err => console.warn('Reminder email failed:', err.message));
+            }
             // FIX: fetch initial queue data using soonest active appointment
             const soonest = getSoonestActiveAppointment(appts || []);
             if (soonest) {
@@ -221,24 +235,21 @@ export default function Dashboard() {
   }, [navigate]);
 
   // ── Queue polling (patient only) ──────────────────────────────────────────
-  useEffect(() => {
+useEffect(() => {
     if (!profile || profile.role !== "patient") return;
 
     const contactDetails = profile.email || profile.phone_number;
     if (!contactDetails) return;
 
-    // FIX: use soonest upcoming appointment, not first in array
     const activeAppt = getSoonestActiveAppointment(appointments);
     if (!activeAppt) return;
 
     const facilityId = activeAppt.appointment_slots?.facility_id || activeAppt.facility_id;
     if (!facilityId) return;
 
-    let queueInterval;
-    queueInterval = setInterval(async () => {
+    const queueInterval = setInterval(async () => {
       const data = await getMyQueue(contactDetails, facilityId);
       if (!data.error) {
-        // FIX: single source of truth — only queueData, no separate liveQueue
         setQueueData(data);
         if (data.status === "complete" || data.status === "completed") {
           clearInterval(queueInterval);
@@ -246,15 +257,10 @@ export default function Dashboard() {
       }
     }, 2000);
 
-    /*const notifyInterval = setInterval(async () => {
-      if (profile.email) await notifyPatient(profile.email, facilityId);
-    }, 60000);
+    return () => clearInterval(queueInterval); // ✅ inside the useEffect, after the interval
+}, [profile, appointments]);
 
-    return () => {
-      clearInterval(queueInterval);
-      clearInterval(notifyInterval);
-    };*/
-  }, [profile, appointments]);
+  
 
   // ── In-app appointment reminders with sound ───────────────────────────────
   // FIX: filter to future dates only so past booked appointments don't trigger reminders
@@ -330,7 +336,7 @@ export default function Dashboard() {
   async function cancelAppointment(appt) {
     if (!confirm("Are you sure you want to cancel this appointment?")) return;
     try {
-      const res  = await fetch(`/appointments/${appt.id}/cancel`, {
+      const res  = await fetch(`${API_BASE}/appointments/${appt.id}/cancel`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ patient_id: profile.id }),
       });
@@ -373,7 +379,7 @@ export default function Dashboard() {
     if (!rescheduleSlotId || !rescheduleAppt) return;
     setRescheduleLoading(true);
     try {
-      const res  = await fetch(`/appointments/${rescheduleAppt.id}/reschedule`, {
+      const res  = await fetch(`${API_BASE}/appointments/${rescheduleAppt.id}/reschedule`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ patient_id: profile.id, new_slot_id: rescheduleSlotId }),
       });
@@ -464,7 +470,16 @@ export default function Dashboard() {
         alert(res.error);
         return;
       }
-
+      fetch(`${API_BASE}/appointments/queue/send-status-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_id: profile.id,
+        status: 'waiting',
+        facility_id: facilityId,
+        position: res.position, // depends on what addToQueue returns
+      }),
+    }).catch(err => console.warn('Join queue email failed:', err.message));
       // FIX: refresh queueData only (single source of truth)
       const updated = await getMyQueue(contactDetails, facilityId);
       if (!updated.error) {
@@ -496,6 +511,9 @@ export default function Dashboard() {
   function renderContent() {
     const bookedAppt = getSoonestActiveAppointment(appointments);
 
+    const today = new Date().toISOString().slice(0, 10);
+    const isAppointmentToday = bookedAppt?.appointment_slots?.slot_date === today;
+
     const sharedOverviewProps = {
       profile,
       appointments,
@@ -513,6 +531,7 @@ export default function Dashboard() {
       onReschedule:            openReschedule,
       onCancel:                cancelAppointment,
       onJoinQueue:             joinQueue,
+      isAppointmentToday,
       slotDate: bookedAppt?.appointment_slots?.slot_date || null,
       slotTime: bookedAppt?.appointment_slots?.slot_time || null,
     };

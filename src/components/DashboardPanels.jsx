@@ -116,7 +116,7 @@ export function OverviewPanel({
   profile, appointments, upcomingAppts, activeQueue, unreadCount,
   staffAssignments, latestAssignment, queueData, availability,
   availabilityStatus, savingAvailability, onSaveAvailability,
-  onUpdateAvailabilityDay, onReschedule, onCancel, slotDate, slotTime, onJoinQueue,
+  onUpdateAvailabilityDay, onReschedule, onCancel, slotDate, slotTime, onJoinQueue,isAppointmentToday,
 }) {
   const navigate = useNavigate();
   if (!profile) return null;
@@ -146,12 +146,22 @@ export function OverviewPanel({
         </div>
       </div>
 
-      {profile.role === "patient" && (
-        <button className="db-btn db-btn-primary" onClick={onJoinQueue}>
-          Join Queue
-        </button>
-      )}
+      {profile.role === "patient" && isAppointmentToday && !activeQueue && (
+          <button className="db-btn db-btn-primary" onClick={onJoinQueue}>
+            Check In — Join Queue
+          </button>
+        )}
+      {profile.role === "patient" && isAppointmentToday && activeQueue && (
+          <p style={{ color: "#16a34a", fontWeight: 600 }}>
+            ✅ You're checked in — Position #{queueData?.position}
+          </p>
+        )}
 
+        {profile.role === "patient" && !isAppointmentToday && upcomingAppts.length > 0 && (
+          <p style={{ color: "#6b7280", fontSize: 14 }}>
+            ⏳ Check-in opens on the day of your appointment
+          </p>
+        )}
       <QueueCard queueData={queueData} slotDate={slotDate} slotTime={slotTime} />
 
       {profile.role === "staff" && latestAssignment && (
