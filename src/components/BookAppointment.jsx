@@ -27,7 +27,7 @@ export default function BookAppointment() {
   });
   const [booking, setBooking] = useState(null);
   const [patientId, setPatientId] = useState(null);
-  const [setProfile]   = useState(null);
+  const [profile, setProfile]   = useState(null);
 
   useEffect(() => {
     let unsub = null;

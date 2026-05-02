@@ -174,7 +174,7 @@ export default function Dashboard() {
 
             const { data: queueEntries } = await supabase
               .from("virtual_queues")
-              .select("*, facilities(name, district)")
+              .select("*")
               .eq("patient_id", prof.id)
               .order("joined_at", { ascending: false })
               .limit(10);
