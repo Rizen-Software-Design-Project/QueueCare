@@ -29,7 +29,7 @@ const getEmailContext = async (patient_id, slot_id, facility_id) => {
     const [profileRes, slotRes, facilityRes] = await Promise.all([
         supabase.from('profiles').select('email, name, surname').eq('id', patient_id).single(),
         supabase.from('appointment_slots').select('slot_date, slot_time, duration_minutes').eq('id', slot_id).single(),
-        supabase.from('facilities').select('name, address').eq('id', facility_id).single(),
+        supabase.from('facilities').select('name, district, province').eq('id', facility_id).single(),
     ]);
 
 
@@ -47,7 +47,9 @@ const getEmailContext = async (patient_id, slot_id, facility_id) => {
         slotTime: slotRes.data?.slot_time?.slice(0, 5) || 'TBD',
         duration: slotRes.data?.duration_minutes || 15,
         facilityName: facilityRes.data?.name || 'the clinic',
-        facilityAddress: facilityRes.data?.address || '',
+        facilityAddress: facilityRes.data?.district 
+                       ? `${facilityRes.data.district}, ${facilityRes.data.province || ''}`.trim() 
+                       : '',
     };
 };
 
@@ -904,7 +906,7 @@ const remindPatientsOfUpcomingAppointments = async (req, res) => {
             const slot = appt.appointment_slots;
             const { data: facility } = await supabase
                 .from('facilities')
-                .select('name, address')
+                .select('name, district, province')
                 .eq('id', appt.facility_id)
                 .single();
 
@@ -915,7 +917,7 @@ const remindPatientsOfUpcomingAppointments = async (req, res) => {
                 html: emailHtml(
                     profile.name,
                     facility?.name || 'the clinic',
-                    facility?.address || '',
+                    facility ? `${facility.district || ''}, ${facility.province || ''}`.trim() : '',
                     slot.slot_date,
                     slot.slot_time?.slice(0, 5),
                     slot.duration_minutes,
