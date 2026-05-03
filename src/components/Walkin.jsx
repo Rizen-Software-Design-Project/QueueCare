@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "#lib/supabase";
 import { FiArrowLeft, FiSearch, FiUserCheck, FiClock, FiCalendar } from "react-icons/fi";
-import "./WalkIn.css";
+import "./Walkin.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
