@@ -4,10 +4,6 @@ import "./Clinic_search.css";
 import { FiGrid, FiCreditCard, FiMap, FiSearch, FiClock, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiLogOut, FiMapPin} from "react-icons/fi";
 import { FaHospital } from "react-icons/fa";
 
-// ================= CONFIG =================
-const SUPABASE_URL = "https://vktjtxljwzyakobkkhol.supabase.co";
-const SUPABASE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA";
 
 // ================= HARDCODED DISTRICTS =================
 const districtsByProvince = {
@@ -168,11 +164,11 @@ export default function ClinicSearch() {
           search_district: dist && dist !== "" ? dist : null,
         };
 
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_clinics`, {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/search_clinics`, {
           method: "POST",
           headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
+            apikey: import.meta.env.VITE_SUPABASE_KEY,    
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(body),
@@ -226,11 +222,11 @@ export default function ClinicSearch() {
       setClinics([]);
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/nearby_clinics`, {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/nearby_clinics`, {
           method: "POST",
           headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
+            apikey: import.meta.env.VITE_SUPABASE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ user_lat: loc.lat, user_lng: loc.lng, radius_km: r }),

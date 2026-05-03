@@ -15,11 +15,9 @@
  */
 
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "#lib/supabase";
+import "./Applications.css";
 
-const SUPABASE_URL  = "https://vktjtxljwzyakobkkhol.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function formatDateTime(value) {
@@ -43,15 +41,12 @@ function dobFromSAId(id) {
 
 // ── StatusBadge ──────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
-  const map = {
-    pending:  { background: "#fff8e1", color: "#e65100", border: "1px solid #ffe0b2" },
-    approved: { background: "#e8f5e9", color: "#2e7d32", border: "1px solid #c8e6c9" },
-    rejected: { background: "#fdecea", color: "#c62828", border: "1px solid #f5c6cb" },
-  };
-  const style = map[status] || { background: "#f5f5f5", color: "#555", border: "1px solid #ddd" };
+  const statusClass = ["pending", "approved", "rejected"].includes(status)
+    ? `status-badge--${status}`
+    : "status-badge--unknown";
+
   return (
-    <span style={{ ...style, padding: "4px 10px", borderRadius: 999,
-                   fontSize: 12, fontWeight: 600, textTransform: "capitalize" }}>
+    <span className={`status-badge ${statusClass}`}>
       {status || "unknown"}
     </span>
   );
@@ -70,17 +65,17 @@ export default function Applications({
   const isApplyMode = mode === "apply";
   const isAdmin     = !isApplyMode && profile?.role === "admin";
 
-  const [loading,         setLoading]         = useState(!isApplyMode);
-  const [submitting,      setSubmitting]       = useState(false);
-  const [reviewingId,     setReviewingId]      = useState(null);
-  const [error,           setError]            = useState("");
-  const [allApplications, setAllApplications]  = useState([]);
+  const [loading,          setLoading]         = useState(!isApplyMode);
+  const [submitting,       setSubmitting]       = useState(false);
+  const [reviewingId,      setReviewingId]      = useState(null);
+  const [error,            setError]            = useState("");
+  const [allApplications,  setAllApplications]  = useState([]);
 
   // Clinic search state (apply mode)
-  const [clinicQuery,     setClinicQuery]     = useState("");
-  const [clinicResults,   setClinicResults]   = useState([]);
-  const [selectedClinic,  setSelectedClinic]  = useState(null);
-  const [searchingClinics,setSearchingClinics]= useState(false);
+  const [clinicQuery,      setClinicQuery]      = useState("");
+  const [clinicResults,    setClinicResults]    = useState([]);
+  const [selectedClinic,   setSelectedClinic]   = useState(null);
+  const [searchingClinics, setSearchingClinics] = useState(false);
 
   const [form, setForm] = useState({
     name: "", surname: "", email: "", phone_number: "",
@@ -93,10 +88,10 @@ export default function Applications({
     if (isApplyMode && identity) {
       setForm((prev) => ({
         ...prev,
-        name:         prev.name         || identity.name    || "",
-        surname:      prev.surname      || identity.surname  || "",
-        email:        prev.email        || identity.email    || "",
-        phone_number: prev.phone_number || identity.phone   || "",
+        name:         prev.name         || identity.name   || "",
+        surname:      prev.surname      || identity.surname || "",
+        email:        prev.email        || identity.email   || "",
+        phone_number: prev.phone_number || identity.phone  || "",
       }));
     }
   }, [isApplyMode, identity]);
@@ -145,12 +140,12 @@ export default function Applications({
     setError("");
 
     if (!identity?.auth_provider || !identity?.provider_user_id) { setError("Missing authenticated identity."); return; }
-    if (!form.name.trim())          { setError("Enter your first name.");   return; }
-    if (!form.surname.trim())       { setError("Enter your surname.");      return; }
-    if (!form.email.trim())         { setError("Enter your email.");        return; }
-    if (!form.phone_number.trim())  { setError("Enter your phone number."); return; }
-    if (!form.sex)                  { setError("Please select a gender.");  return; }
-    if (!form.id_number.trim())     { setError("Enter your SA ID number."); return; }
+    if (!form.name.trim())         { setError("Enter your first name.");   return; }
+    if (!form.surname.trim())      { setError("Enter your surname.");      return; }
+    if (!form.email.trim())        { setError("Enter your email.");        return; }
+    if (!form.phone_number.trim()) { setError("Enter your phone number."); return; }
+    if (!form.sex)                 { setError("Please select a gender.");  return; }
+    if (!form.id_number.trim())    { setError("Enter your SA ID number."); return; }
 
     const dob = dobFromSAId(form.id_number.trim());
     if (!dob) { setError("The SA ID number does not contain a valid date of birth."); return; }
@@ -219,12 +214,16 @@ export default function Applications({
         if (err) throw new Error(err.message);
       } else {
         const { data: inserted, error: err } = await supabase.from("profiles").insert({
-          auth_provider: application.auth_provider,
+          auth_provider:    application.auth_provider,
           provider_user_id: application.provider_user_id,
-          name: application.name || "", surname: application.surname || "",
-          email: application.email || null, phone_number: application.phone_number || null,
-          sex: application.sex || null, dob: application.dob || null,
-          id_number: application.id_number || null, role: profileRole,
+          name:             application.name    || "",
+          surname:          application.surname || "",
+          email:            application.email        || null,
+          phone_number:     application.phone_number || null,
+          sex:              application.sex  || null,
+          dob:              application.dob  || null,
+          id_number:        application.id_number || null,
+          role:             profileRole,
         }).select("id").single();
         if (err) throw new Error(err.message);
         profileId = inserted.id;
@@ -288,50 +287,53 @@ export default function Applications({
     const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
     return (
-      <div style={ui.wrapper}>
-        <div style={ui.card}>
+      <div className="app-wrapper">
+        <div className="app-card">
           {onBack && (
-            <button type="button" style={ui.secondaryBtn} onClick={onBack}>← Back</button>
+            <button type="button" className="app-btn-secondary" onClick={onBack}>← Back</button>
           )}
 
-          <h2 style={ui.title}>Staff Application</h2>
-          <p style={ui.muted}>Complete your application for staff access.</p>
+          <h2 className="app-title">Staff Application</h2>
+          <p className="app-muted">Complete your application for staff access.</p>
 
-          {error && <p style={ui.error}>{error}</p>}
+          {error && <p className="app-error">{error}</p>}
 
-          <form onSubmit={handleApplySubmit} style={ui.form}>
+          <form onSubmit={handleApplySubmit} className="app-form">
             {/* Name */}
-            <div style={ui.grid2}>
+            <div className="app-grid-2">
               <div>
-                <label style={ui.label}>First Name</label>
-                <input style={ui.input} value={form.name} onChange={set("name")} placeholder="Jane" />
+                <label className="app-label">First Name</label>
+                <input className="app-input" value={form.name} onChange={set("name")} placeholder="Jane" />
               </div>
               <div>
-                <label style={ui.label}>Surname</label>
-                <input style={ui.input} value={form.surname} onChange={set("surname")} placeholder="Dlamini" />
+                <label className="app-label">Surname</label>
+                <input className="app-input" value={form.surname} onChange={set("surname")} placeholder="Dlamini" />
               </div>
             </div>
 
             {/* Contact */}
-            <div style={ui.grid2}>
+            <div className="app-grid-2">
               <div>
-                <label style={ui.label}>Email</label>
-                <input style={ui.input} type="email" value={form.email} onChange={set("email")} placeholder="jane@example.com" />
+                <label className="app-label">Email</label>
+                <input className="app-input" type="email" value={form.email} onChange={set("email")} placeholder="jane@example.com" />
               </div>
               <div>
-                <label style={ui.label}>Phone Number</label>
-                <input style={ui.input} value={form.phone_number} onChange={set("phone_number")} placeholder="0821234567" />
+                <label className="app-label">Phone Number</label>
+                <input className="app-input" value={form.phone_number} onChange={set("phone_number")} placeholder="0821234567" />
               </div>
             </div>
 
             {/* Gender */}
             <div>
-              <label style={ui.label}>Gender</label>
-              <div style={ui.genderWrap}>
+              <label className="app-label">Gender</label>
+              <div className="app-gender-wrap">
                 {["male", "female", "other"].map((g) => (
-                  <button key={g} type="button"
-                    style={{ ...ui.genderBtn, ...(form.sex === g ? ui.genderBtnActive : {}) }}
-                    onClick={() => setForm((prev) => ({ ...prev, sex: g }))}>
+                  <button
+                    key={g}
+                    type="button"
+                    className={`app-gender-btn${form.sex === g ? " app-gender-btn--active" : ""}`}
+                    onClick={() => setForm((prev) => ({ ...prev, sex: g }))}
+                  >
                     {g.charAt(0).toUpperCase() + g.slice(1)}
                   </button>
                 ))}
@@ -339,66 +341,81 @@ export default function Applications({
             </div>
 
             {/* ID + employee number */}
-            <div style={ui.grid2}>
+            <div className="app-grid-2">
               <div>
-                <label style={ui.label}>SA ID Number</label>
-                <input style={ui.input} value={form.id_number}
+                <label className="app-label">SA ID Number</label>
+                <input
+                  className="app-input"
+                  value={form.id_number}
                   onChange={(e) => setForm((p) => ({ ...p, id_number: e.target.value.replace(/\D/g, "") }))}
-                  placeholder="13 digit ID number" maxLength={13} />
+                  placeholder="13 digit ID number"
+                  maxLength={13}
+                />
               </div>
               <div>
-                <label style={ui.label}>Employee Number</label>
-                <input style={ui.input} value={form.professional_id} onChange={set("professional_id")} placeholder="Employee number" />
+                <label className="app-label">Employee Number</label>
+                <input className="app-input" value={form.professional_id} onChange={set("professional_id")} placeholder="Employee number" />
               </div>
             </div>
 
             {/* License */}
             <div>
-              <label style={ui.label}>License Number (optional)</label>
-              <input style={ui.input} value={form.license_number} onChange={set("license_number")} placeholder="Professional license" />
+              <label className="app-label">License Number (optional)</label>
+              <input className="app-input" value={form.license_number} onChange={set("license_number")} placeholder="Professional license" />
             </div>
 
             {/* Clinic search */}
             <div>
-              <label style={ui.label}>Clinic</label>
-              <input style={ui.input}
+              <label className="app-label">Clinic</label>
+              <input
+                className="app-input"
                 value={selectedClinic ? selectedClinic.name : clinicQuery}
                 onChange={(e) => { setSelectedClinic(null); searchClinics(e.target.value); }}
-                placeholder="Search clinic name" />
+                placeholder="Search clinic name"
+              />
 
               {!selectedClinic && clinicResults.length > 0 && (
-                <div style={ui.searchResults}>
+                <div className="app-search-results">
                   {clinicResults.map((c) => (
-                    <button key={c.id} type="button" style={ui.searchResultBtn}
-                      onClick={() => { setSelectedClinic(c); setClinicQuery(c.name); setClinicResults([]); }}>
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="app-search-result-btn"
+                      onClick={() => { setSelectedClinic(c); setClinicQuery(c.name); setClinicResults([]); }}
+                    >
                       <strong>{c.name}</strong>
-                      <span style={ui.searchSub}>{c.district || "—"}, {c.province || "—"}</span>
+                      <span className="app-search-sub">{c.district || "—"}, {c.province || "—"}</span>
                     </button>
                   ))}
                 </div>
               )}
 
-              {searchingClinics && <p style={ui.smallMuted}>Searching clinics…</p>}
+              {searchingClinics && <p className="app-muted-small">Searching clinics…</p>}
               {selectedClinic && (
-                <p style={ui.selectedClinic}>Selected: <strong>{selectedClinic.name}</strong></p>
+                <p className="app-selected-clinic">Selected: <strong>{selectedClinic.name}</strong></p>
               )}
             </div>
 
             {/* CV */}
             <div>
-              <label style={ui.label}>CV Link</label>
-              <input style={ui.input} value={form.cv_url} onChange={set("cv_url")} placeholder="Paste your CV link" />
+              <label className="app-label">CV Link</label>
+              <input className="app-input" value={form.cv_url} onChange={set("cv_url")} placeholder="Paste your CV link" />
             </div>
 
             {/* Motivation */}
             <div>
-              <label style={ui.label}>Motivation</label>
-              <textarea style={ui.textarea} rows={4} value={form.motivation} onChange={set("motivation")}
-                placeholder="Why are you applying for this role?" />
+              <label className="app-label">Motivation</label>
+              <textarea
+                className="app-textarea"
+                rows={4}
+                value={form.motivation}
+                onChange={set("motivation")}
+                placeholder="Why are you applying for this role?"
+              />
             </div>
 
-            <div style={ui.formActions}>
-              <button type="submit" style={ui.primaryBtn} disabled={submitting}>
+            <div className="app-form-actions">
+              <button type="submit" className="app-btn-primary" disabled={submitting}>
                 {submitting ? "Submitting…" : "Submit Application"}
               </button>
             </div>
@@ -411,49 +428,49 @@ export default function Applications({
   // ── Review mode render ────────────────────────────────────────────────────
   if (!profile) {
     return (
-      <div style={ui.wrapper}>
-        <div style={ui.card}>
-          <h2 style={ui.title}>Applications</h2>
-          <p style={ui.muted}>No profile loaded.</p>
+      <div className="app-wrapper">
+        <div className="app-card">
+          <h2 className="app-title">Applications</h2>
+          <p className="app-muted">No profile loaded.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={ui.wrapper}>
-      <div style={ui.card}>
-        <div style={ui.headerRow}>
+    <div className="app-wrapper">
+      <div className="app-card">
+        <div className="app-header-row">
           <div>
-            <h2 style={ui.title}>Role Applications</h2>
-            <p style={ui.muted}>Review staff and admin access requests.</p>
+            <h2 className="app-title">Role Applications</h2>
+            <p className="app-muted">Review staff and admin access requests.</p>
           </div>
-          <button style={ui.refreshBtn} onClick={loadData} disabled={loading}>
+          <button className="app-btn-refresh" onClick={loadData} disabled={loading}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
         </div>
 
-        {error && <p style={ui.error}>{error}</p>}
+        {error && <p className="app-error">{error}</p>}
 
         {loading ? (
-          <p style={ui.muted}>Loading applications…</p>
+          <p className="app-muted">Loading applications…</p>
         ) : allApplications.length === 0 ? (
-          <p style={ui.muted}>No applications found.</p>
+          <p className="app-muted">No applications found.</p>
         ) : (
-          <div style={ui.list}>
+          <div className="app-list">
             {allApplications.map((app) => (
-              <div key={app.id} style={ui.applicationCard}>
-                <div style={ui.applicationTop}>
+              <div key={app.id} className="app-application-card">
+                <div className="app-application-top">
                   <div>
-                    <p style={ui.appTitle}>
+                    <p className="app-app-title">
                       {`${app.name || ""} ${app.surname || ""}`.trim() || "Unnamed Applicant"}
                     </p>
-                    <p style={ui.appMeta}>Requested role: <strong>{app.requested_role || "—"}</strong></p>
+                    <p className="app-app-meta">Requested role: <strong>{app.requested_role || "—"}</strong></p>
                   </div>
                   <StatusBadge status={app.status} />
                 </div>
 
-                <div style={ui.appBody}>
+                <div className="app-app-body">
                   {[
                     ["Name",            app.name],
                     ["Surname",         app.surname],
@@ -477,13 +494,19 @@ export default function Applications({
                 </div>
 
                 {app.status === "pending" && (
-                  <div style={ui.formActions}>
-                    <button style={ui.rejectBtn} disabled={reviewingId === app.id}
-                      onClick={() => rejectApplication(app.id)}>
+                  <div className="app-form-actions">
+                    <button
+                      className="app-btn-reject"
+                      disabled={reviewingId === app.id}
+                      onClick={() => rejectApplication(app.id)}
+                    >
                       {reviewingId === app.id ? "Processing…" : "Reject"}
                     </button>
-                    <button style={ui.approveBtn} disabled={reviewingId === app.id}
-                      onClick={() => approveApplication(app)}>
+                    <button
+                      className="app-btn-approve"
+                      disabled={reviewingId === app.id}
+                      onClick={() => approveApplication(app)}
+                    >
                       {reviewingId === app.id ? "Processing…" : "Approve"}
                     </button>
                   </div>
@@ -496,56 +519,3 @@ export default function Applications({
     </div>
   );
 }
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-const ui = {
-  wrapper:        { width: "100%" },
-  card:           { background: "#fff", border: "1px solid #e8e7e3", borderRadius: 16,
-                    padding: 20, boxShadow: "0 2px 12px rgba(0,0,0,.05)" },
-  headerRow:      { display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-                    gap: 12, marginBottom: 18 },
-  title:          { margin: 0, fontSize: 22, fontWeight: 700, color: "#111" },
-  muted:          { margin: "6px 0 0", color: "#666", fontSize: 14, lineHeight: 1.5 },
-  smallMuted:     { margin: "6px 0 0", color: "#777", fontSize: 12 },
-  error:          { background: "#fef2f2", color: "#c0392b", border: "1px solid #fecaca",
-                    borderRadius: 8, padding: "10px 12px", marginBottom: 16, fontSize: 13 },
-  refreshBtn:     { background: "#fff", border: "1px solid #ddd", borderRadius: 10,
-                    padding: "10px 14px", cursor: "pointer", fontWeight: 600 },
-  form:           { border: "1px solid #eee", borderRadius: 14, padding: 16,
-                    marginBottom: 22, background: "#fafafa" },
-  grid2:          { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
-  label:          { display: "block", marginBottom: 6, marginTop: 10, fontSize: 12, fontWeight: 700,
-                    textTransform: "uppercase", letterSpacing: ".5px", color: "#444" },
-  input:          { width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8,
-                    border: "1.5px solid #ddd", fontSize: 14, background: "#fff", outline: "none" },
-  textarea:       { width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8,
-                    border: "1.5px solid #ddd", fontSize: 14, background: "#fff", outline: "none",
-                    resize: "vertical" },
-  genderWrap:     { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 },
-  genderBtn:      { padding: "8px 14px", borderRadius: 20, border: "1.5px solid #ddd",
-                    background: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#444" },
-  genderBtnActive:{ background: "#111", color: "#fff", borderColor: "#111" },
-  searchResults:  { border: "1px solid #e5e5e5", borderRadius: 10, background: "#fff",
-                    marginTop: 8, overflow: "hidden" },
-  searchResultBtn:{ width: "100%", textAlign: "left", display: "flex", flexDirection: "column",
-                    gap: 3, padding: "10px 12px", border: "none", background: "#fff",
-                    cursor: "pointer", borderBottom: "1px solid #f0f0f0" },
-  searchSub:      { fontSize: 12, color: "#777" },
-  selectedClinic: { margin: "8px 0 0", fontSize: 13, color: "#1d9e75" },
-  formActions:    { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 14, flexWrap: "wrap" },
-  primaryBtn:     { border: "none", background: "#111", color: "#fff", borderRadius: 10,
-                    padding: "10px 16px", fontWeight: 700, cursor: "pointer" },
-  secondaryBtn:   { border: "1px solid #ddd", background: "#fff", color: "#111", borderRadius: 10,
-                    padding: "10px 16px", fontWeight: 700, cursor: "pointer", marginBottom: 16 },
-  approveBtn:     { border: "none", background: "#1d9e75", color: "#fff", borderRadius: 10,
-                    padding: "10px 16px", fontWeight: 700, cursor: "pointer" },
-  rejectBtn:      { border: "none", background: "#c0392b", color: "#fff", borderRadius: 10,
-                    padding: "10px 16px", fontWeight: 700, cursor: "pointer" },
-  list:           { display: "grid", gap: 14 },
-  applicationCard:{ border: "1px solid #e8e8e8", borderRadius: 14, padding: 16, background: "#fff" },
-  applicationTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-                    gap: 12, marginBottom: 10 },
-  appTitle:       { margin: 0, fontWeight: 700, fontSize: 16, color: "#111" },
-  appMeta:        { margin: "4px 0 0", fontSize: 13, color: "#666" },
-  appBody:        { display: "grid", gap: 6, fontSize: 14, color: "#333" },
-};

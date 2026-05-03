@@ -2,25 +2,25 @@
  * AuthPage.jsx – redesigned modern authentication flow
  * All original logic preserved, UI/UX completely overhauled.
  */
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "#lib/supabase";
+import "./AuthPage.css";
+
 import {
   signInWithPopup,
   RecaptchaVerifier,
   signInWithPhoneNumber,
   FacebookAuthProvider,
+  GoogleAuthProvider,
 } from "firebase/auth";
-import { auth, googleAuthProvider } from "../firebase";
-
-// ── Supabase ────────────────────────────────────────────────────────────────
-const SUPABASE_URL  = "https://vktjtxljwzyakobkkhol.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+import { auth } from "../firebase";
 
 const facebookProvider = new FacebookAuthProvider();
 facebookProvider.addScope("email");
+const googleAuthProvider = new GoogleAuthProvider();
+googleAuthProvider.addScope("email");
+googleAuthProvider.addScope("profile");
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 function strengthScore(pw) {
@@ -40,7 +40,7 @@ function normaliseSAPhone(raw) {
   return null;
 }
 
-// ── Routing helpers (unchanged) ────────────────────────────────────────────────
+// ── Routing helpers ───────────────────────────────────────────────────────────
 async function fetchProfile(identity) {
   const { data } = await supabase
     .from("profiles")
@@ -67,10 +67,10 @@ function isProfileComplete(profile) {
   return !!(profile?.name && profile?.surname && profile?.sex && profile?.id_number);
 }
 
-// ── Reusable UI Components ──────────────────────────────────────────────────
+// ── Reusable UI Components ────────────────────────────────────────────────────
 const Logo = () => (
-  <div style={styles.logo}>
-    <div style={styles.logoMark}>
+  <div className="auth-logo">
+    <div className="auth-logo-mark">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="1.8">
         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
         <path d="M2 17l10 5 10-5"/>
@@ -78,15 +78,15 @@ const Logo = () => (
       </svg>
     </div>
     <div>
-      <h1 style={styles.logoName}>MediAccess</h1>
-      <p style={styles.logoSub}>Integrated Healthcare Management</p>
+      <h1 className="auth-logo-name">MediAccess</h1>
+      <p className="auth-logo-sub">Integrated Healthcare Management</p>
     </div>
   </div>
 );
 
 const LoadingSpinner = () => (
-  <div style={styles.spinner}>
-    <div style={styles.spinnerCircle} />
+  <div className="auth-spinner">
+    <div className="auth-spinner-circle" />
   </div>
 );
 
@@ -95,25 +95,24 @@ const StrengthMeter = ({ score }) => {
   const levels = ["Very weak", "Weak", "Fair", "Good", "Strong"];
   const colors = ["#E24B4A", "#EF9F27", "#F4C542", "#1D9E75", "#0F6E56"];
   return (
-    <div style={styles.strengthContainer}>
-      <div style={styles.strengthBarContainer}>
+    <div className="auth-strength-container">
+      <div className="auth-strength-bar-container">
         {[0, 1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            style={{
-              ...styles.strengthSegment,
-              backgroundColor: i < score ? colors[score - 1] : "#E5E7EB",
-            }}
+            className="auth-strength-segment"
+            style={{ backgroundColor: i < score ? colors[score - 1] : "#E5E7EB" }}
           />
         ))}
       </div>
-      {score > 0 && <span style={styles.strengthLabel}>{levels[score - 1]}</span>}
+      {score > 0 && <span className="auth-strength-label">{levels[score - 1]}</span>}
     </div>
   );
 };
 
 const OtpInput = ({ value, onChange }) => {
   const inputsRef = useRef([]);
+
   const handleChange = (index, e) => {
     const digit = e.target.value.replace(/\D/g, "").slice(-1);
     const newOtp = [...value];
@@ -121,11 +120,13 @@ const OtpInput = ({ value, onChange }) => {
     onChange(newOtp);
     if (digit && index < 5) inputsRef.current[index + 1]?.focus();
   };
+
   const handleKeyDown = (index, e) => {
     if (e.key === "Backspace" && !value[index] && index > 0) {
       inputsRef.current[index - 1]?.focus();
     }
   };
+
   const handlePaste = (e) => {
     e.preventDefault();
     const paste = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
@@ -134,8 +135,9 @@ const OtpInput = ({ value, onChange }) => {
     onChange(newOtp);
     inputsRef.current[Math.min(5, paste.length - 1)]?.focus();
   };
+
   return (
-    <div style={styles.otpContainer}>
+    <div className="auth-otp-container">
       {value.map((digit, idx) => (
         <input
           key={idx}
@@ -147,7 +149,7 @@ const OtpInput = ({ value, onChange }) => {
           onChange={(e) => handleChange(idx, e)}
           onKeyDown={(e) => handleKeyDown(idx, e)}
           onPaste={idx === 0 ? handlePaste : undefined}
-          style={styles.otpBox}
+          className="auth-otp-box"
           aria-label={`OTP digit ${idx + 1}`}
         />
       ))}
@@ -156,14 +158,14 @@ const OtpInput = ({ value, onChange }) => {
 };
 
 const SocialButton = ({ icon, label, onClick, disabled }) => (
-  <button type="button" style={styles.socialBtn} onClick={onClick} disabled={disabled}>
+  <button type="button" className="auth-btn-social" onClick={onClick} disabled={disabled}>
     {icon}
     <span>{label}</span>
   </button>
 );
 
 const BackButton = ({ onClick }) => (
-  <button type="button" style={styles.backBtn} onClick={onClick}>
+  <button type="button" className="auth-btn-back" onClick={onClick}>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
       <polyline points="15 18 9 12 15 6" />
     </svg>
@@ -172,36 +174,36 @@ const BackButton = ({ onClick }) => (
 );
 
 const Divider = () => (
-  <div style={styles.divider}>
-    <div style={styles.divLine} />
-    <span style={styles.divText}>or</span>
-    <div style={styles.divLine} />
+  <div className="auth-divider">
+    <div className="auth-div-line" />
+    <span className="auth-div-text">or</span>
+    <div className="auth-div-line" />
   </div>
 );
 
 const ErrorMessage = ({ msg }) =>
-  msg ? <div style={styles.errorContainer}>⚠️ {msg}</div> : null;
+  msg ? <div className="auth-error">⚠️ {msg}</div> : null;
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AuthPage() {
   const navigate = useNavigate();
 
   const [selectedRole, setSelectedRole] = useState(null);
-  const [page, setPage] = useState("role-select");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [page, setPage]                 = useState("role-select");
+  const [error, setError]               = useState("");
+  const [loading, setLoading]           = useState(false);
 
   // Email state
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPw, setLoginPw] = useState("");
-  const [isNewEmail, setIsNewEmail] = useState(false);
-  const [newPw, setNewPw] = useState("");
-  const [confirmPw, setConfirmPw] = useState("");
-  const [emailOtp, setEmailOtp] = useState(Array(6).fill(""));
+  const [loginEmail, setLoginEmail]   = useState("");
+  const [loginPw, setLoginPw]         = useState("");
+  const [isNewEmail, setIsNewEmail]   = useState(false);
+  const [newPw, setNewPw]             = useState("");
+  const [confirmPw, setConfirmPw]     = useState("");
+  const [emailOtp, setEmailOtp]       = useState(Array(6).fill(""));
 
   // Phone state
-  const [phone, setPhone] = useState("");
-  const [phoneOtp, setPhoneOtp] = useState(Array(6).fill(""));
+  const [phone, setPhone]             = useState("");
+  const [phoneOtp, setPhoneOtp]       = useState(Array(6).fill(""));
   const [resendTimer, setResendTimer] = useState(0);
 
   const go = useCallback((p) => { setError(""); setPage(p); }, []);
@@ -218,14 +220,14 @@ export default function AuthPage() {
     return () => { window.recaptchaVerifier = null; };
   }, []);
 
-  // Resend OTP timer effect
+  // Resend OTP timer
   useEffect(() => {
     if (resendTimer <= 0) return;
     const interval = setInterval(() => setResendTimer((t) => t - 1), 1000);
     return () => clearInterval(interval);
   }, [resendTimer]);
 
-  // ── Central routing decision (unchanged) ───────────────────────────────────
+  // ── Central routing decision ───────────────────────────────────────────────
   async function routeAfterLogin(identity) {
     localStorage.setItem("userIdentity", JSON.stringify(identity));
     const [profile, application] = await Promise.all([
@@ -251,15 +253,18 @@ export default function AuthPage() {
 
     navigate("/profile-setup", {
       state: {
-        identity: { ...identity, name: profile?.name || identity.name || "",
-                               surname: profile?.surname || identity.surname || "",
-                               sex: profile?.sex || "" },
+        identity: {
+          ...identity,
+          name:    profile?.name    || identity.name    || "",
+          surname: profile?.surname || identity.surname || "",
+          sex:     profile?.sex     || "",
+        },
         selectedRole,
       },
     });
   }
 
-  // ── Email/password ────────────────────────────────────────────────────────
+  // ── Email / password ──────────────────────────────────────────────────────
   async function handleEmailSubmit(e) {
     e.preventDefault();
     setError("");
@@ -275,8 +280,10 @@ export default function AuthPage() {
       const { data: { user } } = await supabase.auth.getUser();
       setLoading(false);
       if (!user) { setError("Could not load your account."); return; }
-      await routeAfterLogin({ auth_provider: "supabase", provider_user_id: user.id,
-                               email: user.email || loginEmail, phone: user.phone || "" });
+      await routeAfterLogin({
+        auth_provider: "supabase", provider_user_id: user.id,
+        email: user.email || loginEmail, phone: user.phone || "",
+      });
       return;
     }
 
@@ -296,14 +303,15 @@ export default function AuthPage() {
     setError(""); setLoading(true);
     const token = emailOtp.join("");
     if (token.length !== 6) { setError("Enter all 6 digits."); setLoading(false); return; }
-
     const { error: err } = await supabase.auth.verifyOtp({ email: loginEmail, token, type: "signup" });
     if (err) { setError("Invalid or expired code."); setLoading(false); return; }
     const { data: { user } } = await supabase.auth.getUser();
     setLoading(false);
     if (!user) { setError("Email verified but session could not be loaded."); return; }
-    await routeAfterLogin({ auth_provider: "supabase", provider_user_id: user.id,
-                             email: user.email || loginEmail, phone: user.phone || "" });
+    await routeAfterLogin({
+      auth_provider: "supabase", provider_user_id: user.id,
+      email: user.email || loginEmail, phone: user.phone || "",
+    });
   }
 
   // ── Phone / OTP ───────────────────────────────────────────────────────────
@@ -331,16 +339,16 @@ export default function AuthPage() {
     const code = phoneOtp.join("");
     if (code.length !== 6) { setError("Enter all 6 digits."); setLoading(false); return; }
     try {
-      const result = await window.confirmationResult.confirm(code);
+      const result       = await window.confirmationResult.confirm(code);
       const firebaseUser = result.user;
-      const normalised = normaliseSAPhone(phone);
+      const normalised   = normaliseSAPhone(phone);
       setLoading(false);
       await routeAfterLogin({
-        auth_provider: "firebase",
+        auth_provider:    "firebase",
         provider_user_id: firebaseUser.uid,
-        email: firebaseUser.email || "",
-        phone: normalised || firebaseUser.phoneNumber || "",
-        name: firebaseUser.displayName?.split(" ")[0] || "",
+        email:   firebaseUser.email || "",
+        phone:   normalised || firebaseUser.phoneNumber || "",
+        name:    firebaseUser.displayName?.split(" ")[0]          || "",
         surname: firebaseUser.displayName?.split(" ").slice(1).join(" ") || "",
       });
     } catch {
@@ -351,14 +359,15 @@ export default function AuthPage() {
 
   async function resendOtp() {
     if (resendTimer > 0) return;
-    setError("");
-    setLoading(true);
+    setError(""); setLoading(true);
     try {
       await window.recaptchaVerifier.render();
-      window.confirmationResult = await signInWithPhoneNumber(auth, normaliseSAPhone(phone), window.recaptchaVerifier);
+      window.confirmationResult = await signInWithPhoneNumber(
+        auth, normaliseSAPhone(phone), window.recaptchaVerifier
+      );
       setResendTimer(30);
       setLoading(false);
-    } catch (err) {
+    } catch {
       setLoading(false);
       setError("Could not resend OTP. Try again.");
     }
@@ -370,16 +379,16 @@ export default function AuthPage() {
     if (!selectedRole) { setError("Choose an account type first."); go("role-select"); return; }
     setLoading(true);
     try {
-      const result = await signInWithPopup(auth, provider);
-      const u = result.user;
+      const result   = await signInWithPopup(auth, provider);
+      const u        = result.user;
       const [first, ...rest] = (u.displayName || "").split(" ");
       setLoading(false);
       await routeAfterLogin({
-        auth_provider: "firebase",
+        auth_provider:    "firebase",
         provider_user_id: u.uid,
-        email: u.email || "",
-        phone: u.phoneNumber || "",
-        name: first || "",
+        email:   u.email       || "",
+        phone:   u.phoneNumber || "",
+        name:    first         || "",
         surname: rest.join(" ") || "",
       });
     } catch (err) {
@@ -390,22 +399,22 @@ export default function AuthPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={styles.root}>
+    <div className="auth-root">
       <Logo />
 
-      <div style={styles.card}>
+      <div className="auth-card">
         {/* Role select */}
         {page === "role-select" && (
-          <div style={styles.section}>
-            <h2 style={styles.title}>Welcome to MediAccess</h2>
-            <p style={styles.sub}>Select how you'd like to continue</p>
-            <button style={styles.primaryBtn} onClick={() => chooseRole("patient")}>
+          <div className="auth-section">
+            <h2 className="auth-title">Welcome to MediAccess</h2>
+            <p className="auth-sub">Select how you'd like to continue</p>
+            <button className="auth-btn-primary" onClick={() => chooseRole("patient")}>
               Continue as Patient
             </button>
-            <button style={styles.outlineBtn} onClick={() => chooseRole("staff")}>
+            <button className="auth-btn-outline" onClick={() => chooseRole("staff")}>
               Continue as Staff
             </button>
-            <button style={styles.outlineBtn} onClick={() => chooseRole("admin")}>
+            <button className="auth-btn-outline" onClick={() => chooseRole("admin")}>
               Continue as Admin
             </button>
           </div>
@@ -413,10 +422,10 @@ export default function AuthPage() {
 
         {/* Login method picker */}
         {page === "home" && (
-          <div style={styles.section}>
+          <div className="auth-section">
             <BackButton onClick={() => go("role-select")} />
-            <h2 style={styles.title}>Sign in to MediAccess</h2>
-            <p style={styles.sub}>Continue as <strong>{selectedRole}</strong></p>
+            <h2 className="auth-title">Sign in to MediAccess</h2>
+            <p className="auth-sub">Continue as <strong>{selectedRole}</strong></p>
 
             <SocialButton
               icon={<GoogleIcon />}
@@ -433,7 +442,7 @@ export default function AuthPage() {
 
             <Divider />
 
-            <button style={styles.outlineBtn} onClick={() => go("email")}>
+            <button className="auth-btn-outline" onClick={() => go("email")}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
@@ -441,7 +450,7 @@ export default function AuthPage() {
               Continue with Email
             </button>
 
-            <button style={styles.outlineBtn} onClick={() => go("phone")}>
+            <button className="auth-btn-outline" onClick={() => go("phone")}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
                 <line x1="12" y1="18" x2="12.01" y2="18"/>
@@ -455,15 +464,15 @@ export default function AuthPage() {
 
         {/* Email sign-in / sign-up */}
         {page === "email" && (
-          <div style={styles.section}>
+          <div className="auth-section">
             <BackButton onClick={() => go("home")} />
-            <h2 style={styles.title}>{isNewEmail ? "Create account" : "Sign in"}</h2>
-            <p style={styles.sub}>Use your email address</p>
+            <h2 className="auth-title">{isNewEmail ? "Create account" : "Sign in"}</h2>
+            <p className="auth-sub">Use your email address</p>
 
             <form onSubmit={handleEmailSubmit}>
-              <label style={styles.label}>Email address</label>
+              <label className="auth-label">Email address</label>
               <input
-                style={styles.input}
+                className="auth-input"
                 type="email"
                 placeholder="jane@example.com"
                 value={loginEmail}
@@ -473,9 +482,9 @@ export default function AuthPage() {
 
               {!isNewEmail && (
                 <>
-                  <label style={styles.label}>Password</label>
+                  <label className="auth-label">Password</label>
                   <input
-                    style={styles.input}
+                    className="auth-input"
                     type="password"
                     placeholder="Enter your password"
                     value={loginPw}
@@ -486,18 +495,18 @@ export default function AuthPage() {
 
               {isNewEmail && (
                 <>
-                  <label style={styles.label}>New password</label>
+                  <label className="auth-label">New password</label>
                   <input
-                    style={styles.input}
+                    className="auth-input"
                     type="password"
                     placeholder="Create a strong password"
                     value={newPw}
                     onChange={(e) => setNewPw(e.target.value)}
                   />
                   <StrengthMeter score={strengthScore(newPw)} />
-                  <label style={styles.label}>Confirm password</label>
+                  <label className="auth-label">Confirm password</label>
                   <input
-                    style={styles.input}
+                    className="auth-input"
                     type="password"
                     placeholder="Repeat your password"
                     value={confirmPw}
@@ -507,12 +516,15 @@ export default function AuthPage() {
               )}
 
               <ErrorMessage msg={error} />
-              <button style={styles.primaryBtn} type="submit" disabled={loading}>
+              <button className="auth-btn-primary" type="submit" disabled={loading}>
                 {loading ? <LoadingSpinner /> : (isNewEmail ? "Send verification code" : "Sign in")}
               </button>
             </form>
 
-            <button style={styles.linkBtn} onClick={() => { setIsNewEmail(!isNewEmail); setError(""); }}>
+            <button
+              className="auth-btn-link"
+              onClick={() => { setIsNewEmail(!isNewEmail); setError(""); }}
+            >
               {isNewEmail ? "Already have an account? Sign in" : "Don't have an account? Create one"}
             </button>
           </div>
@@ -520,16 +532,19 @@ export default function AuthPage() {
 
         {/* Email OTP */}
         {page === "email-otp" && (
-          <div style={styles.section}>
+          <div className="auth-section">
             <BackButton onClick={() => go("email")} />
-            <h2 style={styles.title}>Check your email</h2>
-            <p style={styles.sub}>We sent a 6‑digit code to <strong>{loginEmail}</strong></p>
+            <h2 className="auth-title">Check your email</h2>
+            <p className="auth-sub">We sent a 6‑digit code to <strong>{loginEmail}</strong></p>
             <OtpInput value={emailOtp} onChange={setEmailOtp} />
             <ErrorMessage msg={error} />
-            <button style={styles.primaryBtn} onClick={handleEmailOtp} disabled={loading}>
+            <button className="auth-btn-primary" onClick={handleEmailOtp} disabled={loading}>
               {loading ? <LoadingSpinner /> : "Verify code"}
             </button>
-            <button style={styles.linkBtn} onClick={() => supabase.auth.resend({ type: "signup", email: loginEmail })}>
+            <button
+              className="auth-btn-link"
+              onClick={() => supabase.auth.resend({ type: "signup", email: loginEmail })}
+            >
               Resend code
             </button>
           </div>
@@ -537,17 +552,17 @@ export default function AuthPage() {
 
         {/* Phone number entry */}
         {page === "phone" && (
-          <div style={styles.section}>
+          <div className="auth-section">
             <BackButton onClick={() => go("home")} />
-            <h2 style={styles.title}>Enter your number</h2>
-            <p style={styles.sub}>We'll send a one‑time code via SMS</p>
+            <h2 className="auth-title">Enter your number</h2>
+            <p className="auth-sub">We'll send a one‑time code via SMS</p>
 
             <form onSubmit={handlePhoneSubmit}>
-              <label style={styles.label}>Phone number</label>
-              <div style={styles.phoneWrap}>
-                <span style={styles.phoneCode}>+27</span>
+              <label className="auth-label">Phone number</label>
+              <div className="auth-phone-wrap">
+                <span className="auth-phone-code">+27</span>
                 <input
-                  style={{ ...styles.input, borderRadius: "0 12px 12px 0", marginBottom: 0 }}
+                  className="auth-input auth-input--phone"
                   type="tel"
                   placeholder="821234567"
                   value={phone}
@@ -555,9 +570,9 @@ export default function AuthPage() {
                   required
                 />
               </div>
-              <p style={styles.hint}>South African numbers only</p>
+              <p className="auth-hint">South African numbers only</p>
               <ErrorMessage msg={error} />
-              <button style={{ ...styles.primaryBtn, marginTop: 8 }} type="submit" disabled={loading}>
+              <button className="auth-btn-primary auth-btn-primary--mt" type="submit" disabled={loading}>
                 {loading ? <LoadingSpinner /> : "Send OTP"}
               </button>
             </form>
@@ -566,17 +581,18 @@ export default function AuthPage() {
 
         {/* Phone OTP */}
         {page === "phone-otp" && (
-          <div style={styles.section}>
+          <div className="auth-section">
             <BackButton onClick={() => go("phone")} />
-            <h2 style={styles.title}>Enter OTP</h2>
-            <p style={styles.sub}>Code sent to <strong>+27 {phone}</strong></p>
+            <h2 className="auth-title">Enter OTP</h2>
+            <p className="auth-sub">Code sent to <strong>+27 {phone}</strong></p>
             <OtpInput value={phoneOtp} onChange={setPhoneOtp} />
             <ErrorMessage msg={error} />
-            <button style={styles.primaryBtn} onClick={handlePhoneOtp} disabled={loading}>
+            <button className="auth-btn-primary" onClick={handlePhoneOtp} disabled={loading}>
               {loading ? <LoadingSpinner /> : "Verify"}
             </button>
             <button
-              style={{ ...styles.linkBtn, opacity: resendTimer > 0 ? 0.5 : 1 }}
+              className="auth-btn-link"
+              style={{ opacity: resendTimer > 0 ? 0.5 : 1 }}
               onClick={resendOtp}
               disabled={resendTimer > 0 || loading}
             >
@@ -585,26 +601,26 @@ export default function AuthPage() {
           </div>
         )}
 
-        {/* Pending screens (unchanged) */}
+        {/* Pending screens */}
         {page === "application-pending" && (
-          <div style={styles.section}>
-            <h2 style={styles.title}>Application submitted</h2>
-            <p style={styles.sub}>
+          <div className="auth-section">
+            <h2 className="auth-title">Application submitted</h2>
+            <p className="auth-sub">
               Your staff application has been sent to the admin for approval.
               You'll receive a notification once it's reviewed.
             </p>
-            <button style={styles.primaryBtn} onClick={() => go("home")}>Back to sign in</button>
+            <button className="auth-btn-primary" onClick={() => go("home")}>Back to sign in</button>
           </div>
         )}
 
         {page === "admin-pending" && (
-          <div style={styles.section}>
-            <h2 style={styles.title}>Admin application submitted</h2>
-            <p style={styles.sub}>
+          <div className="auth-section">
+            <h2 className="auth-title">Admin application submitted</h2>
+            <p className="auth-sub">
               Your admin request is pending approval. You'll be able to access
               the admin dashboard once approved.
             </p>
-            <button style={styles.primaryBtn} onClick={() => go("home")}>Back to sign in</button>
+            <button className="auth-btn-primary" onClick={() => go("home")}>Back to sign in</button>
           </div>
         )}
       </div>
@@ -614,7 +630,7 @@ export default function AuthPage() {
   );
 }
 
-// ── Icons (unchanged) ──────────────────────────────────────────────────────
+// ── Icons ─────────────────────────────────────────────────────────────────────
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -629,308 +645,3 @@ const FacebookIcon = () => (
     <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
   </svg>
 );
-
-// ── Enhanced Styles ─────────────────────────────────────────────────────────
-const styles = {
-  root: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "32px 16px",
-    background: "linear-gradient(135deg, #F6F9FC 0%, #EDF2F7 100%)",
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif",
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 28,
-  },
-  logoMark: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    background: "#1B5E20",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-  },
-  logoName: {
-    margin: 0,
-    fontSize: 20,
-    fontWeight: 700,
-    color: "#1B5E20",
-    letterSpacing: "-0.3px",
-  },
-  logoSub: {
-    margin: 0,
-    fontSize: 11,
-    color: "#5B6E8C",
-    letterSpacing: "0.2px",
-  },
-  card: {
-    width: "100%",
-    maxWidth: 440,
-    background: "#FFFFFF",
-    borderRadius: 32,
-    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15)",
-    overflow: "hidden",
-    transition: "transform 0.2s ease",
-  },
-  section: {
-    padding: "32px 28px 28px",
-  },
-  title: {
-    margin: "0 0 6px",
-    fontSize: 26,
-    fontWeight: 700,
-    color: "#0F2B1D",
-    letterSpacing: "-0.5px",
-  },
-  sub: {
-    margin: "0 0 24px",
-    fontSize: 14,
-    color: "#4A5568",
-    lineHeight: 1.5,
-  },
-  label: {
-    display: "block",
-    fontSize: 12,
-    fontWeight: 600,
-    color: "#2D3748",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  input: {
-    display: "block",
-    width: "100%",
-    boxSizing: "border-box",
-    padding: "12px 16px",
-    borderRadius: 12,
-    border: "1.5px solid #E2E8F0",
-    fontSize: 14,
-    color: "#1A202C",
-    background: "#FFFFFF",
-    marginBottom: 16,
-    outline: "none",
-    transition: "all 0.2s",
-    ":focus": {
-      borderColor: "#1B5E20",
-      boxShadow: "0 0 0 3px rgba(27,94,32,0.1)",
-    },
-  },
-  phoneWrap: {
-    display: "flex",
-    marginBottom: 8,
-  },
-  phoneCode: {
-    display: "flex",
-    alignItems: "center",
-    padding: "0 16px",
-    background: "#F7FAFC",
-    border: "1.5px solid #E2E8F0",
-    borderRight: "none",
-    borderRadius: "12px 0 0 12px",
-    fontSize: 14,
-    color: "#2D3748",
-    whiteSpace: "nowrap",
-  },
-  otpContainer: {
-    display: "flex",
-    gap: 10,
-    justifyContent: "center",
-    margin: "24px 0 20px",
-  },
-  otpBox: {
-    width: 52,
-    height: 56,
-    textAlign: "center",
-    fontSize: 22,
-    fontWeight: 600,
-    borderRadius: 14,
-    border: "1.5px solid #E2E8F0",
-    background: "#FFFFFF",
-    outline: "none",
-    color: "#1A202C",
-    transition: "all 0.2s",
-    ":focus": {
-      borderColor: "#1B5E20",
-      boxShadow: "0 0 0 3px rgba(27,94,32,0.1)",
-    },
-  },
-  hint: {
-    margin: "-8px 0 16px",
-    fontSize: 11,
-    color: "#718096",
-  },
-  errorContainer: {
-    margin: "16px 0 12px",
-    fontSize: 13,
-    color: "#C53030",
-    background: "#FFF5F5",
-    border: "1px solid #FED7D7",
-    borderRadius: 12,
-    padding: "10px 14px",
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-  },
-  primaryBtn: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    width: "100%",
-    padding: "12px 20px",
-    background: "#1B5E20",
-    color: "#FFFFFF",
-    border: "none",
-    borderRadius: 14,
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "all 0.2s",
-    ":hover": {
-      background: "#144C18",
-      transform: "scale(0.98)",
-    },
-    ":disabled": {
-      opacity: 0.6,
-      cursor: "not-allowed",
-    },
-  },
-  outlineBtn: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    width: "100%",
-    padding: "11px 16px",
-    background: "#FFFFFF",
-    color: "#1A202C",
-    border: "1.5px solid #E2E8F0",
-    borderRadius: 14,
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: "pointer",
-    marginBottom: 10,
-    transition: "all 0.2s",
-    ":hover": {
-      background: "#F7FAFC",
-      borderColor: "#CBD5E0",
-    },
-  },
-  socialBtn: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    width: "100%",
-    padding: "11px 16px",
-    background: "#FFFFFF",
-    color: "#1A202C",
-    border: "1.5px solid #E2E8F0",
-    borderRadius: 14,
-    fontSize: 14,
-    fontWeight: 500,
-    cursor: "pointer",
-    marginBottom: 10,
-    transition: "all 0.2s",
-    ":hover": {
-      background: "#F7FAFC",
-      transform: "translateY(-1px)",
-    },
-  },
-  linkBtn: {
-    display: "block",
-    width: "100%",
-    background: "none",
-    border: "none",
-    color: "#1B5E20",
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: "pointer",
-    padding: "8px 0",
-    textAlign: "center",
-    transition: "opacity 0.2s",
-    ":hover": {
-      textDecoration: "underline",
-    },
-  },
-  divider: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    margin: "20px 0",
-  },
-  divLine: {
-    flex: 1,
-    height: 1,
-    background: "#E2E8F0",
-  },
-  divText: {
-    fontSize: 12,
-    color: "#A0AEC0",
-    fontWeight: 500,
-  },
-  backBtn: {
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    color: "#4A5568",
-    fontSize: 13,
-    fontWeight: 500,
-    padding: "0 0 20px",
-    transition: "color 0.2s",
-    ":hover": {
-      color: "#1B5E20",
-    },
-  },
-  strengthContainer: {
-    marginTop: -8,
-    marginBottom: 16,
-  },
-  strengthBarContainer: {
-    display: "flex",
-    gap: 6,
-    marginBottom: 6,
-  },
-  strengthSegment: {
-    flex: 1,
-    height: 4,
-    borderRadius: 4,
-    transition: "background-color 0.2s",
-  },
-  strengthLabel: {
-    fontSize: 11,
-    color: "#718096",
-  },
-  spinner: {
-    display: "inline-block",
-    width: 18,
-    height: 18,
-  },
-  spinnerCircle: {
-    width: "100%",
-    height: "100%",
-    border: "2px solid rgba(255,255,255,0.3)",
-    borderTopColor: "#FFFFFF",
-    borderRadius: "50%",
-    animation: "spin 0.8s linear infinite",
-  },
-};
-
-// Inject keyframes for spinner animation
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  @keyframes spin { to { transform: rotate(360deg); } }
-  button:hover, .social-btn:hover { transform: translateY(-1px); }
-`;
-document.head.appendChild(styleSheet);

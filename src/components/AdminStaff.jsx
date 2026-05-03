@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { FiGrid,FiUsers,FiRefreshCw,FiTrash2, FiCreditCard, FiMap, FiSearch, FiClock, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiLogOut, FiMapPin} from "react-icons/fi";
 import { FaHospital } from "react-icons/fa";
+import { supabase } from "#lib/supabase";  
 
 
-const SUPABASE_URL = "https://vktjtxljwzyakobkkhol.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const STAFF_ROLES = ["doctor", "nurse", "receptionist", "admin"];
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];

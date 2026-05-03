@@ -2,9 +2,10 @@
 //self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
 
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 // ADD THESE TWO IMPORTS
-import { ReCaptchaEnterpriseProvider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAiCEmBwTJx30M2k6IoaI3SSMgstajNoyc",
@@ -19,6 +20,7 @@ const firebaseConfig = {
   
 
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const googleAuthProvider = new GoogleAuthProvider();
 

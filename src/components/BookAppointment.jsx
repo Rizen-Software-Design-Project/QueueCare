@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "#lib/supabase";  
+ 
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
-import { addToQueue } from "../queueApi";
-import { FiCalendar, FiCheck, FiClock, FiArrowLeft } from "react-icons/fi";
+import { FiArrowLeft, FiClock, FiCheck, FiCalendar } from "react-icons/fi";
+import "./BookAppointment.css"
 
-const supabase = createClient(
-  "https://vktjtxljwzyakobkkhol.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGp0eGxqd3p5YWtvYmtraG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODE1ODYsImV4cCI6MjA5MTE1NzU4Nn0.LVNelw--Xp1t_weGNwhPGMrzqg0iS7J5TAXw9ZM6aUA"
-);
+const API_BASE = import.meta.env.VITE_API_BASE 
+  || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
+
 
 export default function BookAppointment() {
   const [searchParams] = useSearchParams();
@@ -27,7 +27,7 @@ export default function BookAppointment() {
   });
   const [booking, setBooking] = useState(null);
   const [patientId, setPatientId] = useState(null);
-  const [profile,   setProfile]   = useState(null);
+  const [profile, setProfile]   = useState(null);
 
   useEffect(() => {
     let unsub = null;
@@ -109,10 +109,18 @@ export default function BookAppointment() {
           });
           return;
         }
+        const now = new Date();
 
-        let available = data.filter(
-          (s) => (s.booked_count || 0) < (s.total_capacity || 1)
-        );
+        let available = data.filter((s) => {
+      // Filter 1: slot must not be full
+      const hasCapacity = (s.booked_count || 0) < (s.total_capacity || 1);
+
+      // Filter 2: slot datetime must be in the future
+      const slotDateTime = new Date(`${s.slot_date}T${s.slot_time}`);
+      const isFuture = slotDateTime > now;
+
+      return hasCapacity && isFuture;
+    });
 
         const { data: existing } = await supabase
           .from("appointments")
@@ -133,7 +141,12 @@ export default function BookAppointment() {
           });
           return;
         }
-
+        available.sort((a, b) => {
+      const aDateTime = `${a.slot_date}T${a.slot_time}`;
+      const bDateTime = `${b.slot_date}T${b.slot_time}`;
+      return aDateTime.localeCompare(bDateTime);
+    });
+    
         setSlots(available);
         setStatus({
           type: "count",
@@ -172,7 +185,7 @@ export default function BookAppointment() {
 
   try {
     // ✅ Step 1: Book appointment
-    const res = await fetch("/appointments/book", {
+    const res = await fetch(`${API_BASE}/appointments/book`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -188,7 +201,7 @@ export default function BookAppointment() {
     if (!res.ok) {
       throw new Error(data.error || "Booking failed.");
     }
-
+   
     // ✅ Step 2: Update UI
     setBooking(data.appointment);
     setStatus({
@@ -196,18 +209,20 @@ export default function BookAppointment() {
       message: "Appointment booked successfully",
     });
 
-    // ✅ Step 3: Add to queue (THIS is your integration)
-    const contactDetails = profile?.email || profile?.phone_number;
+    fetch(`${API_BASE}/appointments/send-confirmation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      patient_id: patientId,
+      facility_id: Number(clinicId),
+      slot_id: selectedSlotId,
+      reason: reason.trim(),
+    }),
+  }).catch(err => console.warn("Confirmation email failed:", err.message));
 
-    if (contactDetails && clinicId) {
-      const queueResult = await addToQueue(contactDetails, clinicId);
-
-      if (queueResult?.error) {
-        console.warn("Queue add failed:", queueResult.error);
-      }
-    }
-
-  } catch (err) {
+  } 
+  
+  catch (err) {
     setStatus({
       type: "error",
       message: `Booking failed: ${err.message}`,
@@ -234,235 +249,7 @@ export default function BookAppointment() {
 
   return (
     <>
-      <style>{`
-        /* ----- GLOBAL RESET & VARIABLES (scoped) ----- */
-        .booking-module * {
-          box-sizing: border-box;
-          margin: 0;
-        }
-        .booking-module {
-          --primary: #1B5E20;
-          --primary-light: #2e7d32;
-          --primary-dark: #0a3b0f;
-          --gray-100: #f8f9fa;
-          --gray-200: #e9ecef;
-          --gray-300: #dee2e6;
-          --gray-600: #6c757d;
-          --gray-800: #212529;
-          --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
-          --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
-          --radius: 12px;
-          --radius-sm: 8px;
-          font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-          color: var(--gray-800);
-        }
-
-        .booking-module .container {
-          max-width: 800px;
-          margin: 2rem auto;
-          padding: 1.5rem;
-        }
-
-        /* Back button */
-        .booking-module .back-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: none;
-          border: 1px solid var(--gray-300);
-          padding: 0.5rem 1rem;
-          border-radius: var(--radius-sm);
-          cursor: pointer;
-          font-size: 0.9rem;
-          margin-bottom: 1.5rem;
-          transition: all 0.2s;
-          color: var(--gray-800);
-        }
-        .booking-module .back-btn:hover {
-          background: var(--gray-100);
-          border-color: var(--primary);
-        }
-
-        /* Titles */
-        .booking-module h2 {
-          font-size: 1.8rem;
-          font-weight: 600;
-          margin-bottom: 0.25rem;
-          color: var(--primary-dark);
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .booking-module h3 {
-          font-size: 1.2rem;
-          font-weight: 500;
-          margin-bottom: 1.25rem;
-          color: var(--gray-600);
-        }
-
-        /* Status messages */
-        .booking-module .status {
-          padding: 0.75rem 1rem;
-          border-radius: var(--radius-sm);
-          margin-bottom: 1.5rem;
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
-        .booking-module .status.loading { background: #e3f2fd; color: #0d47a1; border-left: 4px solid #1976d2; }
-        .booking-module .status.count { background: #e8f5e9; color: var(--primary-dark); border-left: 4px solid var(--primary); }
-        .booking-module .status.error { background: #ffebee; color: #b71c1c; border-left: 4px solid #d32f2f; }
-        .booking-module .status.success { background: #e8f5e9; color: var(--primary-dark); border-left: 4px solid var(--primary); font-weight: 600; }
-
-        /* Slots section */
-        .booking-module .slots {
-          margin-bottom: 1.5rem;
-        }
-        .booking-module .slots h4 {
-          font-size: 1.1rem;
-          font-weight: 600;
-          margin-bottom: 1rem;
-        }
-
-        /* Slot card */
-        .booking-module .slot-card {
-          border: 2px solid var(--gray-300);
-          border-radius: var(--radius);
-          padding: 1rem 1.25rem;
-          margin-bottom: 0.75rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          background: white;
-        }
-        .booking-module .slot-card:hover {
-          border-color: var(--primary);
-          box-shadow: var(--shadow-sm);
-          transform: translateY(-2px);
-        }
-        .booking-module .slot-card.selected {
-          border-color: var(--primary);
-          background: #e8f5e9;
-          box-shadow: var(--shadow-sm);
-        }
-        .booking-module .slot-date {
-          font-weight: 700;
-          font-size: 1rem;
-          color: var(--primary-dark);
-        }
-        .booking-module .slot-time {
-          margin-top: 0.25rem;
-          font-size: 0.95rem;
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          color: var(--gray-800);
-        }
-        .booking-module .slot-meta {
-          margin-top: 0.4rem;
-          font-size: 0.8rem;
-          color: var(--gray-600);
-        }
-        .booking-module .slot-check {
-          margin-top: 0.5rem;
-          color: var(--primary);
-          font-weight: 600;
-          font-size: 0.85rem;
-          display: flex;
-          align-items: center;
-          gap: 0.3rem;
-        }
-
-        /* Reason textarea */
-        .booking-module .reason-group {
-          margin-bottom: 1.5rem;
-        }
-        .booking-module .reason-group label {
-          display: block;
-          font-weight: 600;
-          margin-bottom: 0.5rem;
-        }
-        .booking-module .reason-group textarea {
-          width: 100%;
-          padding: 0.75rem;
-          border: 1px solid var(--gray-300);
-          border-radius: var(--radius-sm);
-          font-size: 0.95rem;
-          font-family: inherit;
-          resize: vertical;
-          transition: 0.2s;
-        }
-        .booking-module .reason-group textarea:focus {
-          outline: none;
-          border-color: var(--primary);
-          box-shadow: 0 0 0 3px rgba(27,94,32,0.2);
-        }
-
-        /* Book button */
-        .booking-module .book-btn {
-          width: 100%;
-          padding: 0.85rem;
-          background: var(--primary);
-          color: white;
-          font-size: 1rem;
-          font-weight: 600;
-          border: none;
-          border-radius: var(--radius-sm);
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: var(--shadow-sm);
-        }
-        .booking-module .book-btn:hover:not(:disabled) {
-          background: var(--primary-light);
-          transform: translateY(-1px);
-        }
-        .booking-module .book-btn:disabled {
-          background: var(--gray-600);
-          cursor: not-allowed;
-          opacity: 0.7;
-        }
-
-        /* Confirmation card */
-        .booking-module .confirmation {
-          background: #e8f5e9;
-          border: 2px solid var(--primary);
-          border-radius: var(--radius);
-          padding: 1.25rem;
-          margin-bottom: 1.5rem;
-        }
-        .booking-module .confirmation h3 {
-          color: var(--primary-dark);
-          margin: 0 0 0.75rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .booking-module .confirmation p {
-          margin-bottom: 0.5rem;
-        }
-        .booking-module .confirmation button {
-          margin-top: 1rem;
-          padding: 0.6rem 1.25rem;
-          background: var(--primary);
-          color: white;
-          border: none;
-          border-radius: var(--radius-sm);
-          cursor: pointer;
-          font-size: 0.9rem;
-          transition: background 0.2s;
-        }
-        .booking-module .confirmation button:hover {
-          background: var(--primary-light);
-        }
-
-        @media (max-width: 640px) {
-          .booking-module .container {
-            padding: 1rem;
-          }
-          .booking-module h2 {
-            font-size: 1.5rem;
-          }
-        }
-      `}</style>
-
+    
       <div className="booking-module">
         <div className="container">
           <button className="back-btn" onClick={() => navigate(-1)}>
@@ -480,8 +267,8 @@ export default function BookAppointment() {
               <h3><FiCheck /> Appointment Confirmed</h3>
               <p><strong>Status:</strong> {booking.status}</p>
               <p><strong>Reason:</strong> {booking.reason}</p>
-              <button onClick={() => navigate("/clinic-search")}>
-                Back to Clinic Search
+              <button onClick={() => navigate("/dashboard")}>
+                Back to Dashboard
               </button>
             </div>
           )}

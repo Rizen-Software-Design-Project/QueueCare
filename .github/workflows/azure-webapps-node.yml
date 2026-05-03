@@ -26,31 +26,42 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install frontend dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Build frontend
         run: npm run build
-
-      - name: Install backend dependencies
-        working-directory: "src/appointment booking"
-        run: npm ci --omit=dev
-
-      - name: Prepare deployment package
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+          
+      # ✅ CLEAN DEPLOY PACKAGE (IMPORTANT FIX)
+      - name: Create deployment package
         run: |
           mkdir deploy
-          cp -r dist deploy/dist
-          cp -r "src/appointment booking" deploy/server
-          cp package.json deploy/
-          cp deploy-web.config deploy/web.config
-          cp deploy-entry.js deploy/server.js
-          echo "// deployed $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> deploy/server.js
 
-      - name: Upload deployment artifact
+          # backend entry
+          cp server.js deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp web.config deploy/  
+          # ONLY production-needed files
+          cp -r dist deploy/
+          cp -r src deploy/    
+
+          echo "Deploy contents:"
+          ls -R deploy
+      - name: Install production dependencies in deploy folder
+        run: |
+          cd deploy
+          npm ci --omit=dev
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: deploy/
+          path: deploy
+      
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,18 +72,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app
-          path: .
+          path: app
 
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # ✅ FIXED DEPLOY TARGET
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: .
+          package: app
 
       - name: Restart App Service
-        run: az webapp restart --name $AZURE_WEBAPP_NAME --resource-group $AZURE_RESOURCE_GROUP
+        run: az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
