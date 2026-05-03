@@ -5,12 +5,13 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "#lib/supabase";  
+import { supabase } from "#lib/supabase";
+import "./ProfileSetupPage.css";
 
 import Applications from "./Applications";
 
 
-// ── Utilities (unchanged) ───────────────────────────────────────────────────
+// ── Utilities ─────────────────────────────────────────────────────────────────
 async function sha256Hex(value) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -18,24 +19,27 @@ async function sha256Hex(value) {
 
 function dobFromSAId(id) {
   if (!/^\d{13}$/.test(id)) return null;
-  const yy = parseInt(id.slice(0, 2), 10);
-  const mm = parseInt(id.slice(2, 4), 10);
-  const dd = parseInt(id.slice(4, 6), 10);
+  const yy   = parseInt(id.slice(0, 2), 10);
+  const mm   = parseInt(id.slice(2, 4), 10);
+  const dd   = parseInt(id.slice(4, 6), 10);
   const yyyy = yy <= 25 ? 2000 + yy : 1900 + yy;
   const date = new Date(yyyy, mm - 1, dd);
-  const isValid = date.getFullYear() === yyyy && date.getMonth() === mm - 1 && date.getDate() === dd;
+  const isValid =
+    date.getFullYear() === yyyy &&
+    date.getMonth()    === mm - 1 &&
+    date.getDate()     === dd;
   if (!isValid) return null;
   return `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
 }
 
-// ── Shared micro-components (enhanced) ──────────────────────────────────────
+// ── Shared micro-components ───────────────────────────────────────────────────
 function Err({ msg }) {
   if (!msg) return null;
   return (
-    <div style={styles.errorContainer}>
+    <div className="psp-error">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="8"  x2="12"    y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
       <span>{msg}</span>
@@ -45,7 +49,7 @@ function Err({ msg }) {
 
 function BackBtn({ onClick }) {
   return (
-    <button type="button" style={styles.backBtn} onClick={onClick}>
+    <button type="button" className="psp-btn-back" onClick={onClick}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
         <polyline points="15 18 9 12 15 6" />
       </svg>
@@ -55,16 +59,17 @@ function BackBtn({ onClick }) {
 }
 
 function Dots({ step, total = 2 }) {
+  const colors  = ["#E24B4A", "#EF9F27", "#F4C542", "#1D9E75", "#0F6E56"];
   return (
-    <div style={styles.dotsContainer}>
+    <div className="psp-dots">
       {Array.from({ length: total }, (_, i) => (
         <div
           key={i}
+          className="psp-dot"
           style={{
-            ...styles.dot,
-            width: i + 1 === step ? 28 : 8,
+            width:           i + 1 === step ? 28 : 8,
             backgroundColor: i + 1 <= step ? "#1B5E20" : "#E2E8F0",
-            boxShadow: i + 1 === step ? "0 0 0 3px rgba(27,94,32,0.15)" : "none",
+            boxShadow:       i + 1 === step ? "0 0 0 3px rgba(27,94,32,0.15)" : "none",
           }}
         />
       ))}
@@ -76,14 +81,12 @@ function StrengthBar({ score }) {
   const colors = ["#DC2626", "#F59E0B", "#1B5E20", "#0F3B1A"];
   if (!score) return null;
   return (
-    <div style={styles.strengthContainer}>
+    <div className="psp-strength-bar">
       {[0, 1, 2, 3].map((i) => (
         <div
           key={i}
-          style={{
-            ...styles.strengthSegment,
-            backgroundColor: i < score ? colors[score - 1] : "#E2E8F0",
-          }}
+          className="psp-strength-segment"
+          style={{ backgroundColor: i < score ? colors[score - 1] : "#E2E8F0" }}
         />
       ))}
     </div>
@@ -92,13 +95,13 @@ function StrengthBar({ score }) {
 
 function LoadingSpinner() {
   return (
-    <div style={styles.spinner}>
-      <div style={styles.spinnerCircle} />
+    <div className="psp-spinner">
+      <div className="psp-spinner-circle" />
     </div>
   );
 }
 
-// ── ProfileStep (enhanced UI, logic unchanged) ──────────────────────────────
+// ── ProfileStep ───────────────────────────────────────────────────────────────
 function ProfileStep({ identity, selectedRole, onComplete }) {
   const [firstName, setFirstName] = useState(identity?.name    || "");
   const [surname,   setSurname]   = useState(identity?.surname  || "");
@@ -113,9 +116,9 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
     e.preventDefault();
     setError("");
 
-    if (!firstName || !surname) { setError("Please enter your full name."); return; }
-    if (!sex)                   { setError("Please select a gender.");       return; }
-    if (!/^\d{13}$/.test(idNumber)) { setError("Enter a valid 13-digit SA ID number."); return; }
+    if (!firstName || !surname)     { setError("Please enter your full name.");            return; }
+    if (!sex)                       { setError("Please select a gender.");                 return; }
+    if (!/^\d{13}$/.test(idNumber)) { setError("Enter a valid 13-digit SA ID number.");   return; }
 
     setLoading(true);
 
@@ -127,9 +130,11 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
       .from("profiles").select("id, auth_provider, provider_user_id")
       .eq("id_number", hashed).maybeSingle();
 
-    if (existingId &&
-        !(existingId.auth_provider === identity.auth_provider &&
-          existingId.provider_user_id === identity.provider_user_id)) {
+    if (
+      existingId &&
+      !(existingId.auth_provider    === identity.auth_provider &&
+        existingId.provider_user_id === identity.provider_user_id)
+    ) {
       setError("An account with this ID number already exists.");
       setLoading(false);
       return;
@@ -147,10 +152,8 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
 
       if (
         existingPhone &&
-        !(
-          existingPhone.auth_provider === identity.auth_provider &&
-          existingPhone.provider_user_id === identity.provider_user_id
-        )
+        !(existingPhone.auth_provider    === identity.auth_provider &&
+          existingPhone.provider_user_id === identity.provider_user_id)
       ) {
         setError("An account with this phone number already exists.");
         setLoading(false);
@@ -186,7 +189,6 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
       if (err) {
         console.error("PROFILE INSERT ERROR:", err);
         setError(err.message || "Could not save profile.");
-        setLoading(false);
         return;
       }
       onComplete({ status: "approved", role: "patient" });
@@ -206,17 +208,17 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
   const totalDots = selectedRole === "admin" ? 3 : 2;
 
   return (
-    <div style={styles.section}>
+    <div className="psp-section">
       <Dots step={2} total={totalDots} />
-      <h2 style={styles.title}>Complete your profile</h2>
-      <p style={styles.sub}>We need a few more details to get you started.</p>
+      <h2 className="psp-title">Complete your profile</h2>
+      <p className="psp-sub">We need a few more details to get you started.</p>
 
       <form onSubmit={handleSubmit}>
-        <div style={styles.twoColumnGrid}>
+        <div className="psp-two-col">
           <div>
-            <label style={styles.label}>First name</label>
+            <label className="psp-label">First name</label>
             <input
-              style={styles.input}
+              className="psp-input"
               value={firstName}
               placeholder="Jane"
               onChange={(e) => setFirstName(e.target.value)}
@@ -224,9 +226,9 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
             />
           </div>
           <div>
-            <label style={styles.label}>Surname</label>
+            <label className="psp-label">Surname</label>
             <input
-              style={styles.input}
+              className="psp-input"
               value={surname}
               placeholder="Dlamini"
               onChange={(e) => setSurname(e.target.value)}
@@ -235,16 +237,13 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
           </div>
         </div>
 
-        <label style={styles.label}>Gender</label>
-        <div style={styles.pillGroup}>
+        <label className="psp-label">Gender</label>
+        <div className="psp-pill-group">
           {["male", "female", "other"].map((g) => (
             <button
               key={g}
               type="button"
-              style={{
-                ...styles.pill,
-                ...(sex === g ? styles.pillActive : {}),
-              }}
+              className={`psp-pill${sex === g ? " psp-pill--active" : ""}`}
               onClick={() => setSex(g)}
             >
               {g.charAt(0).toUpperCase() + g.slice(1)}
@@ -252,22 +251,22 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
           ))}
         </div>
 
-        <label style={styles.label}>SA ID Number</label>
+        <label className="psp-label">SA ID Number</label>
         <input
-          style={styles.input}
+          className="psp-input"
           value={idNumber}
           maxLength={13}
           placeholder="13 digits"
           onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, ""))}
           required
         />
-        <p style={styles.hint}>Date of birth will be extracted automatically.</p>
+        <p className="psp-hint">Date of birth will be extracted automatically.</p>
 
         {!identity?.email && (
           <>
-            <label style={styles.label}>Email (optional)</label>
+            <label className="psp-label">Email (optional)</label>
             <input
-              style={styles.input}
+              className="psp-input"
               type="email"
               value={email}
               placeholder="jane@example.com"
@@ -278,9 +277,9 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
 
         {!identity?.phone && (
           <>
-            <label style={styles.label}>Phone (optional)</label>
+            <label className="psp-label">Phone (optional)</label>
             <input
-              style={styles.input}
+              className="psp-input"
               type="tel"
               value={phone}
               placeholder="0821234567"
@@ -290,7 +289,7 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
         )}
 
         <Err msg={error} />
-        <button style={styles.primaryBtn} type="submit" disabled={loading}>
+        <button className="psp-btn-primary" type="submit" disabled={loading}>
           {loading ? <LoadingSpinner /> : "Save & continue"}
         </button>
       </form>
@@ -298,7 +297,7 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
   );
 }
 
-// ── AdminOnboardingStep (enhanced UI) ───────────────────────────────────────
+// ── AdminOnboardingStep ───────────────────────────────────────────────────────
 function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
   const [professionalId, setProfessionalId] = useState("");
   const [licenseNumber,  setLicenseNumber]  = useState("");
@@ -317,10 +316,7 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
     }
     if (!professionalId.trim()) { setError("Please enter your employee or admin ID."); return; }
     if (!motivation.trim())     { setError("Please provide a short motivation.");       return; }
-    if (!cvUrl.trim()) {
-      setError("Please provide your CV link.");
-      return;
-    }
+    if (!cvUrl.trim())          { setError("Please provide your CV link.");             return; }
 
     setLoading(true);
 
@@ -354,49 +350,49 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
   }
 
   return (
-    <div style={styles.section}>
+    <div className="psp-section">
       <BackBtn onClick={onBack} />
       <Dots step={3} total={3} />
-      <h2 style={styles.title}>Admin verification</h2>
-      <p style={styles.sub}>Provide your credentials to request admin access.</p>
+      <h2 className="psp-title">Admin verification</h2>
+      <p className="psp-sub">Provide your credentials to request admin access.</p>
 
       <form onSubmit={handleSubmit}>
-        <label style={styles.label}>Employee / Admin ID</label>
+        <label className="psp-label">Employee / Admin ID</label>
         <input
-          style={styles.input}
+          className="psp-input"
           value={professionalId}
           onChange={(e) => setProfessionalId(e.target.value)}
           placeholder="Enter your employee ID"
           required
         />
 
-        <label style={styles.label}>License Number (optional)</label>
+        <label className="psp-label">License Number (optional)</label>
         <input
-          style={styles.input}
+          className="psp-input"
           value={licenseNumber}
           onChange={(e) => setLicenseNumber(e.target.value)}
           placeholder="Professional or license number"
         />
 
-        <label style={styles.label}>Clinic / Department (optional)</label>
+        <label className="psp-label">Clinic / Department (optional)</label>
         <input
-          style={styles.input}
+          className="psp-input"
           value={clinicName}
           onChange={(e) => setClinicName(e.target.value)}
           placeholder="Clinic or department name"
         />
 
-        <label style={styles.label}>CV Link</label>
+        <label className="psp-label">CV Link</label>
         <input
-          style={styles.input}
+          className="psp-input"
           value={cvUrl}
           onChange={(e) => setCvUrl(e.target.value)}
           placeholder="Paste a link to your CV"
         />
 
-        <label style={styles.label}>Motivation</label>
+        <label className="psp-label">Motivation</label>
         <textarea
-          style={styles.textarea}
+          className="psp-textarea"
           rows={4}
           value={motivation}
           onChange={(e) => setMotivation(e.target.value)}
@@ -405,7 +401,7 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
         />
 
         <Err msg={error} />
-        <button style={styles.primaryBtn} type="submit" disabled={loading}>
+        <button className="psp-btn-primary" type="submit" disabled={loading}>
           {loading ? <LoadingSpinner /> : "Submit admin application"}
         </button>
       </form>
@@ -413,17 +409,17 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
   );
 }
 
-// ── ProfileSetupPage (main exported component) ──────────────────────────────
+// ── ProfileSetupPage ──────────────────────────────────────────────────────────
 export default function ProfileSetupPage() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { identity, selectedRole } = location.state || {};
 
-  const [step,             setStep]             = useState(
+  const [step,         setStep]         = useState(
     selectedRole === "staff" ? "staff-application" : "profile"
   );
-  const [adminProfile,     setAdminProfile]     = useState(null);
+  const [adminProfile, setAdminProfile] = useState(null);
 
   useEffect(() => {
     if (!identity || !selectedRole) {
@@ -431,9 +427,7 @@ export default function ProfileSetupPage() {
     }
   }, [identity, selectedRole, navigate]);
 
-  if (!identity || !selectedRole) {
-    return null;
-  }
+  if (!identity || !selectedRole) return null;
 
   function handleProfileComplete(result) {
     if (result?.status === "approved") {
@@ -451,14 +445,13 @@ export default function ProfileSetupPage() {
   }
 
   return (
-    <div style={styles.root}>
-      {/* Animated background gradient */}
-      <div style={styles.bgGradient} />
-      <div style={styles.bgBlob} />
+    <div className="psp-root">
+      <div className="psp-bg-gradient" />
+      <div className="psp-bg-blob" />
 
       {/* Logo */}
-      <div style={styles.logo}>
-        <div style={styles.logoMark}>
+      <div className="psp-logo">
+        <div className="psp-logo-mark">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="1.8">
             <path d="M12 2L2 7l10 5 10-5-10-5z"/>
             <path d="M2 17l10 5 10-5"/>
@@ -466,12 +459,12 @@ export default function ProfileSetupPage() {
           </svg>
         </div>
         <div>
-          <h1 style={styles.logoName}>MediAccess</h1>
-          <p style={styles.logoSub}>Integrated Healthcare Management</p>
+          <h1 className="psp-logo-name">MediAccess</h1>
+          <p className="psp-logo-sub">Integrated Healthcare Management</p>
         </div>
       </div>
 
-      <div style={styles.card}>
+      <div className="psp-card">
         {step === "profile" && (
           <ProfileStep
             identity={identity}
@@ -499,28 +492,28 @@ export default function ProfileSetupPage() {
         )}
 
         {step === "staff-pending" && (
-          <div style={styles.section}>
-            <div style={styles.successIcon}>✓</div>
-            <h2 style={styles.title}>Application submitted</h2>
-            <p style={styles.sub}>
+          <div className="psp-section">
+            <div className="psp-success-icon">✓</div>
+            <h2 className="psp-title">Application submitted</h2>
+            <p className="psp-sub">
               Your staff application has been sent to the admin for approval.
               You'll receive a notification once it's reviewed.
             </p>
-            <button style={styles.primaryBtn} onClick={() => navigate("/signin")}>
+            <button className="psp-btn-primary" onClick={() => navigate("/signin")}>
               Back to sign in
             </button>
           </div>
         )}
 
         {step === "admin-pending" && (
-          <div style={styles.section}>
-            <div style={styles.successIcon}>✓</div>
-            <h2 style={styles.title}>Admin application submitted</h2>
-            <p style={styles.sub}>
+          <div className="psp-section">
+            <div className="psp-success-icon">✓</div>
+            <h2 className="psp-title">Admin application submitted</h2>
+            <p className="psp-sub">
               Your request is pending approval. You'll be able to access the
               admin dashboard once an existing admin has reviewed it.
             </p>
-            <button style={styles.primaryBtn} onClick={() => navigate("/signin")}>
+            <button className="psp-btn-primary" onClick={() => navigate("/signin")}>
               Back to sign in
             </button>
           </div>
@@ -529,305 +522,3 @@ export default function ProfileSetupPage() {
     </div>
   );
 }
-
-// ── Enhanced Styles (primary #1B5E20) ───────────────────────────────────────
-const styles = {
-  root: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "32px 16px",
-    background: "#F8FAF8",
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    position: "relative",
-    overflow: "hidden",
-  },
-  bgGradient: {
-    position: "absolute",
-    top: "-30%",
-    right: "-10%",
-    width: "500px",
-    height: "500px",
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(27,94,32,0.08) 0%, transparent 70%)",
-    pointerEvents: "none",
-    zIndex: 0,
-  },
-  bgBlob: {
-    position: "absolute",
-    bottom: "-20%",
-    left: "-10%",
-    width: "400px",
-    height: "400px",
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(27,94,32,0.05) 0%, transparent 70%)",
-    pointerEvents: "none",
-    zIndex: 0,
-  },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 32,
-    position: "relative",
-    zIndex: 1,
-  },
-  logoMark: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    background: "#1B5E20",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 8px 20px rgba(27,94,32,0.25)",
-    transition: "transform 0.2s ease",
-  },
-  logoName: {
-    margin: 0,
-    fontSize: 22,
-    fontWeight: 700,
-    background: "linear-gradient(135deg, #1B5E20, #2E7D32)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    letterSpacing: "-0.5px",
-  },
-  logoSub: {
-    margin: 0,
-    fontSize: 12,
-    color: "#558B2F",
-    fontWeight: 500,
-    letterSpacing: "0.3px",
-  },
-  card: {
-    width: "100%",
-    maxWidth: 480,
-    background: "#FFFFFF",
-    borderRadius: 32,
-    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.15), 0 0 0 1px rgba(27,94,32,0.05)",
-    overflow: "hidden",
-    position: "relative",
-    zIndex: 1,
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-  },
-  section: {
-    padding: "40px 36px 36px",
-    "@media (max-width: 480px)": {
-      padding: "28px 20px 24px",
-    },
-  },
-  title: {
-    margin: "0 0 8px",
-    fontSize: 28,
-    fontWeight: 700,
-    color: "#1B5E20",
-    letterSpacing: "-0.6px",
-  },
-  sub: {
-    margin: "0 0 28px",
-    fontSize: 15,
-    color: "#5B6E8C",
-    lineHeight: 1.5,
-    fontWeight: 400,
-  },
-  label: {
-    display: "block",
-    fontSize: 12,
-    fontWeight: 600,
-    color: "#1B5E20",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: "0.6px",
-  },
-  input: {
-    display: "block",
-    width: "100%",
-    boxSizing: "border-box",
-    padding: "12px 16px",
-    borderRadius: 14,
-    border: "1.5px solid #E2E8F0",
-    fontSize: 14,
-    color: "#1A202C",
-    background: "#FFFFFF",
-    marginBottom: 16,
-    outline: "none",
-    transition: "all 0.2s ease",
-    fontFamily: "inherit",
-    ":focus": {
-      borderColor: "#1B5E20",
-      boxShadow: "0 0 0 3px rgba(27,94,32,0.1)",
-    },
-  },
-  textarea: {
-    display: "block",
-    width: "100%",
-    boxSizing: "border-box",
-    padding: "12px 16px",
-    borderRadius: 14,
-    border: "1.5px solid #E2E8F0",
-    fontSize: 14,
-    color: "#1A202C",
-    background: "#FFFFFF",
-    marginBottom: 16,
-    outline: "none",
-    resize: "vertical",
-    transition: "all 0.2s ease",
-    fontFamily: "inherit",
-    ":focus": {
-      borderColor: "#1B5E20",
-      boxShadow: "0 0 0 3px rgba(27,94,32,0.1)",
-    },
-  },
-  hint: {
-    margin: "-12px 0 18px",
-    fontSize: 12,
-    color: "#718096",
-    fontWeight: 400,
-  },
-  twoColumnGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 14,
-    marginBottom: 4,
-  },
-  pillGroup: {
-    display: "flex",
-    gap: 12,
-    marginBottom: 20,
-    flexWrap: "wrap",
-  },
-  pill: {
-    padding: "8px 20px",
-    borderRadius: 40,
-    border: "1.5px solid #E2E8F0",
-    background: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: "pointer",
-    color: "#2D3748",
-    transition: "all 0.2s ease",
-    fontFamily: "inherit",
-    ":hover": {
-      borderColor: "#1B5E20",
-      background: "#F0FDF4",
-    },
-  },
-  pillActive: {
-    background: "#1B5E20",
-    borderColor: "#1B5E20",
-    color: "#FFFFFF",
-    boxShadow: "0 4px 12px rgba(27,94,32,0.25)",
-  },
-  primaryBtn: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    width: "100%",
-    padding: "14px 20px",
-    background: "#1B5E20",
-    color: "#FFFFFF",
-    border: "none",
-    borderRadius: 16,
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    boxShadow: "0 4px 12px rgba(27,94,32,0.3)",
-    fontFamily: "inherit",
-    ":hover": {
-      background: "#144C18",
-      transform: "scale(0.98)",
-    },
-    ":disabled": {
-      opacity: 0.6,
-      cursor: "not-allowed",
-      transform: "none",
-    },
-  },
-  backBtn: {
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    color: "#558B2F",
-    fontSize: 13,
-    fontWeight: 600,
-    padding: "0 0 20px",
-    transition: "color 0.2s ease",
-    fontFamily: "inherit",
-    ":hover": {
-      color: "#1B5E20",
-    },
-  },
-  errorContainer: {
-    margin: "16px 0 20px",
-    fontSize: 13,
-    color: "#C53030",
-    background: "#FFF5F5",
-    border: "1px solid #FED7D7",
-    borderRadius: 14,
-    padding: "10px 14px",
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    fontWeight: 500,
-  },
-  dotsContainer: {
-    display: "flex",
-    gap: 10,
-    justifyContent: "center",
-    marginBottom: 28,
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-    transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-  },
-  strengthContainer: {
-    display: "flex",
-    gap: 6,
-    marginTop: -8,
-    marginBottom: 18,
-  },
-  strengthSegment: {
-    flex: 1,
-    height: 4,
-    borderRadius: 4,
-    transition: "background-color 0.2s ease",
-  },
-  spinner: {
-    display: "inline-block",
-    width: 18,
-    height: 18,
-  },
-  spinnerCircle: {
-    width: "100%",
-    height: "100%",
-    border: "2px solid rgba(255,255,255,0.3)",
-    borderTopColor: "#FFFFFF",
-    borderRadius: "50%",
-    animation: "spin 0.8s linear infinite",
-  },
-  successIcon: {
-    fontSize: 52,
-    color: "#1B5E20",
-    margin: "0 0 20px",
-    textAlign: "center",
-    fontWeight: 700,
-    animation: "pulse 0.6s ease-out",
-  },
-};
-
-// Inject keyframes for animations
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes pulse { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-  input:focus, textarea:focus, button:focus { outline: none; }
-`;
-document.head.appendChild(styleSheet);

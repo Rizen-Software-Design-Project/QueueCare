@@ -1,0 +1,358 @@
+/* ── ProfileSetupPage.css ─────────────────────────────────────────────────── */
+
+/* ── Keyframes ────────────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%   { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+/* ── Root layout ──────────────────────────────────────────────────────────── */
+.psp-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  background: #f8faf8;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Background blobs ─────────────────────────────────────────────────────── */
+.psp-bg-gradient {
+  position: absolute;
+  top: -30%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(27, 94, 32, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.psp-bg-blob {
+  position: absolute;
+  bottom: -20%;
+  left: -10%;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(27, 94, 32, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Logo ─────────────────────────────────────────────────────────────────── */
+.psp-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.psp-logo-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #1b5e20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(27, 94, 32, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.psp-logo-name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1b5e20, #2e7d32);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.psp-logo-sub {
+  margin: 0;
+  font-size: 12px;
+  color: #558b2f;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+.psp-card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 32px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(27, 94, 32, 0.05);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.psp-section {
+  padding: 40px 36px 36px;
+}
+
+@media (max-width: 480px) {
+  .psp-section {
+    padding: 28px 20px 24px;
+  }
+}
+
+/* ── Typography ───────────────────────────────────────────────────────────── */
+.psp-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1b5e20;
+  letter-spacing: -0.6px;
+}
+
+.psp-sub {
+  margin: 0 0 28px;
+  font-size: 15px;
+  color: #5b6e8c;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.psp-hint {
+  margin: -12px 0 18px;
+  font-size: 12px;
+  color: #718096;
+  font-weight: 400;
+}
+
+/* ── Form controls ────────────────────────────────────────────────────────── */
+.psp-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1b5e20;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.psp-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 14px;
+  color: #1a202c;
+  background: #ffffff;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.psp-input:focus {
+  border-color: #1b5e20;
+  box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.1);
+}
+
+.psp-textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 14px;
+  color: #1a202c;
+  background: #ffffff;
+  margin-bottom: 16px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.psp-textarea:focus {
+  border-color: #1b5e20;
+  box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.1);
+}
+
+.psp-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+/* ── Gender pills ─────────────────────────────────────────────────────────── */
+.psp-pill-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.psp-pill {
+  padding: 8px 20px;
+  border-radius: 40px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #2d3748;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  font-family: inherit;
+}
+
+.psp-pill:hover {
+  border-color: #1b5e20;
+  background: #f0fdf4;
+}
+
+.psp-pill--active {
+  background: #1b5e20;
+  border-color: #1b5e20;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(27, 94, 32, 0.25);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.psp-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  background: #1b5e20;
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3);
+  font-family: inherit;
+}
+
+.psp-btn-primary:hover:not(:disabled) {
+  background: #144c18;
+  transform: scale(0.98);
+}
+
+.psp-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.psp-btn-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #558b2f;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 0 20px;
+  transition: color 0.2s ease;
+  font-family: inherit;
+}
+
+.psp-btn-back:hover {
+  color: #1b5e20;
+}
+
+/* ── Error ────────────────────────────────────────────────────────────────── */
+.psp-error {
+  margin: 16px 0 20px;
+  font-size: 13px;
+  color: #c53030;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+/* ── Progress dots ────────────────────────────────────────────────────────── */
+.psp-dots {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.psp-dot {
+  height: 8px;
+  border-radius: 4px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Strength bar ─────────────────────────────────────────────────────────── */
+.psp-strength-bar {
+  display: flex;
+  gap: 6px;
+  margin-top: -8px;
+  margin-bottom: 18px;
+}
+
+.psp-strength-segment {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+/* ── Loading spinner ──────────────────────────────────────────────────────── */
+.psp-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+}
+
+.psp-spinner-circle {
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Success icon ─────────────────────────────────────────────────────────── */
+.psp-success-icon {
+  font-size: 52px;
+  color: #1b5e20;
+  margin: 0 0 20px;
+  text-align: center;
+  font-weight: 700;
+  animation: pulse 0.6s ease-out;
+}
+
+/* ── Focus reset ──────────────────────────────────────────────────────────── */
+input:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+}
