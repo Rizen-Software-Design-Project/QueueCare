@@ -207,7 +207,11 @@ router.patch("/update_status", async (req, res) => {
     .maybeSingle();
 
   if (!profile) return res.status(400).json({ error: "User not found" });
-
+  
+  const patch = { status };
+  if (status === "called")     patch.called_at    = new Date().toISOString();
+  if (status === "completed")  patch.completed_at = new Date().toISOString();
+  
   const { error } = await supabase
     .from("virtual_queues")
     .update({ status })

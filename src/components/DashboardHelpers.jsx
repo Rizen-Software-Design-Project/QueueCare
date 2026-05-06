@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { FiGrid, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiUserPlus } from "react-icons/fi";
-import { FaHospital } from "react-icons/fa";
+import { FaHospital, FaStackpath } from "react-icons/fa";
+import { FiBarChart2 } from "react-icons/fi";
 
 // ── Navigation configs ────────────────────────────────────────────────────────
 // eslint-disable-next-line react-refresh/only-export-components
@@ -19,8 +20,9 @@ export const STAFF_NAV = [
   { id: "overview",           icon: <FiGrid />,     label: "Overview" },
   { id: "staff-appointments", icon: <FiCalendar />, label: "Clinic Appointments" },
   { id: "staff-queue",        icon: <FiHash />,     label: "Patient Queue" },
-  { id: "walk-in",            icon: <FiUserPlus />,            label: "Walk-In Patients" }, 
+  { id: "walk-in",            icon: <FiUserPlus />, label: "Walk-In Patients" }, 
   { id: "patients",           icon: <FiUser />,     label: "Patients" },
+  { id: "analytics",          icon: <FiBarChart2 />, label: "Analytics"},
   { id: "notifications",      icon: <FiBell />,     label: "Notifications" },
   { id: "profile",            icon: <FiUser />,     label: "Profile" },
 ];
@@ -30,6 +32,7 @@ export const ADMIN_NAV = [
   { id: "applications",  icon: <FiFileText />, label: "Applications" },
   { id: "staff",         icon: <FiUser />,     label: "Staff Management" },
   { id: "clinics",       icon: <FaHospital />, label: "Clinics" },
+  {id: "analytics",      icon: <FiBarChart2 />, label: "Analytics"},
   { id: "notifications", icon: <FiBell />,     label: "Notifications" },
   { id: "profile",       icon: <FiUser />,     label: "Profile" },
 ];

@@ -215,8 +215,77 @@
         .booking-module .confirmation button:hover {
           background: var(--primary-light);
         }
+        .booking-clinic-details {
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-left: 5px solid #1b5e20;
+          border-radius: 14px;
+          padding: 1rem;
+          margin: 1rem 0 1.25rem;
+          box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+        }
 
-        @media (max-width: 640px) {
+        .booking-clinic-details h4 {
+          margin: 0;
+          color: #1b5e20;
+          font-size: 1.1rem;
+        }
+
+        .booking-clinic-details p {
+          margin: 0.3rem 0 0;
+          color: #6b7280;
+          font-size: 0.9rem;
+        }
+
+        .booking-clinic-section {
+          margin-top: 1rem;
+        }
+
+        .booking-clinic-section strong {
+          display: block;
+          margin-bottom: 0.5rem;
+          color: #111827;
+        }
+
+        .booking-service-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.45rem;
+        }
+
+        .booking-service-tag {
+          background: #e8f5e9;
+          color: #1b5e20;
+          border: 1px solid #b7dfbd;
+          border-radius: 999px;
+          padding: 0.3rem 0.65rem;
+          font-size: 0.78rem;
+          font-weight: 600;
+        }
+
+        .booking-hours-list {
+          display: grid;
+          gap: 0.35rem;
+        }
+
+        .booking-hour-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 1rem;
+          padding: 0.35rem 0;
+          border-bottom: 1px solid #f3f4f6;
+          font-size: 0.87rem;
+        }
+
+        .booking-hour-row span:first-child {
+          font-weight: 600;
+          color: #1b5e20;
+        }
+
+        .booking-muted {
+          color: #9ca3af;
+        }
+                @media (max-width: 640px) {
           .booking-module .container {
             padding: 1rem;
           }
@@ -224,4 +293,31 @@
             font-size: 1.5rem;
           }
         }
-    
+        .reason-suggestions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 12px;
+        }
+
+        .reason-chip {
+          border: 1px solid #d1d5db;
+          background: #ffffff;
+          color: #374151;
+          padding: 8px 14px;
+          border-radius: 999px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          transition: all 0.2s ease;
+        }
+
+        .reason-chip:hover {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+
+        .reason-chip.active {
+          background: #0F6E56;
+          color: white;
+          border-color: #0F6E56;
+        }

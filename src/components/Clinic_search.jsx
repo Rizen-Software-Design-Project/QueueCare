@@ -18,7 +18,27 @@ const districtsByProvince = {
   "Western Cape": ["Cape Winelands", "Central Karoo", "City of Cape Town", "Eden", "Overberg", "West Coast"],
 };
 const allDistricts = [...new Set(Object.values(districtsByProvince).flat())].sort();
-
+//hardcoded service options
+const SERVICE_OPTIONS = [
+  "General Consultation",
+  "HIV Testing",
+  "TB Screening",
+  "Vaccination",
+  "Maternal Care",
+  "Child Health",
+  "Family Planning",
+  "Chronic Medication",
+  "Emergency Care",
+];
+const DAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
 // ================= HELPERS =================
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371;
@@ -31,12 +51,40 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
       Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
+function getClinicOpenStatus(hours) {
+  if (!hours) return { open: false, text: "Hours not listed" };
 
+  const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  const now = new Date();
+  const today = dayNames[now.getDay()];
+  const entry = hours[today];
+
+  if (!entry || entry.closed || !entry.open || !entry.close) {
+    return { open: false, text: "Closed today" };
+  }
+
+  const current = now.getHours() * 60 + now.getMinutes();
+  const [openH, openM] = entry.open.split(":").map(Number);
+  const [closeH, closeM] = entry.close.split(":").map(Number);
+  const openTime = openH * 60 + openM;
+  const closeTime = closeH * 60 + closeM;
+
+  if (current >= openTime && current < closeTime) {
+    return { open: true, text: `Open now · Closes ${entry.close}` };
+  }
+
+  if (current < openTime) {
+    return { open: false, text: `Closed · Opens today ${entry.open}` };
+  }
+
+  return { open: false, text: "Closed · Opens next working day" };
+}
 export default function ClinicSearch() {
   const navigate = useNavigate();
   const [nameSearch, setNameSearch] = useState("");
   const [province, setProvince] = useState("");
   const [district, setDistrict] = useState("");
+  const [selectedService, setSelectedService] = useState("");
   const [radius, setRadius] = useState("5");
   const [clinics, setClinics] = useState([]);
   const [status, setStatus] = useState({ type: "loading", message: '🔍 Use filters above or click "Clinics Near Me" to find clinics.' });
@@ -153,7 +201,7 @@ export default function ClinicSearch() {
 
   // ================= SEARCH CLINICS =================
   const searchClinics = useCallback(
-    async (name, prov, dist) => {
+    async (name, prov, dist, service) => {
       setStatus({ type: "loading", message: "🔍 Searching clinics..." });
       setClinics([]);
 
@@ -180,7 +228,12 @@ export default function ClinicSearch() {
         }
 
         let results = await response.json();
-
+        if (service) {
+          results = results.filter((clinic) =>
+            Array.isArray(clinic.services_offered) &&
+            clinic.services_offered.includes(service)
+          );
+        }
         const withDistance = results.map((c) => ({
           ...c,
           distance:
@@ -197,6 +250,7 @@ export default function ClinicSearch() {
         if (body.search_name) titleParts.push(`name: "${body.search_name}"`);
         if (body.search_province) titleParts.push(`province: ${body.search_province}`);
         if (body.search_district) titleParts.push(`district: ${body.search_district}`);
+        if (service) titleParts.push(`service: ${service}`);
         const title = titleParts.length ? titleParts.join(", ") : "all clinics (no filters)";
 
         if (!withDistance.length) {
@@ -235,6 +289,12 @@ export default function ClinicSearch() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         let results = await response.json();
+        if (selectedService) {
+            results = results.filter((clinic) =>
+              Array.isArray(clinic.services_offered) &&
+              clinic.services_offered.includes(selectedService)
+            );
+          }
         results = results.map((c) => ({
           ...c,
           distance:
@@ -255,7 +315,7 @@ export default function ClinicSearch() {
         setStatus({ type: "error", message: `❌ Error fetching nearby clinics: ${err.message}` });
       }
     },
-    [radius, updateMapMarkers]
+    [radius, selectedService, updateMapMarkers]
   );
 
   const findNearbyClinics = useCallback(() => {
@@ -286,7 +346,7 @@ export default function ClinicSearch() {
   }, [userLocation, performNearbySearch]);
 
   // ================= APPLY FILTERS =================
-  const applyFilters = () => searchClinics(nameSearch, province, district);
+  const applyFilters = () => searchClinics(nameSearch, province, district, selectedService);
 
   const handleProvinceChange = (e) => {
     setProvince(e.target.value);
@@ -328,6 +388,20 @@ export default function ClinicSearch() {
           </select>
         </div>
         <div className="filter-group">
+          <label>Services</label>
+          <select
+            value={selectedService}
+            onChange={(e) => setSelectedService(e.target.value)}
+          >
+            <option value="">Any service</option>
+            {SERVICE_OPTIONS.map((service) => (
+              <option key={service} value={service}>
+                {service}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="filter-group">
           <button onClick={applyFilters}><FiSearch /> Apply filters</button>
         </div>
       </div>
@@ -365,6 +439,33 @@ export default function ClinicSearch() {
                 {clinic.district || ""}
                 {clinic.province ? `, ${clinic.province}` : ""}
               </div>
+              <div className="clinic-services">
+                <strong>Services:</strong>
+                {Array.isArray(clinic.services_offered) && clinic.services_offered.length > 0 ? (
+                  <div className="clinic-service-tags">
+                    {clinic.services_offered.map((service) => (
+                      <span key={service} className="clinic-service-tag">
+                        {service}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="clinic-empty"> No services listed</span>
+                )}
+              </div>
+
+              <div className="clinic-hours">
+              <strong>Working hours:</strong>{" "}
+              {(() => {
+                  const openStatus = getClinicOpenStatus(clinic.operating_hours);
+
+                  return (
+                    <span className={`clinic-open-badge ${openStatus.open ? "open" : "closed"}`}>
+                      {openStatus.text}
+                    </span>
+                  );
+                })()}
+            </div>
             </div>
             <button className="book-btn" onClick={() => navigate(bookUrl)}>
               <FiCalendar /> Book now

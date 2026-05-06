@@ -28,7 +28,19 @@ export default function BookAppointment() {
   const [booking, setBooking] = useState(null);
   const [patientId, setPatientId] = useState(null);
   const [profile, setProfile]   = useState(null);
-
+  const [clinicDetails, setClinicDetails] = useState(null);
+  const REASON_SUGGESTIONS = [
+  "General Checkup",
+  "Flu Symptoms",
+  "Medication Refill",
+  "Follow-up Visit",
+  "Chronic Condition",
+  "Headache",
+  "Stomach Pain",
+  "Vaccination",
+  "Blood Pressure Check",
+  "Family Planning",
+];
   useEffect(() => {
     let unsub = null;
 
@@ -83,7 +95,26 @@ export default function BookAppointment() {
       if (unsub) unsub();
     };
   }, []);
+  useEffect(() => {
+  async function fetchClinicDetails() {
+    if (!clinicId) return;
 
+    const { data, error } = await supabase
+      .from("facilities")
+      .select("id, name, facility_type, province, district, services_offered, operating_hours, is_active")
+      .eq("id", Number(clinicId))
+      .maybeSingle();
+
+    if (error) {
+      console.error("Clinic details error:", error);
+      return;
+    }
+
+    setClinicDetails(data);
+  }
+
+  fetchClinicDetails();
+}, [clinicId]);
   useEffect(() => {
     if (!clinicId || !patientId) {
       if (!clinicId) {
@@ -163,6 +194,26 @@ export default function BookAppointment() {
   const handleSelectSlot = (slotId) => {
     setSelectedSlotId(slotId);
   };
+  const handleSelectReason = (suggestion) => {
+  const reasons = reason
+    .split(",")
+    .map((r) => r.trim())
+    .filter(Boolean);
+
+  const alreadySelected = reasons.includes(suggestion);
+
+  let updatedReasons;
+
+  if (alreadySelected) {
+    // remove if already selected
+    updatedReasons = reasons.filter((r) => r !== suggestion);
+  } else {
+    // add new suggestion
+    updatedReasons = [...reasons, suggestion];
+  }
+
+  setReason(updatedReasons.join(", "));
+};
 
   async function handleBook() {
   if (!selectedSlotId) {
@@ -246,7 +297,23 @@ export default function BookAppointment() {
     if (!timeStr) return "N/A";
     return timeStr.slice(0, 5);
   };
+  const formatHours = (hours) => {
+  if (!hours) return [];
 
+  const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+  return days.map((day) => {
+    const entry = hours[day];
+
+    if (!entry) return { day, text: "Not listed" };
+    if (entry.closed) return { day, text: "Closed" };
+
+    return {
+      day,
+      text: entry.open && entry.close ? `${entry.open} - ${entry.close}` : "Not listed",
+    };
+  });
+};
   return (
     <>
     
@@ -258,7 +325,45 @@ export default function BookAppointment() {
 
           <h2><FiCalendar /> Book Appointment</h2>
           <h3>{clinicName || "Unknown Clinic"}</h3>
+          {clinicDetails && (
+          <div className="booking-clinic-details">
+            <div>
+              <h4>{clinicDetails.name}</h4>
+              <p>
+                {clinicDetails.facility_type || "Clinic"} · {clinicDetails.district || "Unknown district"}
+                {clinicDetails.province ? `, ${clinicDetails.province}` : ""}
+              </p>
+            </div>
 
+            <div className="booking-clinic-section">
+              <strong>Services offered</strong>
+              {Array.isArray(clinicDetails.services_offered) &&
+              clinicDetails.services_offered.length > 0 ? (
+                <div className="booking-service-tags">
+                  {clinicDetails.services_offered.map((service) => (
+                    <span key={service} className="booking-service-tag">
+                      {service}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="booking-muted">No services listed.</p>
+              )}
+            </div>
+
+            <div className="booking-clinic-section">
+              <strong>Operating hours</strong>
+              <div className="booking-hours-list">
+                {formatHours(clinicDetails.operating_hours).map(({ day, text }) => (
+                  <div key={day} className="booking-hour-row">
+                    <span>{day.charAt(0).toUpperCase() + day.slice(1)}</span>
+                    <span>{text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
           <div className={`status ${status.type}`}>{status.message}</div>
 
           {/* Booking confirmation */}
@@ -315,6 +420,26 @@ export default function BookAppointment() {
                   onChange={(e) => setReason(e.target.value)}
                   rows={3}
                 />
+                <div className="reason-suggestions">
+                  {REASON_SUGGESTIONS.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className={`reason-chip ${
+                          reason
+                            .split(",")
+                            .map((r) => r.trim())
+                            .includes(suggestion)
+                              ? "active"
+                              : ""
+                        }`}
+                      onClick={() => handleSelectReason(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+                
               </div>
 
               <button

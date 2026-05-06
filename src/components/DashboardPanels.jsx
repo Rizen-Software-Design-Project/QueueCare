@@ -113,10 +113,10 @@ function QueueCard({ queueData, slotDate, slotTime }) {
 
 // ── Overview Panel ────────────────────────────────────────────────────────────
 export function OverviewPanel({
-  profile, appointments, upcomingAppts, activeQueue, unreadCount,
+  profile, appointments, upcomingAppts = [], activeQueue, unreadCount,
   staffAssignments, latestAssignment, queueData, availability,
   availabilityStatus, savingAvailability, onSaveAvailability,
-  onUpdateAvailabilityDay, onReschedule, onCancel, slotDate, slotTime, onJoinQueue,isAppointmentToday,
+  onUpdateAvailabilityDay, onReschedule, onCancel, slotDate, slotTime, onJoinQueue,isAppointmentToday, lastClinic,
 }) {
   const navigate = useNavigate();
   if (!profile) return null;
@@ -161,6 +161,23 @@ export function OverviewPanel({
           <p style={{ color: "#6b7280", fontSize: 14 }}>
             ⏳ Check-in opens on the day of your appointment
           </p>
+        )}
+        {profile.role === "patient" && lastClinic && (
+          <div className="db-card" style={{ marginTop: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>Last visited</p>
+              <p style={{ margin: 0, fontWeight: 600 }}>{lastClinic.facilities?.name}</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+                {lastClinic.facilities?.district}
+              </p>
+            </div>
+            <button
+              className="db-btn db-btn-reschedule"
+              onClick={() => navigate(`/clinic?id=${lastClinic.facility_id}&name=${encodeURIComponent(lastClinic.facilities?.name || "")}`)}
+            >
+              Book Again
+            </button>
+          </div>
         )}
       <QueueCard queueData={queueData} slotDate={slotDate} slotTime={slotTime} />
 
@@ -231,14 +248,32 @@ export function PatientQueuePanel({ queueData, slotDate, slotTime }) {
 export function NotificationsPanel({ notifications, unreadCount, onMarkAllRead }) {
   return (
     <div className="db-section">
-      <h2 className="db-section-title">Notifications ({unreadCount})</h2>
-      <button onClick={onMarkAllRead}>Mark all as read</button>
+      <h2 className="db-section-title">Notifications ({unreadCount} unread)</h2>
+      <button onClick={onMarkAllRead} style={{ marginBottom: 16 }}>Mark all as read</button>
       {notifications.length === 0 ? (
         <p>No notifications.</p>
       ) : (
         notifications.map((n) => (
-          <div key={n.id} className="db-card">
-            <p>{n.message}</p>
+          <div key={n.id} className="db-card" style={{
+            borderLeft: `4px solid ${n.is_read ? "#e5e7eb" : "#2563eb"}`,
+            opacity: n.is_read ? 0.7 : 1,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+              <p style={{ margin: 0, fontWeight: n.is_read ? 400 : 600 }}>{n.message}</p>
+              {!n.is_read && (
+                <span style={{ background: "#2563eb", color: "white", borderRadius: 999, fontSize: 10, padding: "2px 7px", whiteSpace: "nowrap" }}>
+                  New
+                </span>
+              )}
+            </div>
+            {n.sent_at && (
+              <p style={{ margin: "6px 0 0", fontSize: 12, color: "#9ca3af" }}>
+                {new Date(n.sent_at).toLocaleString("en-ZA", {
+                  day: "numeric", month: "short", year: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })}
+              </p>
+            )}
           </div>
         ))
       )}

@@ -6,8 +6,14 @@ import Applications     from "./components/Applications.jsx";
 import BookAppointment  from "./components/BookAppointment";
 import AuthPage         from "./components/AuthPage.jsx";
 import ProfileSetupPage from "./components/ProfileSetupPage.jsx";
-import StaffDashboard from "./components/StaffDashboard";
+import StaffClinicManagement from "./components/StaffClinicManagement.jsx";
 import WalkIn from "./components/Walkin.jsx";
+import AnalyticsDashboardAdmin from "./components/AnalyticsDashboardAdmin.jsx";
+import AnalyticsDashboardStaff from "./components/AnalyticsDashboardStaff.jsx";
+import StaffDashboard from "./components/StaffDashboard.jsx"
+import PatientDashboard from "./components/PatientDashboard.jsx"
+import AdminDashboard from "./components/AdminDashboard.jsx"
+
 import "./App.css";
 
 
@@ -22,9 +28,12 @@ function App() {
         <Route path="/clinic-search" element={<ClinicSearch />} />
         <Route path="/applications"  element={<Applications />} />
         <Route path="/clinic"        element={<BookAppointment />} />
-        <Route path="*"              element={<Navigate to="/" replace />} />
-        <Route path="/staff-dashboard" element={<StaffDashboard />} />
+        <Route path="/staff-manage" element={<StaffClinicManagement />} />
         <Route path="/walk-in"        element={<WalkIn />} />
+        <Route path="/analytics-admin"        element={<AnalyticsDashboardAdmin />} />
+        <Route path="/analytics-staff"        element={<AnalyticsDashboardStaff />} />
+
+        <Route path="*"              element={<Navigate to="/" replace />} />
 
 
 

@@ -946,7 +946,7 @@ const remindPatientsOfUpcomingAppointments = async (req, res) => {
 };
 
 router.post("/book-walkin", async (req, res) => {
-        console.log("book-walkin body:", req.body);
+
         const { profile, reason, slot_id, facility_id } = req.body;
 
         if (!profile || !slot_id || !facility_id) {

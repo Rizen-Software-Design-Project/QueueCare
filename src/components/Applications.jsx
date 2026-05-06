@@ -18,6 +18,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "#lib/supabase";
 import "./Applications.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
+
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function formatDateTime(value) {
@@ -27,6 +29,15 @@ function formatDateTime(value) {
     hour: "2-digit", minute: "2-digit",
   });
 }
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidSAPhone(phone) {
+  return /^0[6-8][0-9]{8}$/.test(phone);
+}
+
+
 
 function dobFromSAId(id) {
   if (!/^\d{13}$/.test(id)) return null;
@@ -70,7 +81,7 @@ export default function Applications({
   const [reviewingId,      setReviewingId]      = useState(null);
   const [error,            setError]            = useState("");
   const [allApplications,  setAllApplications]  = useState([]);
-
+  const [cvFile, setCvFile] = useState(null);
   // Clinic search state (apply mode)
   const [clinicQuery,      setClinicQuery]      = useState("");
   const [clinicResults,    setClinicResults]    = useState([]);
@@ -80,7 +91,7 @@ export default function Applications({
   const [form, setForm] = useState({
     name: "", surname: "", email: "", phone_number: "",
     sex: "", id_number: "", professional_id: "",
-    license_number: "", cv_url: "", motivation: "",
+    license_number: "", motivation: "",
   });
 
   // Pre-fill form from identity (apply mode)
@@ -139,21 +150,135 @@ export default function Applications({
     e.preventDefault();
     setError("");
 
-    if (!identity?.auth_provider || !identity?.provider_user_id) { setError("Missing authenticated identity."); return; }
-    if (!form.name.trim())         { setError("Enter your first name.");   return; }
-    if (!form.surname.trim())      { setError("Enter your surname.");      return; }
-    if (!form.email.trim())        { setError("Enter your email.");        return; }
-    if (!form.phone_number.trim()) { setError("Enter your phone number."); return; }
-    if (!form.sex)                 { setError("Please select a gender.");  return; }
-    if (!form.id_number.trim())    { setError("Enter your SA ID number."); return; }
+const email = form.email.trim().toLowerCase();
+const phone = form.phone_number.trim();
+const idNumber = form.id_number.trim();
 
-    const dob = dobFromSAId(form.id_number.trim());
-    if (!dob) { setError("The SA ID number does not contain a valid date of birth."); return; }
-    if (!form.professional_id.trim()) { setError("Enter your employee number."); return; }
-    if (!form.cv_url.trim())          { setError("Please provide your CV link.");  return; }
-    if (!selectedClinic)              { setError("Please choose the clinic you work at."); return; }
+if (!identity?.auth_provider || !identity?.provider_user_id) {
+  setError("Missing authenticated identity.");
+  return;
+}
+if (!form.name.trim() || form.name.trim().length < 2) {
+  setError("First name must be at least 2 characters.");
+  return;
+}
+
+if (!/^[a-zA-Z\s'-]+$/.test(form.name.trim())) {
+  setError("First name contains invalid characters.");
+  return;
+}
+
+if (!form.surname.trim() || form.surname.trim().length < 2) {
+  setError("Surname must be at least 2 characters.");
+  return;
+}
+
+if (!/^[a-zA-Z\s'-]+$/.test(form.surname.trim())) {
+  setError("Surname contains invalid characters.");
+  return;
+}
+
+if (!isValidEmail(email)) {
+  setError("Enter a valid email address.");
+  return;
+}
+if (!isValidSAPhone(phone)) {
+  setError("Enter a valid South African phone number, e.g. 0821234567.");
+  return;
+}
+if (!form.sex) {
+  setError("Please select a gender.");
+  return;
+}
+if (!/^\d{13}$/.test(idNumber)) {
+  setError("SA ID number must be exactly 13 digits.");
+  return;
+}
+
+const dob = dobFromSAId(idNumber);
+if (!dob) {
+  setError("The SA ID number does not contain a valid date of birth.");
+  return;
+}
+const today = new Date();
+const birthDate = new Date(dob);
+
+let age = today.getFullYear() - birthDate.getFullYear();
+const hasBirthdayPassed =
+  today.getMonth() > birthDate.getMonth() ||
+  (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+
+if (!hasBirthdayPassed) age--;
+
+if (age < 18) {
+  setError("Applicants must be at least 18 years old.");
+  return;
+}
+if (!form.professional_id.trim() || form.professional_id.trim().length < 5) {
+  setError("Employee number must be at least 5 characters.");
+  return;
+}
+
+if (!/^[A-Za-z0-9-]+$/.test(form.professional_id.trim())) {
+  setError("Employee number contains invalid characters.");
+  return;
+}
+if (form.license_number.trim()) {
+  if (form.license_number.trim().length < 5) {
+    setError("License number must be at least 5 characters if provided.");
+    return;
+  }
+
+  if (!/^[A-Za-z0-9-]+$/.test(form.license_number.trim())) {
+    setError("License number contains invalid characters.");
+    return;
+  }
+}
+if (!cvFile) {
+  setError("Please upload your CV document.");
+  return;
+}
+
+const allowedTypes = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
+if (!allowedTypes.includes(cvFile.type)) {
+  setError("CV must be a PDF, DOC, or DOCX file.");
+  return;
+}
+
+if (cvFile.size > 2 * 1024 * 1024) {
+  setError("CV file must be smaller than 2MB.");
+  return;
+}
+if (!selectedClinic) {
+  setError("Please choose the clinic you work at.");
+  return;
+}
 
     setSubmitting(true);
+    const fileExt = cvFile.name.split(".").pop();
+const safeExt = fileExt.toLowerCase().replace(/[^a-z0-9]/g, "");
+const filePath = `staff-applications/${identity.provider_user_id}-${Date.now()}.${safeExt}`;
+
+const { error: uploadError } = await supabase.storage
+  .from("application-documents")
+  .upload(filePath, cvFile);
+
+if (uploadError) {
+  setError(uploadError.message || "Could not upload CV.");
+  setSubmitting(false);
+  return;
+}
+
+const { data: publicUrlData } = supabase.storage
+  .from("application-documents")
+  .getPublicUrl(filePath);
+
+const uploadedCvUrl = publicUrlData.publicUrl;
 
     const { error: err } = await supabase.from("role_applications").upsert(
       {
@@ -163,16 +288,16 @@ export default function Applications({
         status:           "pending",
         name:             form.name.trim(),
         surname:          form.surname.trim(),
-        email:            form.email.trim().toLowerCase(),
-        phone_number:     form.phone_number.trim(),
+        email:            email,
+        phone_number:     phone,
         sex:              form.sex,
-        id_number:        form.id_number.trim(),
+        id_number:        idNumber,
         dob,
         professional_id:  form.professional_id.trim(),
         license_number:   form.license_number.trim() || null,
         clinic_id:        selectedClinic.id,
         clinic_name:      selectedClinic.name,
-        cv_url:           form.cv_url.trim(),
+        cv_url: uploadedCvUrl,
         motivation:       form.motivation.trim() || null,
         submitted_at:     new Date().toISOString(),
       },
@@ -181,8 +306,19 @@ export default function Applications({
 
     setSubmitting(false);
     if (err) { setError(err.message || "Could not submit application."); return; }
+    fetch(`${API_BASE}/notify/application/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email: form.email.trim().toLowerCase(),
+            name: form.name.trim(),
+            role: 'staff',
+            status: 'submitted',
+        }),
+    }).catch(err => console.warn('Application email failed:', err.message));
     if (onSubmitted) onSubmitted();
   }
+  
 
   // ── Approve (review mode) ─────────────────────────────────────────────────
   async function approveApplication(application) {
@@ -247,16 +383,49 @@ export default function Applications({
           if (err) throw new Error(err.message);
         }
       }
+      // After a successful approve/reject Supabase call
 
+
+    
       // Mark application approved
-      const { error: err } = await supabase.from("role_applications")
-        .update({ status: "approved", reviewed_by: profile.id, reviewed_at: now })
-        .eq("id", application.id);
-      if (err) throw new Error(err.message);
+    const { error: err } = await supabase
+  .from("role_applications")
+  .update({
+    status: "approved",
+    reviewed_by: profile.id,
+    reviewed_at: now,
+  })
+  .eq("id", application.id);
+
+if (err) throw new Error(err.message);
+
+setAllApplications((prev) =>
+  prev.map((app) =>
+    app.id === application.id
+      ? {
+          ...app,
+          status: "approved",
+          reviewed_by: profile.id,
+          reviewed_at: now,
+        }
+      : app
+  )
+);
+
+      fetch(`${API_BASE}/notify/application/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email: application.email,
+            name: application.name,
+            role: application.requested_role,
+            status: 'approved', // or 'rejected'
+        }),
+    }).catch(err => console.warn('Approval email failed:', err.message));
 
       if (onRoleUpdated) onRoleUpdated(profileId, profileRole);
       alert("Application approved.");
-      await loadData();
+     
     } catch (err) {
       setError(err.message || "Could not approve application.");
     } finally {
@@ -265,22 +434,61 @@ export default function Applications({
   }
 
   // ── Reject (review mode) ──────────────────────────────────────────────────
-  async function rejectApplication(applicationId) {
-    if (!profile?.id) return;
-    setReviewingId(applicationId);
-    setError("");
-    try {
-      const { error: err } = await supabase.from("role_applications")
-        .update({ status: "rejected", reviewed_by: profile.id, reviewed_at: new Date().toISOString() })
-        .eq("id", applicationId);
-      if (err) throw new Error(err.message);
-      await loadData();
-    } catch (err) {
-      setError(err.message || "Could not reject application.");
-    } finally {
-      setReviewingId(null);
-    }
+ async function rejectApplication(application) {
+  if (!profile?.id) return;
+
+  setReviewingId(application.id);
+  setError("");
+
+  try {
+    const { error: err } = await supabase
+      .from("role_applications")
+      .update({
+        status: "rejected",
+        reviewed_by: profile.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", application.id);
+
+    if (err) throw new Error(err.message);
+
+    // Send email notification
+    fetch(`${API_BASE}/notify/application/send-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: application.email,
+        name: application.name,
+        role: application.requested_role,
+        status: "rejected",
+      }),
+    }).catch((err) =>
+      console.warn("Rejection email failed:", err.message)
+    );
+
+    // Create in-app notification
+    setAllApplications((prev) =>
+      prev.map((app) =>
+        app.id === application.id
+          ? {
+              ...app,
+              status: "rejected",
+              reviewed_by: profile.id,
+              reviewed_at: new Date().toISOString(),
+            }
+          : app
+      )
+    );
+
+    await loadData();
+  } catch (err) {
+    setError(err.message || "Could not reject application.");
+  } finally {
+    setReviewingId(null);
   }
+}
 
   // ── Apply mode render ─────────────────────────────────────────────────────
   if (isApplyMode) {
@@ -398,8 +606,19 @@ export default function Applications({
 
             {/* CV */}
             <div>
-              <label className="app-label">CV Link</label>
-              <input className="app-input" value={form.cv_url} onChange={set("cv_url")} placeholder="Paste your CV link" />
+              <label className="app-label">Upload CV</label>
+            <input
+              className="app-input"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+            />
+
+            {cvFile && (
+              <p className="app-muted-small">
+                Selected file: {cvFile.name}
+              </p>
+            )}
             </div>
 
             {/* Motivation */}
@@ -415,7 +634,11 @@ export default function Applications({
             </div>
 
             <div className="app-form-actions">
-              <button type="submit" className="app-btn-primary" disabled={submitting}>
+              <button
+                type="submit"
+                className="app-btn-primary"
+                disabled={submitting || !selectedClinic || !cvFile}
+              >
                 {submitting ? "Submitting…" : "Submit Application"}
               </button>
             </div>
@@ -498,7 +721,7 @@ export default function Applications({
                     <button
                       className="app-btn-reject"
                       disabled={reviewingId === app.id}
-                      onClick={() => rejectApplication(app.id)}
+                      onClick={() => rejectApplication(app)}
                     >
                       {reviewingId === app.id ? "Processing…" : "Reject"}
                     </button>

@@ -10,6 +10,8 @@ import "./ProfileSetupPage.css";
 
 import Applications from "./Applications";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
+
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 async function sha256Hex(value) {
@@ -31,7 +33,31 @@ function dobFromSAId(id) {
   if (!isValid) return null;
   return `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
 }
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
 
+function isValidSAPhone(phone) {
+  return /^0[6-8][0-9]{8}$/.test(phone);
+}
+
+
+function isValidName(value) {
+  return /^[a-zA-Z\s'-]+$/.test(value);
+}
+
+function getAgeFromDob(dob) {
+  const today = new Date();
+  const birthDate = new Date(dob);
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const birthdayPassed =
+    today.getMonth() > birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+
+  if (!birthdayPassed) age--;
+  return age;
+}
 // ── Shared micro-components ───────────────────────────────────────────────────
 function Err({ msg }) {
   if (!msg) return null;
@@ -116,13 +142,71 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
     e.preventDefault();
     setError("");
 
-    if (!firstName || !surname)     { setError("Please enter your full name.");            return; }
-    if (!sex)                       { setError("Please select a gender.");                 return; }
-    if (!/^\d{13}$/.test(idNumber)) { setError("Enter a valid 13-digit SA ID number.");   return; }
+    const cleanFirstName = firstName.trim();
+const cleanSurname = surname.trim();
+const cleanEmail = (email || identity.email || "").trim().toLowerCase();
+const cleanPhone = (phone || identity.phone || "").trim();
+const cleanIdNumber = idNumber.trim();
 
+if (!cleanFirstName || cleanFirstName.length < 2) {
+  setError("First name must be at least 2 characters.");
+  return;
+}
+
+if (!isValidName(cleanFirstName)) {
+  setError("First name contains invalid characters.");
+  return;
+}
+
+if (!cleanSurname || cleanSurname.length < 2) {
+  setError("Surname must be at least 2 characters.");
+  return;
+}
+
+if (!isValidName(cleanSurname)) {
+  setError("Surname contains invalid characters.");
+  return;
+}
+
+if (!sex) {
+  setError("Please select a gender.");
+  return;
+}
+
+if (!/^\d{13}$/.test(cleanIdNumber)) {
+  setError("SA ID number must be exactly 13 digits.");
+  return;
+}
+
+if (cleanEmail && !isValidEmail(cleanEmail)) {
+  setError("Enter a valid email address.");
+  return;
+}
+
+if (cleanPhone && !isValidSAPhone(cleanPhone)) {
+  setError("Enter a valid South African phone number, e.g. 0821234567.");
+  return;
+}
+
+const dob = dobFromSAId(cleanIdNumber);
+
+if (!dob) {
+  setError("The SA ID number does not contain a valid date of birth.");
+  return;
+}
+
+if (new Date(dob) > new Date()) {
+  setError("Date of birth cannot be in the future.");
+  return;
+}
+
+if (getAgeFromDob(dob) < 13) {
+  setError("You must be at least 13 years old to create a profile.");
+  return;
+}
     setLoading(true);
 
-    const hashed = await sha256Hex(idNumber).catch(() => null);
+    const hashed = await sha256Hex(cleanIdNumber).catch(() => null);
     if (!hashed) { setError("Could not hash ID. Please try again."); setLoading(false); return; }
 
     // Duplicate ID check
@@ -161,23 +245,16 @@ function ProfileStep({ identity, selectedRole, onComplete }) {
       }
     }
 
-    const dob = dobFromSAId(idNumber);
-    if (!dob) {
-      setError("The SA ID number does not contain a valid date of birth.");
-      setLoading(false);
-      return;
-    }
-
     const commonProfile = {
-      auth_provider:    identity.auth_provider,
+      auth_provider: identity.auth_provider,
       provider_user_id: identity.provider_user_id,
-      name:         firstName,
-      surname,
+      name: cleanFirstName,
+      surname: cleanSurname,
       sex,
-      id_number:    hashed,
+      id_number: hashed,
       dob,
-      email:        normalizedEmail || null,
-      phone_number: normalizedPhone || null,
+      email: cleanEmail || null,
+      phone_number: cleanPhone || null,
     };
 
     if (selectedRole === "patient") {
@@ -303,23 +380,92 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
   const [licenseNumber,  setLicenseNumber]  = useState("");
   const [clinicName,     setClinicName]     = useState("");
   const [motivation,     setMotivation]     = useState("");
-  const [cvUrl,          setCvUrl]          = useState("");
+  const [cvFile, setCvFile]                 = useState(null);  
   const [error,          setError]          = useState("");
   const [loading,        setLoading]        = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    const cleanProfessionalId = professionalId.trim();
+const cleanLicenseNumber = licenseNumber.trim();
+const cleanClinicName = clinicName.trim();
+const cleanMotivation = motivation.trim();
 
-    if (!adminProfile?.auth_provider || !adminProfile?.provider_user_id) {
-      setError("Missing admin profile details."); return;
-    }
-    if (!professionalId.trim()) { setError("Please enter your employee or admin ID."); return; }
-    if (!motivation.trim())     { setError("Please provide a short motivation.");       return; }
-    if (!cvUrl.trim())          { setError("Please provide your CV link.");             return; }
 
+  if (!adminProfile?.auth_provider || !adminProfile?.provider_user_id) {
+    setError("Missing admin profile details.");
+    return;
+  }
+
+  if (!cleanProfessionalId || cleanProfessionalId.length < 3) {
+    setError("Employee/Admin ID must be at least 3 characters.");
+    return;
+  }
+
+  if (!/^[A-Za-z0-9-]+$/.test(cleanProfessionalId)) {
+    setError("Employee/Admin ID contains invalid characters.");
+    return;
+  }
+
+  if (cleanLicenseNumber && cleanLicenseNumber.length < 3) {
+    setError("License number must be at least 3 characters if provided.");
+    return;
+  }
+
+  if (cleanLicenseNumber && !/^[A-Za-z0-9-]+$/.test(cleanLicenseNumber)) {
+    setError("License number contains invalid characters.");
+    return;
+  }
+
+  if (cleanClinicName && cleanClinicName.length < 2) {
+    setError("Clinic or department name must be at least 2 characters if provided.");
+    return;
+  }
+
+  if (!cleanMotivation || cleanMotivation.length < 20) {
+    setError("Motivation must be at least 20 characters.");
+    return;
+  }
+  if (!cvFile) {
+  setError("Please upload your CV document.");
+  return;
+}
+
+const allowedTypes = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
+if (!allowedTypes.includes(cvFile.type)) {
+  setError("CV must be a PDF, DOC, or DOCX file.");
+  return;
+}
+
+if (cvFile.size > 2 * 1024 * 1024) {
+  setError("CV file must be smaller than 2MB.");
+  return;
+}
     setLoading(true);
+    const fileExt = cvFile.name.split(".").pop();
+const filePath = `admin-applications/${adminProfile.provider_user_id}-${Date.now()}.${fileExt}`;
 
+const { error: uploadError } = await supabase.storage
+  .from("application-documents")
+  .upload(filePath, cvFile);
+
+if (uploadError) {
+  setError(uploadError.message || "Could not upload CV.");
+  setLoading(false);
+  return;
+}
+
+const { data: publicUrlData } = supabase.storage
+  .from("application-documents")
+  .getPublicUrl(filePath);
+
+const uploadedCvUrl = publicUrlData.publicUrl;
     const { error: err } = await supabase.from("role_applications").upsert(
       {
         auth_provider:    adminProfile.auth_provider,
@@ -333,12 +479,12 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
         sex:              adminProfile.sex,
         id_number:        adminProfile.id_number,
         dob:              adminProfile.dob,
-        professional_id:  professionalId.trim(),
-        license_number:   licenseNumber.trim() || null,
+        professional_id:  cleanProfessionalId,
+        license_number:   cleanLicenseNumber || null,
         clinic_id:        null,
-        clinic_name:      clinicName.trim()     || null,
-        motivation:       motivation.trim(),
-        cv_url:           cvUrl.trim(),
+        clinic_name:      cleanClinicName || null,
+        motivation:       cleanMotivation,
+        cv_url: uploadedCvUrl,
         submitted_at:     new Date().toISOString(),
       },
       { onConflict: "auth_provider,provider_user_id,requested_role" }
@@ -346,7 +492,19 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
 
     setLoading(false);
     if (err) { setError(err.message || "Could not submit admin application."); return; }
+    
+     fetch(`${API_BASE}/notify/application/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email: adminProfile.email,
+            name: adminProfile.name,
+            role: 'admin',
+            status: 'submitted',
+        }),
+    }).catch(err => console.warn('Application email failed:', err.message));
     onSubmit();
+
   }
 
   return (
@@ -382,13 +540,18 @@ function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
           placeholder="Clinic or department name"
         />
 
-        <label className="psp-label">CV Link</label>
+        <label className="psp-label">Upload CV</label>
         <input
           className="psp-input"
-          value={cvUrl}
-          onChange={(e) => setCvUrl(e.target.value)}
-          placeholder="Paste a link to your CV"
+          type="file"
+          accept=".pdf,.doc,.docx"
+          onChange={(e) => setCvFile(e.target.files?.[0] || null)}
         />
+        {cvFile && (
+            <p className="psp-hint">
+              Selected file: {cvFile.name}
+            </p>
+          )}
 
         <label className="psp-label">Motivation</label>
         <textarea
@@ -490,7 +653,7 @@ export default function ProfileSetupPage() {
             onBack={() => navigate("/signin")}
           />
         )}
-
+        
         {step === "staff-pending" && (
           <div className="psp-section">
             <div className="psp-success-icon">✓</div>
