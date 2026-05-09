@@ -1,27 +1,15 @@
-
-// components/AnalyticsDashboard.jsx
-//
-// Drop-in analytics page for QueueCare.
-// Requires: npm install recharts jspdf jspdf-autotable
-
 import { useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, Legend,
 } from 'recharts'
 
-/*import {
-  useWaitTimes, useNoShowRates, useCustomView, useFacilities,
-} from '#hooks/useAnalytics' 
-*/
-
 import {
   useWaitTimes, useNoShowRates, useCustomView, useFacilities,
-} from '#hooks/useAnalyticsMock' 
-import { exportCSV, exportPDF } from '#utils/exportUtils'  
+} from '#hooks/useAnalytics'
+import { exportCSV, exportPDF } from '#utils/exportUtils'
 import "./AnalyticsDashboard.css";
 
-// ── Constants ────────────────────────────────
 const TABS = ['Wait Times', 'No-Show Rates', 'Custom View']
 
 const HOUR_LABEL = (h) => {
@@ -32,13 +20,12 @@ const HOUR_LABEL = (h) => {
 }
 
 const STATUS_STYLES = {
-  completed: 'bg-teal-50  text-teal-700',
+  complete:  'bg-teal-50  text-teal-700',
+  confirmed: 'bg-blue-50  text-blue-700',
   no_show:   'bg-rose-50  text-rose-700',
   cancelled: 'bg-slate-100 text-slate-500',
   booked:    'bg-amber-50 text-amber-700',
 }
-
-// ── Shared UI ────────────────────────────────
 
 function Skeleton({ className = '' }) {
   return <div className={`animate-pulse bg-slate-100 rounded-lg ${className}`} />
@@ -138,8 +125,6 @@ const TOOLTIP_STYLE = {
   cursor: { fill: '#f8fafc' },
 }
 
-// ── Wait Times Report ─────────────────────────
-
 function WaitTimesReport({ facilities }) {
   const [facilityId, setFacilityId] = useState(null)
   const { data, loading } = useWaitTimes({ facilityId })
@@ -214,8 +199,6 @@ function WaitTimesReport({ facilities }) {
     </div>
   )
 }
-
-// ── No-Show Report ────────────────────────────
 
 function NoShowReport({ facilities }) {
   const [facilityId, setFacilityId] = useState(null)
@@ -324,8 +307,6 @@ function NoShowReport({ facilities }) {
   )
 }
 
-// ── Custom View Report ────────────────────────
-
 const COLUMNS = [
   {
     key: 'booked_at',
@@ -397,7 +378,8 @@ function CustomViewReport({ facilities }) {
                        bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer">
             <option value="">All Statuses</option>
             <option value="booked">Booked</option>
-            <option value="completed">Completed</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="complete">Completed</option>
             <option value="no_show">No-Show</option>
             <option value="cancelled">Cancelled</option>
           </select>
@@ -473,8 +455,6 @@ function CustomViewReport({ facilities }) {
     </div>
   )
 }
-
-// ── Main Dashboard ────────────────────────────
 
 export default function AnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState(0)

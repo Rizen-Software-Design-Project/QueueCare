@@ -1,6 +1,3 @@
-// components/AnalyticsDashboard.jsx
-// Requires: npm install recharts jspdf jspdf-autotable
-
 import { useState, useEffect } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -9,7 +6,7 @@ import {
 import { supabase } from '#lib/supabase'
 import {
   useWaitTimes, useNoShowRates, useCustomView,
-} from '#hooks/useAnalyticsMock'
+} from '#hooks/useAnalytics'
 import { exportCSV, exportPDF } from '#utils/exportUtils'
 import './AnalyticsDashboard.css'
 
@@ -23,7 +20,8 @@ const HOUR_LABEL = (h) => {
 }
 
 const STATUS_BADGE = {
-  completed: 'ad-badge--completed',
+  complete:  'ad-badge--completed',
+  confirmed: 'ad-badge--confirmed',
   no_show:   'ad-badge--no_show',
   cancelled: 'ad-badge--cancelled',
   booked:    'ad-badge--booked',
@@ -87,8 +85,6 @@ const TOOLTIP_STYLE = {
   contentStyle: { fontSize: 12, borderRadius: 10, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,.06)' },
   cursor: { fill: '#f8fafc' },
 }
-
-// ── Wait Times ────────────────────────────────
 
 function WaitTimesReport({ facilityId }) {
   const { data, loading } = useWaitTimes({ facilityId })
@@ -286,7 +282,8 @@ function CustomViewReport({ facilityId }) {
           <select value={status} onChange={e => setStatus(e.target.value)} className="ad-select">
             <option value="">All Statuses</option>
             <option value="booked">Booked</option>
-            <option value="completed">Completed</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="complete">Completed</option>
             <option value="no_show">No-Show</option>
             <option value="cancelled">Cancelled</option>
           </select>
@@ -341,8 +338,6 @@ function CustomViewReport({ facilityId }) {
     </div>
   )
 }
-
-// ── Main Dashboard ────────────────────────────
 
 export default function AnalyticsDashboard() {
   const [activeTab,       setActiveTab]       = useState(0)
