@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { supabase } from "#lib/supabase";  
+import { supabase } from "#lib/supabase";
+import AIAssistant from "./AIAssistant";
 
 import { viewFullQueue, updateQueueStatus } from "../queueApi";
 import "./StaffDashboard.css";
@@ -1390,6 +1391,15 @@ const filteredSlots = slotDateFilter
           )}
         </section>
       </div>
+
+      <AIAssistant
+        context={{
+          role: 'staff',
+          facilityId,
+          facilityName,
+          pageContext: 'clinic management - appointments, queue, slots',
+        }}
+      />
     </div>
   );
 }

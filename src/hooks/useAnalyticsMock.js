@@ -1,8 +1,3 @@
-// hooks/useAnalyticsMock.js
-// Swap this in place of useAnalytics.js to test the dashboard UI with fake data.
-// To go live: change the import in AnalyticsDashboard.jsx back to '#hooks/useAnalytics'
-
-// ── Facilities ────────────────────────────────
 export function useFacilities() {
   return [
     { id: 1, name: 'Soweto Community Clinic' },
@@ -11,7 +6,6 @@ export function useFacilities() {
   ]
 }
 
-// ── Wait Times ────────────────────────────────
 const MOCK_WAIT_TIMES = [
   { facility_id: 1, facility_name: 'Soweto Community Clinic', hour_of_day: 7,  total_served: 12, avg_wait_minutes: 8,  min_wait_minutes: 3,  max_wait_minutes: 18 },
   { facility_id: 1, facility_name: 'Soweto Community Clinic', hour_of_day: 8,  total_served: 28, avg_wait_minutes: 22, min_wait_minutes: 10, max_wait_minutes: 45 },
@@ -37,7 +31,6 @@ export function useWaitTimes({ facilityId = null } = {}) {
   return { data, loading: false, error: null }
 }
 
-// ── No-Show Rates ─────────────────────────────
 function daysAgo(n) {
   const d = new Date()
   d.setDate(d.getDate() - n)
@@ -76,7 +69,6 @@ export function useNoShowRates({ facilityId = null, startDate = null, endDate = 
   return { data, loading: false, error: null }
 }
 
-// ── Custom View ───────────────────────────────
 const MOCK_APPOINTMENTS = [
   { id: '1', booked_at: new Date(Date.now() - 3600000).toISOString(),  patient_name: 'Thabo',    patient_surname: 'Nkosi',    patient_email: 'thabo@example.com',    patient_phone: null,            patient_contact: 'thabo@example.com',    facility_id: 1, facility_name: 'Soweto Community Clinic', appointment_type: 'scheduled', status: 'completed', queue_status: 'completed', joined_at: new Date(Date.now() - 5400000).toISOString(), called_at: new Date(Date.now() - 3960000).toISOString(), completed_at: new Date(Date.now() - 3600000).toISOString(), wait_minutes: 24, service_minutes: 6,  reason: 'Annual check-up' },
   { id: '2', booked_at: new Date(Date.now() - 7200000).toISOString(),  patient_name: 'Naledi',   patient_surname: 'Dlamini',  patient_email: null,                   patient_phone: '0821234567',    patient_contact: '0821234567',           facility_id: 1, facility_name: 'Soweto Community Clinic', appointment_type: 'walk_in',   status: 'completed', queue_status: 'completed', joined_at: new Date(Date.now() - 9000000).toISOString(), called_at: new Date(Date.now() - 7560000).toISOString(), completed_at: new Date(Date.now() - 7200000).toISOString(), wait_minutes: 30, service_minutes: 6,  reason: 'Fever' },

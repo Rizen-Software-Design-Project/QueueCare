@@ -1,5 +1,3 @@
-// AdminDashboard.jsx
-
 import { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
@@ -7,6 +5,7 @@ import { supabase } from "#lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import { FaStethoscope } from "react-icons/fa";
+import AIAssistant from "./AIAssistant";
 
 import { ADMIN_NAV } from "./DashboardHelpers";
 import { NotificationsPanel, ProfilePanel } from "./DashboardPanels";
@@ -178,6 +177,14 @@ export default function AdminDashboard({ profile: initialProfile }) {
 
         <main className="db-content">{renderContent()}</main>
       </div>
+
+      <AIAssistant
+        context={{
+          role: 'admin',
+          profile,
+          pageContext: activeTab,
+        }}
+      />
     </div>
   );
 }

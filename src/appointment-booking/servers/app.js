@@ -10,6 +10,7 @@ import staffRoutes from '../routes/staff_server.js';
 import notifyRoutes from '../routes/notify_server.js';
 import scheduleRoutes from '../routes/schedule_server.js';
 
+import aiRoutes from '../routes/ai_server.js';
 import notFound from '../middleware/notFound.js';
 import errorHandler from '../middleware/errorHandler.js';
 
@@ -33,6 +34,7 @@ app.use('/appointments', appointmentRoutes);
 app.use('/queue', queueRoutes);
 app.use('/staff', staffRoutes);
 app.use('/notify', notifyRoutes);
+app.use('/ai', aiRoutes);
 app.use('/', scheduleRoutes);
 
 // =====================
@@ -48,7 +50,7 @@ if (fs.existsSync(distPath)) {
 // =====================
 // React ROUTE HANDLER (ONLY for non-API routes)
 // =====================
-app.get(/^\/(?!(health|appointments|queue|staff|notify|schedule|get_staff)(\/|$)).*/, (req, res) => {
+app.get(/^\/(?!(health|appointments|queue|staff|notify|schedule|get_staff|ai)(\/|$)).*/, (req, res) => {
   const indexPath = path.join(distPath, 'index.html');
 
   if (fs.existsSync(indexPath)) {

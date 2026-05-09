@@ -1,12 +1,6 @@
-// hooks/useAnalytics.js
-// Supabase data hooks for the QueueCare analytics dashboard.
-// Adjust the import path to match your supabase client location.
-
 import { useState, useEffect } from 'react'
 import { supabase } from '#lib/supabase'
-// ─────────────────────────────────────────────
-// useFacilities — list all facilities for filter dropdowns
-// ─────────────────────────────────────────────
+
 export function useFacilities() {
   const [facilities, setFacilities] = useState([])
 
@@ -21,11 +15,6 @@ export function useFacilities() {
   return facilities
 }
 
-// ─────────────────────────────────────────────
-// useWaitTimes — avg wait times by hour of day
-// Params:
-//   facilityId: number | null  — filter to one facility
-// ─────────────────────────────────────────────
 export function useWaitTimes({ facilityId = null } = {}) {
   const [data, setData]       = useState([])
   const [loading, setLoading] = useState(true)
@@ -57,13 +46,6 @@ export function useWaitTimes({ facilityId = null } = {}) {
   return { data, loading, error }
 }
 
-// ─────────────────────────────────────────────
-// useNoShowRates — no-show stats by facility and date
-// Params:
-//   facilityId: number | null
-//   startDate:  'YYYY-MM-DD' | null
-//   endDate:    'YYYY-MM-DD' | null
-// ─────────────────────────────────────────────
 export function useNoShowRates({ facilityId = null, startDate = null, endDate = null } = {}) {
   const [data, setData]       = useState([])
   const [loading, setLoading] = useState(true)
@@ -98,15 +80,6 @@ export function useNoShowRates({ facilityId = null, startDate = null, endDate = 
   return { data, loading, error }
 }
 
-// ─────────────────────────────────────────────
-// useCustomView — filterable appointments table
-// Params:
-//   facilityId:  number | null
-//   status:      string | null   ('booked' | 'completed' | 'no_show' | 'cancelled')
-//   type:        string | null   ('scheduled' | 'walk_in')
-//   startDate:   ISO string | null
-//   endDate:     ISO string | null
-// ─────────────────────────────────────────────
 export function useCustomView({
   facilityId = null,
   status     = null,
