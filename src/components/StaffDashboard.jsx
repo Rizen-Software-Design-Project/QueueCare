@@ -1,7 +1,3 @@
-// StaffDashboard.jsx — sidebar dashboard for the staff role.
-// ⚠️  Rename your existing StaffDashboard.jsx (the clinic management page at /staff-dashboard)
-//     to StaffClinicDashboard.jsx and update its route in App.jsx before dropping this in.
-
 import { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
@@ -9,6 +5,7 @@ import { supabase } from "#lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import { FaStethoscope } from "react-icons/fa";
+import AIAssistant from "./AIAssistant";
 
 import {
   STAFF_NAV, normalizeAvailability,
@@ -243,6 +240,16 @@ function goTo(id) {
 
         <main className="db-content">{renderContent()}</main>
       </div>
+
+      <AIAssistant
+        context={{
+          role: 'staff',
+          profile,
+          facilityId: staffAssignments[0]?.facility_id ?? null,
+          facilityName: staffAssignments[0]?.facilities?.name ?? '',
+          pageContext: activeTab,
+        }}
+      />
     </div>
   );
 }

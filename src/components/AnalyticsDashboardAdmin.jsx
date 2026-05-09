@@ -8,6 +8,7 @@ import {
   useWaitTimes, useNoShowRates, useCustomView, useFacilities,
 } from '#hooks/useAnalytics'
 import { exportCSV, exportPDF } from '#utils/exportUtils'
+import AIAssistant from './AIAssistant'
 import "./AnalyticsDashboard.css";
 
 const TABS = ['Wait Times', 'No-Show Rates', 'Custom View']
@@ -494,6 +495,13 @@ export default function AnalyticsDashboard() {
         {activeTab === 1 && <NoShowReport     facilities={facilities} />}
         {activeTab === 2 && <CustomViewReport facilities={facilities} />}
       </div>
+
+      <AIAssistant
+        context={{
+          role: 'admin',
+          pageContext: 'analytics - ' + TABS[activeTab],
+        }}
+      />
     </div>
   )
 }
