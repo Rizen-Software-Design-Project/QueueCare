@@ -255,7 +255,107 @@
   color: #1B5E20;
   border-left: 4px solid #1B5E20;
 }
+.clinic-services {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
 
+.clinic-hours {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.clinic-hours-list {
+  margin-top: 0.4rem;
+  display: grid;
+  gap: 0.25rem;
+  max-width: 360px;
+}
+
+.clinic-hour-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.clinic-hour-row span:first-child {
+  font-weight: 600;
+  color: #1B5E20;
+}
+.clinic-card {
+  align-items: flex-start;
+}
+
+.clinic-info {
+  flex: 1;
+}
+
+.clinic-services,
+.clinic-hours {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.clinic-services strong,
+.clinic-hours strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #1f2937;
+}
+
+.clinic-service-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+.clinic-service-tag {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border: 1px solid #b7dfbd;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.clinic-hours-summary {
+  display: inline-block;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.clinic-empty {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+.clinic-open-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.clinic-open-badge.open {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.clinic-open-badge.closed {
+  background: #fee2e2;
+  color: #991b1b;
+}
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 780px) {
   .cs-wrapper {
@@ -334,6 +434,7 @@
     font-size: 0.85rem;
   }
 }
+
 
 /* Extra small devices */
 @media (max-width: 480px) {

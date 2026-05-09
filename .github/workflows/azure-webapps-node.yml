@@ -26,31 +26,50 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install frontend dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Build frontend
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
 
-      - name: Install backend dependencies
-        working-directory: "src/appointment booking"
-        run: npm ci --omit=dev
-
-      - name: Prepare deployment package
+      - name: Create clean deployment package
         run: |
+          rm -rf deploy
           mkdir deploy
-          cp -r dist deploy/dist
-          cp -r "src/appointment booking" deploy/server
-          cp package.json deploy/
-          cp deploy-web.config deploy/web.config
-          cp deploy-entry.js deploy/server.js
-          echo "// deployed $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> deploy/server.js
 
-      - name: Upload deployment artifact
+          cp server.js deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp web.config deploy/
+
+          cp -r dist deploy/
+
+          # Copy backend source only if server.js needs it
+          cp -r src deploy/
+
+          # Remove anything unnecessary
+          rm -rf deploy/node_modules
+          rm -rf deploy/src/**/node_modules
+          rm -rf deploy/.git
+          rm -rf deploy/coverage
+          rm -rf deploy/tests
+          rm -rf deploy/__tests__
+
+          echo "Deployment package size:"
+          du -sh deploy
+
+          echo "Deploy contents:"
+          find deploy -maxdepth 3 -type f
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: deploy/
+          path: deploy
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,18 +80,25 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app
-          path: .
+          path: app
 
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Enable Azure build during deployment
+        run: |
+          az webapp config appsettings set \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --settings SCM_DO_BUILD_DURING_DEPLOYMENT=true
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: .
+          package: app
 
       - name: Restart App Service
-        run: az webapp restart --name $AZURE_WEBAPP_NAME --resource-group $AZURE_RESOURCE_GROUP
+        run: az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}

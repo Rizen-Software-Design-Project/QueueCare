@@ -1,0 +1,75 @@
+.analytics-dashboard {
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 40px 32px;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.analytics-dashboard h1 {
+  color: #0f172a;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.analytics-dashboard p {
+  color: #64748b;
+}
+
+.analytics-dashboard button {
+  border: none;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.analytics-dashboard button:hover {
+  transform: translateY(-1px);
+}
+
+.analytics-dashboard select,
+.analytics-dashboard input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #475569;
+  background: white;
+}
+
+.analytics-dashboard table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.analytics-dashboard th {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 12px;
+  text-align: left;
+}
+
+.analytics-dashboard td {
+  padding: 12px;
+  color: #475569;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.analytics-dashboard tr:hover {
+  background: #f8fafc;
+}
+
+.analytics-dashboard .recharts-wrapper {
+  font-family: inherit;
+}
+
+@media (max-width: 768px) {
+  .analytics-dashboard {
+    padding: 24px 16px;
+  }
+
+  .analytics-dashboard table {
+    min-width: 900px;
+  }
+}

@@ -1,0 +1,211 @@
+/* ── WalkIn.css ───────────────────────────────────────────────────────────── */
+
+/* ── Loading / error states ───────────────────────────────────────────────── */
+.wi-loading {
+  padding: 40px;
+  color: #888;
+}
+
+.wi-facility-error {
+  padding: 40px;
+  color: #ef4444;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.wi-card-full {
+  grid-column: 1 / -1;
+  max-width: 640px;
+}
+
+/* ── Facility name subtitle ───────────────────────────────────────────────── */
+.wi-facility-name {
+  margin: 0;
+  font-size: 14px;
+  color: #ccc;
+}
+
+/* ── Tab switcher ─────────────────────────────────────────────────────────── */
+.wi-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.wi-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  color: white;
+  background: #1f2937;
+  box-shadow: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.wi-tab--queue {
+  background: #1d4ed8;
+  box-shadow: 0 0 0 2px #60a5fa;
+}
+
+.wi-tab--book {
+  background: #15803d;
+  box-shadow: 0 0 0 2px #4ade80;
+}
+
+.wi-tab--checkin {
+  background: #b45309;
+  box-shadow: 0 0 0 2px #fbbf24;
+}
+
+/* ── Tab description ──────────────────────────────────────────────────────── */
+.wi-tab-desc {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+/* ── Step headings ────────────────────────────────────────────────────────── */
+.wi-step-heading {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: #e5e7eb;
+}
+
+/* ── Search section ───────────────────────────────────────────────────────── */
+.wi-search-section {
+  margin-bottom: 28px;
+}
+
+.wi-search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.wi-search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 14px;
+}
+
+.wi-search-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: #374151;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.15s;
+}
+
+.wi-search-btn:disabled {
+  opacity: 0.6;
+}
+
+.wi-search-msg {
+  margin-top: 10px;
+}
+
+/* ── Profile card ─────────────────────────────────────────────────────────── */
+.wi-profile-card {
+  margin-bottom: 28px;
+  padding: 16px;
+  background: #052e16;
+  border: 1px solid #166534;
+  border-radius: 10px;
+}
+
+.wi-profile-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.wi-profile-check-icon {
+  color: #4ade80;
+  font-size: 20px;
+}
+
+.wi-profile-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: #f0fdf4;
+}
+
+.wi-profile-details {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.wi-profile-detail {
+  font-size: 13px;
+  color: #86efac;
+}
+
+/* ── Step 2: check-in ─────────────────────────────────────────────────────── */
+.wi-checkin-btn {
+  padding: 11px 24px;
+  background: #b45309;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.wi-checkin-btn:disabled {
+  opacity: 0.6;
+}
+
+/* ── Step 2: slot + submit ────────────────────────────────────────────────── */
+.wi-no-slots-msg {
+  color: #f59e0b;
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+.wi-submit-btn {
+  padding: 11px 24px;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.wi-submit-btn--queue {
+  background: #1d4ed8;
+}
+
+.wi-submit-btn--book {
+  background: #15803d;
+}
+
+.wi-submit-btn:disabled {
+  opacity: 0.6;
+}
+
+/* ── Submit message ───────────────────────────────────────────────────────── */
+.wi-submit-msg {
+  margin-top: 16px;
+  font-size: 15px;
+}

@@ -1,28 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { configDefaults } from "vitest/config";
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [react()],
   base: "./",
-  server: {
-    proxy: {
-      "/appointments": {
-        target: "http://127.0.0.1:5000",
-        changeOrigin: true,
-      },
-      "/queue": {
-        target: "http://127.0.0.1:5000",
-        changeOrigin: true,
-      },
-      "/staff": {
-        target: "http://127.0.0.1:5000",
-        changeOrigin: true,
-      },
-      "/notify": {
-        target: "http://127.0.0.1:5000",
-        changeOrigin: true,
-      },
+  resolve: {
+    alias: {
+      '#lib':   path.resolve(__dirname, 'src/lib'),
+      '#utils': path.resolve(__dirname, 'src/utils'),
+      '#hooks': path.resolve(__dirname, 'src/hooks'),
     },
   },
   test: {
