@@ -25,7 +25,7 @@ export default function StaffClinicManagement() {
   const facilityName = state?.facilityName ?? "";
   const authProvider = state?.authProvider ?? "";
   const providerUserId = state?.providerUserId ?? "";
-
+localStorage.setItem("facility_id",facilityId);
   const [appointments, setAppointments] = useState([]);
   const [apptLoading, setApptLoading] = useState(true);
   const [apptError, setApptError] = useState("");

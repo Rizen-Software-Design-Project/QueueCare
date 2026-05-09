@@ -14,6 +14,8 @@ import StaffDashboard from "./components/StaffDashboard.jsx"
 import PatientDashboard from "./components/PatientDashboard.jsx"
 import AdminDashboard from "./components/AdminDashboard.jsx"
 
+import Availability from "./components/availability.jsx";
+
 import "./App.css";
 
 
@@ -32,7 +34,8 @@ function App() {
         <Route path="/walk-in"        element={<WalkIn />} />
         <Route path="/analytics-admin"        element={<AnalyticsDashboardAdmin />} />
         <Route path="/analytics-staff"        element={<AnalyticsDashboardStaff />} />
-
+        <Route path="/analytics-staff"        element={<AnalyticsDashboardStaff />} />
+       <Route path="/availability" element={<Availability />} />
         <Route path="*"              element={<Navigate to="/" replace />} />
 
 

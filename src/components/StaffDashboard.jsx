@@ -2,7 +2,7 @@
 // ⚠️  Rename your existing StaffDashboard.jsx (the clinic management page at /staff-dashboard)
 //     to StaffClinicDashboard.jsx and update its route in App.jsx before dropping this in.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect ,useRef} from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { supabase } from "#lib/supabase";
@@ -20,6 +20,7 @@ import "./Dashboard.css";
 
 export default function StaffDashboard({ profile: initialProfile }) {
   const navigate = useNavigate();
+  
 
   const [profile,           setProfile]           = useState(initialProfile);
   const [staffAssignments,  setStaffAssignments]  = useState([]);
@@ -57,7 +58,9 @@ export default function StaffDashboard({ profile: initialProfile }) {
           .order("sent_at", { ascending: false })
           .limit(30),
       ]);
-
+localStorage.setItem("staff_id", profile.id);
+console.log(assignments);
+localStorage.setItem("facility_id", assignments?.[0]?.facility_id ?? "");
       setStaffAssignments(assignments || []);
       setAvailability(normalizeAvailability(assignments?.[0]?.availability ?? null));
       setNotifications(notif || []);
@@ -70,6 +73,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
   // ── Actions ───────────────────────────────────────────────────────────────
   async function handleLogout() {
     await Promise.allSettled([supabase.auth.signOut(), signOut(auth)]);
+    
     localStorage.removeItem("userIdentity");
     navigate("/signin");
   }
@@ -181,6 +185,12 @@ function goTo(id) {
                 </button>
                 <button className="db-btn db-btn-reschedule" onClick={() => goTo("analytics")}>
                     View Analytics
+                </button>
+                <button className="db-btn db-btn-reschedule" onClick={() => {
+  console.log("facility_id", staffAssignments[0]?.facility_id);
+  navigate("/availability", { state: { facility_id: staffAssignments[0]?.facility_id, staff_id: profile.id } });
+}}>
+                    Availibilty
                 </button>
                 </div>
             </div>
