@@ -32,17 +32,14 @@ export default function StaffClinicManagement() {
   const [updatingId, setUpdatingId] = useState(null);
   const [appointmentView, setAppointmentView] = useState("today");
 
-  const [newSlotDate, setNewSlotDate] = useState("");
-  const [newSlotTime, setNewSlotTime] = useState("");
-  const [newSlotCapacity, setNewSlotCapacity] = useState("");
-  const [newSlotDuration, setNewSlotDuration] = useState("");
   const [createSlotMsg, setCreateSlotMsg] = useState({ type: "", text: "" });
   const [creatingSlot, setCreatingSlot] = useState(false);
-
+  const [slotBatchDate, setSlotBatchDate] = useState("");
   const [slots, setSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState("");
-
+  const [slotDateFilter, setSlotDateFilter] = useState("");
+  const [deletingSlotId, setDeletingSlotId] = useState(null);
   const [editingSlotId, setEditingSlotId] = useState(null);
   const [editSlotDate, setEditSlotDate] = useState("");
   const [editSlotTime, setEditSlotTime] = useState("");
@@ -50,7 +47,7 @@ export default function StaffClinicManagement() {
   const [editSlotDuration, setEditSlotDuration] = useState("");
   const [updatingSlot, setUpdatingSlot] = useState(false);
   const [updateSlotMsg, setUpdateSlotMsg] = useState({ type: "", text: "" });
-
+  const [showCreateSlots, setShowCreateSlots] = useState(false);
   const [queueList, setQueueList] = useState([]);
   const [queueLoading, setQueueLoading] = useState(false);
 
@@ -61,7 +58,35 @@ export default function StaffClinicManagement() {
   const [rescheduleSlotId, setRescheduleSlotId] = useState("");
   const [rescheduling, setRescheduling] = useState(false);
   const [rescheduleMsg, setRescheduleMsg] = useState({ type: "", text: "" });
-
+const [slotBlocks, setSlotBlocks] = useState([
+  {
+    id: crypto.randomUUID(),
+    label: "Morning",
+    start: "08:00",
+    end: "12:00",
+    duration: "15",
+    capacity: "5",
+    enabled: true,
+  },
+  {
+    id: crypto.randomUUID(),
+    label: "Lunch break",
+    start: "12:00",
+    end: "13:00",
+    duration: "15",
+    capacity: "0",
+    enabled: false,
+  },
+  {
+    id: crypto.randomUUID(),
+    label: "Afternoon",
+    start: "13:00",
+    end: "16:00",
+    duration: "30",
+    capacity: "3",
+    enabled: true,
+  },
+]);
   function getTodayString() {
     const now = new Date();
     const year = now.getFullYear();
@@ -87,6 +112,77 @@ export default function StaffClinicManagement() {
     if (!slotDate) return false;
     return slotDate >= getTodayString();
   }
+  function generateSlotTimes(start, end, durationMinutes) {
+  const result = [];
+
+  if (!start || !end || !durationMinutes) return result;
+
+  const [startH, startM] = start.split(":").map(Number);
+  const [endH, endM] = end.split(":").map(Number);
+
+  let current = startH * 60 + startM;
+  const endTotal = endH * 60 + endM;
+  const duration = Number(durationMinutes);
+
+  while (current + duration <= endTotal) {
+    const h = String(Math.floor(current / 60)).padStart(2, "0");
+    const m = String(current % 60).padStart(2, "0");
+
+    result.push(`${h}:${m}`);
+    current += duration;
+  }
+
+  return result;
+}
+
+function updateSlotBlock(id, field, value) {
+  setSlotBlocks((prev) =>
+    prev.map((block) =>
+      block.id === id ? { ...block, [field]: value } : block
+    )
+  );
+}
+
+function addSlotBlock() {
+  setSlotBlocks((prev) => [
+    ...prev,
+    {
+      id: crypto.randomUUID(),
+      label: "Custom block",
+      start: "09:00",
+      end: "10:00",
+      duration: "15",
+      capacity: "5",
+      enabled: true,
+    },
+  ]);
+}
+
+function removeSlotBlock(id) {
+  setSlotBlocks((prev) => {
+    if (prev.length === 1) return prev;
+    return prev.filter((block) => block.id !== id);
+  });
+}
+
+function getDistributedSlotPreview() {
+  return slotBlocks.flatMap((block) => {
+    if (!block.enabled) return [];
+
+    const capacity = parseInt(block.capacity, 10);
+    const duration = parseInt(block.duration, 10);
+
+    if (!block.start || !block.end || !capacity || !duration) return [];
+    if (capacity < 1 || duration < 5) return [];
+
+    return generateSlotTimes(block.start, block.end, duration).map((time) => ({
+      time,
+      capacity,
+      duration,
+      blockLabel: block.label,
+    }));
+  });
+}
 
   async function fetchAppointments(fId) {
     setApptLoading(true);
@@ -165,7 +261,70 @@ export default function StaffClinicManagement() {
 
   setSlots(active);
   }
+async function handleCreateBatchSlots(e) {
+  e.preventDefault();
 
+  setCreateSlotMsg({ type: "", text: "" });
+
+  if (!facilityId) {
+    setCreateSlotMsg({ type: "error", text: "No facility assigned." });
+    return;
+  }
+
+  if (!slotBatchDate) {
+    setCreateSlotMsg({ type: "error", text: "Please choose a date." });
+    return;
+  }
+
+  const slotsToCreate = getDistributedSlotPreview();
+
+  if (slotsToCreate.length === 0) {
+    setCreateSlotMsg({
+      type: "error",
+      text: "No appointment slots generated. Enable at least one time block.",
+    });
+    return;
+  }
+
+  setCreatingSlot(true);
+
+  let successCount = 0;
+  let failedMessage = "";
+
+  for (const slot of slotsToCreate) {
+    const { data, error } = await supabase.rpc("create_appointment_slot", {
+      p_auth_provider: authProvider,
+      p_provider_user_id: providerUserId,
+      p_facility_id: facilityId,
+      p_slot_date: slotBatchDate,
+      p_slot_time: slot.time,
+      p_total_capacity: parseInt(slot.capacity, 10),
+      p_duration_minutes: parseInt(slot.duration, 10),
+    });
+
+    if (error || data?.error) {
+      failedMessage = error?.message || data?.error || "Some slots failed.";
+    } else {
+      successCount += 1;
+    }
+  }
+
+  setCreatingSlot(false);
+
+  if (successCount > 0) {
+    setCreateSlotMsg({
+      type: "success",
+      text: `${successCount} slot${successCount === 1 ? "" : "s"} created successfully.`,
+    });
+
+    await fetchSlots(facilityId);
+  } else {
+    setCreateSlotMsg({
+      type: "error",
+      text: failedMessage || "Failed to create slots.",
+    });
+  }
+}
   // ADD THIS IN ITS PLACE:
   useEffect(() => {
     if (!facilityId) return;
@@ -322,49 +481,6 @@ export default function StaffClinicManagement() {
     );
   }
 
- 
-  async function handleCreateSlot(e) {
-    e.preventDefault();
-    setCreateSlotMsg({ type: "", text: "" });
-    setCreatingSlot(true);
-
-      const { data, error } = await supabase.rpc("create_appointment_slot", {
-      p_auth_provider: authProvider,
-      p_provider_user_id: providerUserId,
-      p_facility_id: facilityId,
-      p_slot_date: newSlotDate,
-      p_slot_time: newSlotTime,
-      p_total_capacity: parseInt(newSlotCapacity, 10),
-      p_duration_minutes: parseInt(newSlotDuration, 10),
-    });
-
-    setCreatingSlot(false);
-
-    if (error) {
-      setCreateSlotMsg({
-        type: "error",
-        text: error.message || "Failed to create slot.",
-      });
-      return;
-    }
-
-    if (data?.error) {
-      setCreateSlotMsg({ type: "error", text: data.error });
-      return;
-    }
-
-    setCreateSlotMsg({
-      type: "success",
-      text: data?.message || "Slot created successfully.",
-    });
-
-    if (facilityId) fetchSlots(facilityId);
-
-    setNewSlotDate("");
-    setNewSlotTime("");
-    setNewSlotCapacity("");
-    setNewSlotDuration("");
-  }
 
   function startEditSlot(slot) {
     setEditingSlotId(slot.id);
@@ -383,7 +499,39 @@ export default function StaffClinicManagement() {
     setEditSlotDuration("");
     setUpdateSlotMsg({ type: "", text: "" });
   }
+ async function handleDeleteSlot(slot) {
+  const bookedCount = slot.booked_count ?? 0;
 
+  if (bookedCount > 0) {
+    alert("This slot already has bookings, so it cannot be deleted.");
+    return;
+  }
+
+  if (
+    !confirm(
+      `Delete slot on ${formatDate(slot.slot_date)} at ${formatTime(slot.slot_time)}?`
+    )
+  ) {
+    return;
+  }
+
+  setDeletingSlotId(slot.id);
+
+  const { data, error } = await supabase.rpc("delete_appointment_slot_as_staff", {
+    p_auth_provider: authProvider,
+    p_provider_user_id: providerUserId,
+    p_slot_id: slot.id,
+  });
+
+  setDeletingSlotId(null);
+
+  if (error || data?.error) {
+    alert("Failed to delete slot: " + (error?.message || data?.error));
+    return;
+  }
+
+  setSlots((prev) => prev.filter((s) => s.id !== slot.id));
+}
   async function handleUpdateSlot(slotId) {
     setUpdateSlotMsg({ type: "", text: "" });
     setUpdatingSlot(true);
@@ -521,6 +669,11 @@ export default function StaffClinicManagement() {
   const isDifferent  = slot.id !== rescheduleAppointment?.slot_id;
   return hasCapacity && isFuture && isDifferent;
 });
+
+const distributedSlotPreview = getDistributedSlotPreview();
+const filteredSlots = slotDateFilter
+  ? slots.filter((slot) => slot.slot_date === slotDateFilter)
+  : slots;
 
   return (
     <div className="staff-dash">
@@ -861,73 +1014,191 @@ export default function StaffClinicManagement() {
         </section>
 
         {/* Create New Appointment Slot */}
-        <section className="staff-card">
-          <h2>Create New Appointment Slot</h2>
+        <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0 }}>Create Appointment Slots</h2>
+              <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 14 }}>
+                Add distributed slots with breaks, lunch time, and custom capacity.
+              </p>
+            </div>
 
-          <form onSubmit={handleCreateSlot} className="staff-form">
-            <label>
-              Date
-              <input
-                type="date"
-                value={newSlotDate}
-                onChange={(e) => setNewSlotDate(e.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              Time
-              <input
-                type="time"
-                value={newSlotTime}
-                onChange={(e) => setNewSlotTime(e.target.value)}
-                required
-              />
-            </label>
-
-            <label>
-              Capacity
-              <input
-                type="number"
-                min="1"
-                value={newSlotCapacity}
-                onChange={(e) => setNewSlotCapacity(e.target.value)}
-                placeholder="e.g. 5"
-                required
-              />
-            </label>
-
-            <label>
-              Duration (min)
-              <input
-                type="number"
-                min="5"
-                value={newSlotDuration}
-                onChange={(e) => setNewSlotDuration(e.target.value)}
-                placeholder="e.g. 15"
-                required
-              />
-            </label>
-
-            <button type="submit" disabled={creatingSlot || !facilityId}>
-              {creatingSlot ? "Creating..." : "Create Slot"}
-            </button>
-          </form>
-
-          {createSlotMsg.text && (
-            <p
-              className={
-                createSlotMsg.type === "error" ? "staff-error" : "staff-success"
-              }
+            <button
+              type="button"
+              className="staff-action-btn"
+              onClick={() => setShowCreateSlots((prev) => !prev)}
+              style={{
+                fontSize: 20,
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+              }}
             >
-              {createSlotMsg.text}
-            </p>
-          )}
+              {showCreateSlots ? "−" : "+"}
+            </button>
+          </div>
 
-          {!facilityId && !apptLoading && (
-            <p className="staff-error">
-              No facility assigned — cannot create slots.
-            </p>
+          {showCreateSlots && (
+            <>
+              <form onSubmit={handleCreateBatchSlots} className="staff-form" style={{ marginTop: 18 }}>
+                <div className="slot-quick-card">
+                  <h3>Slot distribution</h3>
+                  <p>
+                    Create slots in blocks. Disable lunch or admin time so no appointments
+                    are created during breaks.
+                  </p>
+
+                  <label>
+                    Date
+                    <input
+                      type="date"
+                      value={slotBatchDate}
+                      onChange={(e) => setSlotBatchDate(e.target.value)}
+                      required
+                    />
+                  </label>
+
+                  <div className="slot-blocks">
+                    {slotBlocks.map((block) => (
+                      <div
+                        key={block.id}
+                        className={`slot-block-row ${!block.enabled ? "disabled" : ""}`}
+                      >
+                        <label>
+                          Block name
+                          <input
+                            type="text"
+                            value={block.label}
+                            onChange={(e) =>
+                              updateSlotBlock(block.id, "label", e.target.value)
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          Start
+                          <input
+                            type="time"
+                            value={block.start}
+                            disabled={!block.enabled}
+                            onChange={(e) =>
+                              updateSlotBlock(block.id, "start", e.target.value)
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          End
+                          <input
+                            type="time"
+                            value={block.end}
+                            disabled={!block.enabled}
+                            onChange={(e) =>
+                              updateSlotBlock(block.id, "end", e.target.value)
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          Duration
+                          <select
+                            value={block.duration}
+                            disabled={!block.enabled}
+                            onChange={(e) =>
+                              updateSlotBlock(block.id, "duration", e.target.value)
+                            }
+                          >
+                            <option value="10">10 min</option>
+                            <option value="15">15 min</option>
+                            <option value="20">20 min</option>
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60">60 min</option>
+                          </select>
+                        </label>
+
+                        <label>
+                          Capacity
+                          <input
+                            type="number"
+                            min="1"
+                            value={block.capacity}
+                            disabled={!block.enabled}
+                            onChange={(e) =>
+                              updateSlotBlock(block.id, "capacity", e.target.value)
+                            }
+                          />
+                        </label>
+
+                        <label className="slot-toggle">
+                          <input
+                            type="checkbox"
+                            checked={block.enabled}
+                            onChange={(e) =>
+                              updateSlotBlock(block.id, "enabled", e.target.checked)
+                            }
+                          />
+                          Create slots
+                        </label>
+
+                        <button
+                          type="button"
+                          className="staff-action-btn"
+                          onClick={() => removeSlotBlock(block.id)}
+                          disabled={slotBlocks.length === 1}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button type="button" className="staff-action-btn" onClick={addSlotBlock}>
+                    + Add time block
+                  </button>
+                </div>
+
+                <div className="slot-preview">
+                  <strong>Preview:</strong>
+
+                  <div className="slot-preview-list">
+                    {distributedSlotPreview.map((slot) => (
+                      <span key={`${slot.blockLabel}-${slot.time}`} className="slot-chip">
+                        {slot.time} · {slot.duration}min · cap {slot.capacity}
+                      </span>
+                    ))}
+                  </div>
+
+                  {distributedSlotPreview.length === 0 && (
+                    <p style={{ color: "#888", marginTop: 8 }}>
+                      No slots will be created yet.
+                    </p>
+                  )}
+                </div>
+
+                <button type="submit" disabled={creatingSlot || !facilityId}>
+                  {creatingSlot ? "Creating slots..." : "Create Distributed Slots"}
+                </button>
+              </form>
+
+              {createSlotMsg.text && (
+                <p
+                  className={
+                    createSlotMsg.type === "error" ? "staff-error" : "staff-success"
+                  }
+                >
+                  {createSlotMsg.text}
+                </p>
+              )}
+            </>
           )}
         </section>
 
@@ -939,29 +1210,50 @@ export default function StaffClinicManagement() {
               justifyContent: "space-between",
               alignItems: "center",
               marginBottom: 16,
+              gap: 12,
+              flexWrap: "wrap",
             }}
           >
             <h2 style={{ margin: 0 }}>Available Appointment Slots</h2>
 
-            {facilityId && (
-              <button
-                className="staff-back-btn"
-                onClick={() => fetchSlots(facilityId)}
-                disabled={slotsLoading}
-              >
-                {slotsLoading ? "Refreshing..." : "↻ Refresh"}
-              </button>
-            )}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                type="date"
+                className="slot-date-filter"
+                value={slotDateFilter}
+                onChange={(e) => setSlotDateFilter(e.target.value)}
+              />
+
+              {slotDateFilter && (
+                <button
+                  type="button"
+                  className="staff-action-btn"
+                  onClick={() => setSlotDateFilter("")}
+                >
+                  Clear date
+                </button>
+              )}
+
+              {facilityId && (
+                <button
+                  className="staff-back-btn"
+                  onClick={() => fetchSlots(facilityId)}
+                  disabled={slotsLoading}
+                >
+                  {slotsLoading ? "Refreshing..." : "↻ Refresh"}
+                </button>
+              )}
+            </div>
           </div>
 
           {slotsLoading && <p style={{ color: "#888" }}>Loading slots...</p>}
           {slotsError && <p className="staff-error">{slotsError}</p>}
 
-          {!slotsLoading && !slotsError && slots.length === 0 && (
+          {!slotsLoading && !slotsError && filteredSlots.length === 0 && (
             <p style={{ color: "#888" }}>No slots found for this facility.</p>
           )}
 
-          {!slotsLoading && slots.length > 0 && (
+          {!slotsLoading && filteredSlots.length > 0 && (
             <div style={{ overflowX: "auto" }}>
               <table className="staff-table">
                 <thead>
@@ -976,7 +1268,7 @@ export default function StaffClinicManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {slots.map((slot) => (
+                  {filteredSlots.map((slot) => (
                     <tr key={slot.id}>
                       <td>{formatDate(slot.slot_date)}</td>
                       <td>{formatTime(slot.slot_time)}</td>
@@ -987,6 +1279,7 @@ export default function StaffClinicManagement() {
                         {(slot.total_capacity ?? 0) - (slot.booked_count ?? 0)}
                       </td>
                       <td>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button
                           type="button"
                           className="staff-action-btn"
@@ -994,7 +1287,19 @@ export default function StaffClinicManagement() {
                         >
                           Edit
                         </button>
-                      </td>
+
+                        <button
+                          type="button"
+                          className="staff-action-btn"
+                          style={{ background: "#dc2626" }}
+                          disabled={deletingSlotId === slot.id || (slot.booked_count ?? 0) > 0}
+                          onClick={() => handleDeleteSlot(slot)}
+                          title={(slot.booked_count ?? 0) > 0 ? "Cannot delete booked slots" : "Delete slot"}
+                        >
+                          {deletingSlotId === slot.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
+                    </td>
                     </tr>
                   ))}
                 </tbody>

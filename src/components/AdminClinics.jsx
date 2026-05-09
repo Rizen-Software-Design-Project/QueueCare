@@ -32,6 +32,13 @@ const SERVICE_OPTIONS = [
   "Emergency Care",
 ];
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const PRESETS = [
+  { label: "Mon–Fri  08:00–17:00", open: "08:00", close: "17:00", days: ["monday","tuesday","wednesday","thursday","friday"], closedDays: ["saturday","sunday"] },
+  { label: "Mon–Sat  08:00–13:00", open: "08:00", close: "13:00", days: ["monday","tuesday","wednesday","thursday","friday","saturday"], closedDays: ["sunday"] },
+  { label: "24 / 7",               open: "00:00", close: "23:59", days: DAYS, closedDays: [] },
+  { label: "Closed all",           open: "",      close: "",      days: [],   closedDays: DAYS },
+];
+
 
 function normalizeOperatingHours(hours) {
   const normalized = {};
@@ -44,6 +51,7 @@ function normalizeOperatingHours(hours) {
   });
   return normalized;
 }
+
 
 // ================= COMPONENT =================
 export default function AdminClinics() {
@@ -66,7 +74,10 @@ export default function AdminClinics() {
     setProvince(e.target.value);
     setDistrict("");
   }
-
+  const [pillDays,    setPillDays]    = useState([]);
+  const [pillOpen,    setPillOpen]    = useState("08:00");
+  const [pillClose,   setPillClose]   = useState("17:00");
+  const [pillClosed,  setPillClosed]  = useState(false);
   // ================= SEARCH =================
   async function applyFilters() {
     setStatus({ type: "loading", message: "🔍 Searching..." });
@@ -123,6 +134,25 @@ export default function AdminClinics() {
       },
     }));
   }
+  function applyPreset(preset) {
+  setEditingFacility(prev => {
+    const h = { ...prev.operating_hours_form };
+    preset.days.forEach(d       => { h[d] = { open: preset.open, close: preset.close, closed: false }; });
+    preset.closedDays.forEach(d => { h[d] = { open: "",          close: "",           closed: true  }; });
+    return { ...prev, operating_hours_form: h };
+  });
+}
+
+function applyPillDays() {
+  if (!pillDays.length) return;
+  setEditingFacility(prev => {
+    const h = { ...prev.operating_hours_form };
+    pillDays.forEach(d => {
+      h[d] = { open: pillClosed ? "" : pillOpen, close: pillClosed ? "" : pillClose, closed: pillClosed };
+    });
+    return { ...prev, operating_hours_form: h };
+  });
+}
 
   async function saveFacilityChanges() {
     if (!editingFacility) return;
@@ -263,38 +293,128 @@ export default function AdminClinics() {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>🕒 Operating Hours</label>
-                  <div className="hours-grid">
-                    {DAYS.map(day => (
-                      <div key={day} className="day-row">
-                        <div className="day-name">{day.charAt(0).toUpperCase() + day.slice(1)}</div>
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={editingFacility.operating_hours_form?.[day]?.closed ?? false}
-                            onChange={e => updateHours(day, "closed", e.target.checked)}
-                          />
-                          Closed
-                        </label>
-                        <input
-                          type="time"
-                          className="input"
-                          value={editingFacility.operating_hours_form?.[day]?.open ?? ""}
-                          disabled={editingFacility.operating_hours_form?.[day]?.closed ?? false}
-                          onChange={e => updateHours(day, "open", e.target.value)}
-                        />
-                        <input
-                          type="time"
-                          className="input"
-                          value={editingFacility.operating_hours_form?.[day]?.close ?? ""}
-                          disabled={editingFacility.operating_hours_form?.[day]?.closed ?? false}
-                          onChange={e => updateHours(day, "close", e.target.value)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
+               <div className="form-group">
+  <label>🕒 Operating Hours</label>
+
+  <section className="quick-fill-card">
+    <h3>Quick fill</h3>
+    <p>Apply common clinic hours, then adjust individual days below.</p>
+
+    <div className="quick-fill-actions">
+      {PRESETS.map((preset) => (
+        <button
+          key={preset.label}
+          type="button"
+          className="btn secondary"
+          onClick={() => applyPreset(preset)}
+        >
+          {preset.label}
+        </button>
+      ))}
+    </div>
+  </section>
+
+  <div className="weekly-editor">
+    {DAYS.map((day) => {
+      const entry = editingFacility.operating_hours_form?.[day] ?? {
+        open: "",
+        close: "",
+        closed: false,
+      };
+
+      return (
+        <section className={`weekly-row ${entry.closed ? "is-closed" : ""}`} key={day}>
+          <div className="weekly-day">
+            <strong>{day.charAt(0).toUpperCase() + day.slice(1)}</strong>
+            <span className={`hours-badge ${entry.closed ? "closed" : "open"}`}>
+              {entry.closed ? "Closed" : "Open"}
+            </span>
+          </div>
+
+          <div className="weekly-inputs">
+            <input
+              type="time"
+              value={entry.open}
+              disabled={entry.closed}
+              onChange={(e) => updateHours(day, "open", e.target.value)}
+            />
+
+            <input
+              type="time"
+              value={entry.close}
+              disabled={entry.closed}
+              onChange={(e) => updateHours(day, "close", e.target.value)}
+            />
+
+            <select
+              value={entry.closed ? "closed" : "open"}
+              onChange={(e) => {
+                const isClosed = e.target.value === "closed";
+
+                setEditingFacility((prev) => ({
+                  ...prev,
+                  operating_hours_form: {
+                    ...prev.operating_hours_form,
+                    [day]: {
+                      open: isClosed ? "" : prev.operating_hours_form?.[day]?.open || "08:00",
+                      close: isClosed ? "" : prev.operating_hours_form?.[day]?.close || "17:00",
+                      closed: isClosed,
+                    },
+                  },
+                }));
+              }}
+            >
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
+          <div className="weekly-actions">
+            <button
+              type="button"
+              className="mini-btn"
+              onClick={() =>
+                setEditingFacility((prev) => ({
+                  ...prev,
+                  operating_hours_form: {
+                    ...prev.operating_hours_form,
+                    [day]: {
+                      open: "08:00",
+                      close: "17:00",
+                      closed: false,
+                    },
+                  },
+                }))
+              }
+            >
+              Open 08–17
+            </button>
+
+            <button
+              type="button"
+              className="mini-btn"
+              onClick={() =>
+                setEditingFacility((prev) => ({
+                  ...prev,
+                  operating_hours_form: {
+                    ...prev.operating_hours_form,
+                    [day]: {
+                      open: "",
+                      close: "",
+                      closed: true,
+                    },
+                  },
+                }))
+              }
+            >
+              Closed
+            </button>
+          </div>
+        </section>
+      );
+    })}
+  </div>
+</div>
 
                 <div className="modal-actions">
                   <button className="btn secondary" onClick={() => setEditingFacility(null)}>Cancel</button>

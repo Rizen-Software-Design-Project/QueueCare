@@ -28,7 +28,7 @@ export async function getMyQueue(contactDetails, facilityId) {
       return { error: true, status: res.status, data: null };
     }
 
-    const data = await res.json(); // ✅ await the json parse
+    const data = await res.json(); 
     return data;
 
   } catch (err) {
@@ -45,11 +45,7 @@ export async function removeFromQueue(contactDetails, facilityId) {
   return res.json();
 }
 
-//
-// ─────────────────────────────────────────────
-// HISTORY (queue_entries)
-// ─────────────────────────────────────────────
-//
+
 
 export async function getQueueHistory(contactDetails, facilityId) {
   const res = await fetch(
@@ -58,14 +54,7 @@ export async function getQueueHistory(contactDetails, facilityId) {
   return res.json();
 }
 
-//
-// ─────────────────────────────────────────────
-// STAFF VIEW (LIVE FULL QUEUE)
-// ─────────────────────────────────────────────
-//
 
-// FIX: was hitting /staff/view_queue which doesn't return position data
-// now correctly hits /queue/full_queue
 export async function viewFullQueue(facilityId) {
   const res = await fetch(
     `${API_BASE}/queue/full_queue?facility_id=${facilityId}`
@@ -73,13 +62,9 @@ export async function viewFullQueue(facilityId) {
   return res.json();
 }
 
-//
-// ─────────────────────────────────────────────
-// STATUS UPDATE (LIVE ONLY)
-// ─────────────────────────────────────────────
-//
 
-// FIX: added API_BASE prefix (was using relative URL which breaks in some envs)
+
+
 export async function updateQueueStatus(contactDetails, facilityId, newStatus) {
   try {
     const res = await fetch(`${API_BASE}/queue/update_status`, {
@@ -98,15 +83,93 @@ export async function updateQueueStatus(contactDetails, facilityId, newStatus) {
   }
 }
 
-//
-// ─────────────────────────────────────────────
-// NOTIFICATIONS
-// ─────────────────────────────────────────────
-//
+
 
 export async function notifyPatient(email, facilityId) {
   const res = await fetch(
     `${API_BASE}/notify/notify_patient?email=${encodeURIComponent(email)}&facility_id=${facilityId}`
   );
   return res.json();
+}
+//Staff Functionality
+export async function getSchedule(staff_id) {
+  try {
+    const res = await fetch(`${API_BASE}/schedule?staff_id=${staff_id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+async function checkStaff(staff_id) {
+  try {
+    const res = await fetch(`${API_BASE}/get_staff?staff_id=${staff_id}`);
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.status === true;  // check the actual payload
+  } catch (err) {
+    console.error("Network error:", err.message);
+    return false;
+  }
+}
+
+export async function createSchedule(rows) {
+  const staffId = rows?.[0]?.staff_id;
+
+  if (!staffId) {
+    return { success: false, error: "Missing staff_id" };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/schedule`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        staff_id: staffId,
+        rows,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      return {
+        success: false,
+        error: data?.error || data?.message || `HTTP ${res.status}`,
+      };
+    }
+
+    return data;
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+export async function updateDaySchedule(body) {
+  const exists = await checkStaff(body.staff_id);
+  if (!exists) return { success: false, error: "Staff not found" };
+
+  try {
+    const res = await fetch(`${API_BASE}/schedule`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deleteSchedule(staff_id) {
+  try {
+    const res = await fetch(`${API_BASE}/schedule?staff_id=${staff_id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }

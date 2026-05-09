@@ -1,7 +1,3 @@
-// StaffDashboard.jsx — sidebar dashboard for the staff role.
-// ⚠️  Rename your existing StaffDashboard.jsx (the clinic management page at /staff-dashboard)
-//     to StaffClinicDashboard.jsx and update its route in App.jsx before dropping this in.
-
 import { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
@@ -17,6 +13,7 @@ import {
   OverviewPanel, NotificationsPanel, ProfilePanel,
 } from "./DashboardPanels";
 import "./Dashboard.css";
+
 
 export default function StaffDashboard({ profile: initialProfile }) {
   const navigate = useNavigate();
@@ -57,7 +54,8 @@ export default function StaffDashboard({ profile: initialProfile }) {
           .order("sent_at", { ascending: false })
           .limit(30),
       ]);
-
+      localStorage.setItem("staff_id", profile.id);
+      localStorage.setItem("facility_id", assignments?.[0]?.facility_id ?? "");
       setStaffAssignments(assignments || []);
       setAvailability(normalizeAvailability(assignments?.[0]?.availability ?? null));
       setNotifications(notif || []);
@@ -116,6 +114,7 @@ function goTo(id) {
   setSidebarOpen(false);
 
   const navState = {
+    staff: profile,
     facilityId:    staffAssignments[0]?.facility_id ?? null,
     facilityName:  latestAssignment?.facilities?.name ?? "",
     authProvider:  profile.auth_provider,
@@ -135,6 +134,10 @@ function goTo(id) {
 
     case "analytics":
       navigate("/analytics-staff", { state: navState });
+      return;
+    
+    case "schedule":
+      navigate("/schedule", {state: navState});
       return;
 
     default:
@@ -181,6 +184,9 @@ function goTo(id) {
                 </button>
                 <button className="db-btn db-btn-reschedule" onClick={() => goTo("analytics")}>
                     View Analytics
+                </button>
+                 <button className="db-btn db-btn-reschedule" onClick={() => goTo("schedule")}>
+                    Availability
                 </button>
                 </div>
             </div>
