@@ -9,7 +9,7 @@ const router = express.Router();
 
 
 
-// ── Email transporter ────────────────────────────────────────────────────────
+// We set up the SMTP email transporter here and reuse it throughout this file to send confirmation and reminder emails────────────
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,
@@ -125,7 +125,7 @@ const getAppointmentById = async (req, res) => {
     }
 };
 
-// ── PATIENT: Get all appointments for a patient ───────────────────────────────
+// This fetches all appointments for a specific patient we call it whenever the patient dashboard loads their history
 // GET /appointments/my/:patient_id
 const getMyAppointments = async (req, res) => {
     try {
@@ -151,7 +151,7 @@ const getMyAppointments = async (req, res) => {
 };
 
 
-// ── PATIENT: Get available slots for a facility ───────────────────────────────
+// This returns all open slots at a given facility that still have capacity and haven't passed yet
 // POST /slots/available  body: { facility_id }
 const getAvailableSlots = async (req, res) => {
     try {
@@ -163,7 +163,7 @@ const getAvailableSlots = async (req, res) => {
 
         const today = new Date().toISOString().slice(0, 10);
 
-        // Only return slots where there is still capacity and the date is today or future
+        // We pull all future slots from Supabase and filter to ones with remaining capacity
         const { data: slots, error } = await supabase
             .from('appointment_slots')
             .select('*')
@@ -176,7 +176,7 @@ const getAvailableSlots = async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
 
-        // Filter in JS so we respect each slot's individual total_capacity
+        // We do this step in JavaScript because each slot has its own total_capacity rather than a shared global one
         const available = slots.filter(s => s.booked_count < s.total_capacity);
 
         if (available.length === 0) {
@@ -207,7 +207,7 @@ const bookAppointment = async (req, res) => {
             return res.status(400).json({ error: 'reason is required' });
         }
 
-        // 1. Confirm slot still has capacity (prevent race condition)
+        // First we verify the slot still has space because two patients could be booking the same slot at the same time
         const { data: slot, error: slotError } = await supabase
             .from('appointment_slots')
             .select('id, booked_count, total_capacity, slot_date, slot_time, facility_id')
@@ -227,7 +227,7 @@ const bookAppointment = async (req, res) => {
             return res.status(409).json({ error: 'This slot is fully booked. Please choose another.' });
         }
 
-        // 2. Check patient has not already booked this slot
+        // Next we make sure this patient hasn't already booked this exact slot so we don't end up with duplicates
         const { data: existing } = await supabase
             .from('appointments')
             .select('id')
@@ -240,7 +240,7 @@ const bookAppointment = async (req, res) => {
             return res.status(409).json({ error: 'You already have a booking for this slot.' });
         }
 
-        // 3. Insert appointment
+        // Everything looks good so we go ahead and insert the appointment into the database
         const { data: appointment, error: insertError } = await supabase
             .from('appointments')
             .insert({
@@ -258,13 +258,13 @@ const bookAppointment = async (req, res) => {
             return res.status(400).json({ error: insertError.message });
         }
 
-        // 4. Increment booked_count on the slot
+        // After booking we bump the booked_count on the slot so future capacity checks stay accurate
         await supabase
             .from('appointment_slots')
             .update({ booked_count: slot.booked_count + 1 })
             .eq('id', slot_id);
 
-        // 5. Insert in-app notification
+        // We also drop an in-app notification so the patient sees a confirmation message on their dashboard
         await supabase.from('notifications').insert({
             profile_id: patient_id,
             type: 'appointment_confirmation',
@@ -281,7 +281,7 @@ const bookAppointment = async (req, res) => {
     }
 };
 
-//PATIENT: Cancel their own appointment
+// This lets a patient cancel one of their own appointments and we verify ownership before doing anything
 const cancelAppointment = async (req, res) => {
     try {
         const { appointment_id } = req.params;
@@ -426,7 +426,7 @@ const rescheduleAppointment = async (req, res) => {
             .update({ booked_count: newSlot.booked_count + 1 })
             .eq('id', new_slot_id);
 
-        // 6. In-app notification
+        // We send an in-app notification so the patient knows the reschedule went through successfully
         await supabase.from('notifications').insert({
             profile_id: patient_id,
             type: 'reschedule',
@@ -443,7 +443,7 @@ const rescheduleAppointment = async (req, res) => {
     }
 };
 
-// ── PATIENT: Join virtual queue as walk-in ────────────────────────────────────
+// This is for patients who show up without a booking they join the walk-in queue and get a position number assigned
 // POST /queue/walk-in  body: { patient_id, facility_id }
 const joinWalkInQueue = async (req, res) => {
     try {
@@ -458,7 +458,7 @@ const joinWalkInQueue = async (req, res) => {
 
         const today = new Date().toISOString().slice(0, 10);
 
-        // Check patient is not already in today's queue at this facility
+        // Before adding anyone we check if this patient is already waiting at this clinic today
         const { data: existing } = await supabase
             .from('virtual_queue')
             .select('id, status')
@@ -472,7 +472,7 @@ const joinWalkInQueue = async (req, res) => {
             return res.status(409).json({ error: 'You are already in the queue at this clinic.' });
         }
 
-        // Get current position (count of waiting patients today + 1)
+        // We count how many people are already waiting so we can assign the correct next position number
         const { count } = await supabase
             .from('virtual_queue')
             .select('*', { count: 'exact', head: true })
@@ -500,7 +500,7 @@ const joinWalkInQueue = async (req, res) => {
             return res.status(400).json({ error: error.message });
         }
 
-        // In-app notification
+        // We let the patient know they joined the queue and what their position number is
         await supabase.from('notifications').insert({
             profile_id: patient_id,
             type: 'queue_joined',
@@ -519,7 +519,7 @@ const joinWalkInQueue = async (req, res) => {
 };
 
 
-//STAFF: Get all appointments for a facility
+// This is what staff see when they open the appointments list and it can be filtered by facility status or date
 
 const getAppointmentsForFacility = async (req, res) => {
     try {
@@ -560,16 +560,19 @@ const getAppointmentsForFacility = async (req, res) => {
     }
 };
 
-//STAFF: Update appointment status
+// Staff use this to mark appointments as confirmed no-show complete or cancelled and we now check facility ownership to prevent IDOR
 const valid_statuses = ['booked', 'confirmed', 'cancelled', 'no_show', 'completed'];
 
 const updateAppointmentStatus = async (req, res) => {
     try {
         const { appointment_id } = req.params;
-        const { status } = req.body;
+        const { status, facility_id } = req.body;
 
         if (!status) {
             return res.status(400).json({ error: 'status is required' });
+        }
+        if (!facility_id) {
+            return res.status(400).json({ error: 'facility_id is required' });
         }
         if (!valid_statuses.includes(status)) {
             return res.status(400).json({
@@ -580,12 +583,16 @@ const updateAppointmentStatus = async (req, res) => {
 
         const { data: appointment, error: fetchError } = await supabase
             .from('appointments')
-            .select('id, slot_id, status, patient_id')
+            .select('id, slot_id, status, patient_id, facility_id')
             .eq('id', appointment_id)
             .single();
 
         if (fetchError || !appointment) {
             return res.status(404).json({ error: 'Appointment not found' });
+        }
+        // Security check here — we make sure this appointment actually belongs to this facility so one clinic can't touch another's data
+        if (Number(appointment.facility_id) !== Number(facility_id)) {
+            return res.status(403).json({ error: 'This appointment does not belong to your facility' });
         }
 
         const { data: updated, error: updateError } = await supabase
@@ -629,7 +636,7 @@ const updateAppointmentStatus = async (req, res) => {
     }
 };
 
-// STAFF: Add a new appointment slot
+// Staff create new bookable slots here and we check for duplicate date and time combinations before inserting
 
 const addSlot = async (req, res) => {
     try {
@@ -677,15 +684,32 @@ const addSlot = async (req, res) => {
     }
 };
 
-//  STAFF: Update a slot 
+// This lets staff update the date time capacity or duration of an existing slot and we verify facility ownership first to prevent IDOR
 
 const updateSlot = async (req, res) => {
     try {
         const { slot_id } = req.params;
-        const { slot_time, slot_date, total_capacity, duration_minutes } = req.body;
+        const { slot_time, slot_date, total_capacity, duration_minutes, facility_id } = req.body;
 
         if (!slot_id) {
             return res.status(400).json({ error: 'slot_id is required' });
+        }
+        if (!facility_id) {
+            return res.status(400).json({ error: 'facility_id is required' });
+        }
+
+        // Security check here — we confirm this slot belongs to the staff member's facility before allowing any edits
+        const { data: slotOwner } = await supabase
+            .from('appointment_slots')
+            .select('facility_id')
+            .eq('id', slot_id)
+            .single();
+
+        if (!slotOwner) {
+            return res.status(404).json({ error: 'Slot not found' });
+        }
+        if (Number(slotOwner.facility_id) !== Number(facility_id)) {
+            return res.status(403).json({ error: 'This slot does not belong to your facility' });
         }
 
         const updateData = {};
@@ -723,18 +747,30 @@ const updateSlot = async (req, res) => {
     }
 };
 
-//STAFF: Delete a slot
+// Staff can deactivate a slot here but only if nobody has booked it yet and we also verify facility ownership first
 
 const deactivateSlot = async (req, res) => {
     try {
         const { slot_id } = req.params;
+        const { facility_id } = req.body;
 
+        if (!facility_id) {
+            return res.status(400).json({ error: 'facility_id is required' });
+        }
 
         const { data: slot } = await supabase
             .from('appointment_slots')
-            .select('booked_count')
+            .select('booked_count, facility_id')
             .eq('id', slot_id)
             .single();
+
+        if (!slot) {
+            return res.status(404).json({ error: 'Slot not found' });
+        }
+        // Security check — same as update_slot we make sure only the owning facility can deactivate this slot
+        if (Number(slot.facility_id) !== Number(facility_id)) {
+            return res.status(403).json({ error: 'This slot does not belong to your facility' });
+        }
 
         if (slot?.booked_count > 0) {
             return res.status(409).json({
@@ -756,7 +792,7 @@ const deactivateSlot = async (req, res) => {
     }
 };
 
-//EMAIL: Send booking confirmation
+// This sends the patient a confirmation email after booking and it pulls all the appointment details to format them nicely
 
 const sendConfirmationEmail = async (req, res) => {
     try {
@@ -784,7 +820,7 @@ const sendConfirmationEmail = async (req, res) => {
         return res.status(500).json({ error: err.message });
     }
 };
-// add after sendConfirmationEmail
+// Below is the HTML email template we use for queue status updates — it handles called waiting and completed states
 
 const queueStatusEmailHtml = (patientName, status, facilityName, position) => {
     const configs = {
@@ -956,19 +992,23 @@ router.post("/book-walkin", async (req, res) => {
             return res.status(400).json({ error: "Missing parameters" });
         }
 
-        // Check slot exists and has capacity
+        // We verify the slot exists and still has room before creating the walk-in appointment
         const { data: slot } = await supabase
             .from("appointment_slots")
-            .select("id, total_capacity, booked_count")
+            .select("id, total_capacity, booked_count, facility_id")
             .eq("id", slot_id)
             .maybeSingle();
 
         if (!slot) return res.status(400).json({ error: "Slot not found" });
+        // Security check — we make sure the slot being used belongs to the same facility the staff member is operating from
+        if (Number(slot.facility_id) !== Number(facility_id)) {
+            return res.status(403).json({ error: "Slot does not belong to this facility" });
+        }
         if ((slot.booked_count ?? 0) >= (slot.total_capacity ?? 0)) {
             return res.status(400).json({ error: "Slot is full" });
         }
 
-        // Create the appointment
+        // Slot looks good so we go ahead and create the appointment record for the walk-in patient
         const { data: appt, error: apptErr } = await supabase
             .from("appointments")
             .insert({
@@ -984,7 +1024,7 @@ router.post("/book-walkin", async (req, res) => {
 
         if (apptErr) return res.status(500).json({ error: apptErr.message });
 
-        // Increment booked_count on the slot
+        // After creating the appointment we increment the booked_count to keep slot capacity numbers accurate
         await supabase
             .from("appointment_slots")
             .update({ booked_count: (slot.booked_count ?? 0) + 1 })
