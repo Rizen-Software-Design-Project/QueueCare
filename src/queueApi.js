@@ -5,7 +5,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || "https://queuecare-gubjeae9fqd
 // LIVE QUEUE (virtual_queues)
 // ─────────────────────────────────────────────
 //
-
+ 
 export async function addToQueue(contactDetails, facilityId) {
   const res = await fetch(`${API_BASE}/queue/add_to_queue`, {
     method: "POST",
