@@ -16,7 +16,8 @@ export default function BookAppointment() {
   const navigate = useNavigate();
 
   const clinicId = searchParams.get("id");
-  const clinicName = searchParams.get("name");
+  // We only trust the name from the database not from the URL since anyone can type anything in the address bar
+  const [clinicName, setClinicName] = useState("");
 
   const [slots, setSlots] = useState([]);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
@@ -97,12 +98,17 @@ export default function BookAppointment() {
   }, []);
   useEffect(() => {
   async function fetchClinicDetails() {
-    if (!clinicId) return;
+    // We validate that the id in the URL is actually a positive integer before using it
+    const parsed = parseInt(clinicId, 10);
+    if (!clinicId || isNaN(parsed) || parsed <= 0 || String(parsed) !== String(clinicId)) {
+      navigate("/clinic-search", { replace: true });
+      return;
+    }
 
     const { data, error } = await supabase
       .from("facilities")
       .select("id, name, facility_type, province, district, services_offered, operating_hours, is_active")
-      .eq("id", Number(clinicId))
+      .eq("id", parsed)
       .maybeSingle();
 
     if (error) {
@@ -110,11 +116,19 @@ export default function BookAppointment() {
       return;
     }
 
+    // If the clinic doesn't exist or has been deactivated by an admin we send the user back to search
+    if (!data || data.is_active === false) {
+      navigate("/clinic-search", { replace: true });
+      return;
+    }
+
+    // We set the name from the DB so it can never be spoofed through the URL
+    setClinicName(data.name);
     setClinicDetails(data);
   }
 
   fetchClinicDetails();
-}, [clinicId]);
+}, [clinicId, navigate]);
   useEffect(() => {
     if (!clinicId || !patientId) {
       if (!clinicId) {

@@ -173,7 +173,7 @@ export function OverviewPanel({
             </div>
             <button
               className="db-btn db-btn-reschedule"
-              onClick={() => navigate(`/clinic?id=${lastClinic.facility_id}&name=${encodeURIComponent(lastClinic.facilities?.name || "")}`)}
+              onClick={() => navigate(`/clinic?id=${lastClinic.facility_id}`)}
             >
               Book Again
             </button>
