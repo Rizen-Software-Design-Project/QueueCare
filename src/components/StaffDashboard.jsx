@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import { FaStethoscope } from "react-icons/fa";
 import AIAssistant from "./AIAssistant";
-
+    
 import {
   STAFF_NAV, normalizeAvailability,
 } from "./DashboardHelpers";
