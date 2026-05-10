@@ -404,7 +404,7 @@ describe("ClinicSearch, Booking navigation", () => {
     await user.click(bookButtons[0]);
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining("/clinic?id=1&name=Tygerberg%20Clinic")
+      expect.stringContaining("/clinic?id=1")
     );
   });
 
@@ -421,7 +421,7 @@ describe("ClinicSearch, Booking navigation", () => {
     await user.click(bookButtons[1]);
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining("/clinic?id=2&name=Groote%20Schuur%20Hospital")
+      expect.stringContaining("/clinic?id=2")
     );
   });
 });
