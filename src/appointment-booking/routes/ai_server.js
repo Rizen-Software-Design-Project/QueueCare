@@ -12,7 +12,7 @@ const API_BASE =
   process.env.VITE_API_BASE ||
   'https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net';
 
-// ── Tool definitions ──────────────────────────────────────────────────────────
+// Here we define all the tools we give to GPT so it knows what actions it can take on behalf of the user──────────
 
 const PATIENT_TOOLS = [
   {
@@ -225,8 +225,9 @@ const STAFF_TOOLS = [
         properties: {
           appointment_id: { type: 'string', description: 'Appointment UUID' },
           status: { type: 'string', enum: ['booked', 'confirmed', 'complete', 'no_show', 'cancelled'], description: 'New status' },
+          facility_id: { type: 'number', description: 'Your facility ID (required for security)' },
         },
-        required: ['appointment_id', 'status'],
+        required: ['appointment_id', 'status', 'facility_id'],
       },
     },
   },
@@ -257,12 +258,13 @@ const STAFF_TOOLS = [
         type: 'object',
         properties: {
           slot_id: { type: 'string', description: 'Slot UUID to update' },
+          facility_id: { type: 'number', description: 'Your facility ID (required for security)' },
           slot_date: { type: 'string', description: 'New date YYYY-MM-DD (optional)' },
           slot_time: { type: 'string', description: 'New time HH:MM (optional)' },
           total_capacity: { type: 'number', description: 'New capacity (optional)' },
           duration_minutes: { type: 'number', description: 'New duration in minutes (optional)' },
         },
-        required: ['slot_id'],
+        required: ['slot_id', 'facility_id'],
       },
     },
   },
@@ -275,8 +277,9 @@ const STAFF_TOOLS = [
         type: 'object',
         properties: {
           slot_id: { type: 'string', description: 'Slot UUID to delete' },
+          facility_id: { type: 'number', description: 'Your facility ID (required for security)' },
         },
-        required: ['slot_id'],
+        required: ['slot_id', 'facility_id'],
       },
     },
   },
@@ -475,7 +478,7 @@ const ADMIN_TOOLS = [
   },
 ];
 
-// ── Tool executors ────────────────────────────────────────────────────────────
+// This switch handles each tool call GPT makes and runs the actual Supabase or API calls to fulfill the request────────────────
 
 async function executeTool(name, args) {
   switch (name) {
@@ -613,7 +616,7 @@ async function executeTool(name, args) {
       const res = await fetch(`${API_BASE}/appointments/staff/appointments/${args.appointment_id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: args.status }),
+        body: JSON.stringify({ status: args.status, facility_id: args.facility_id }),
       });
       return res.json();
     }
@@ -634,7 +637,7 @@ async function executeTool(name, args) {
     }
 
     case 'update_slot': {
-      const body = {};
+      const body = { facility_id: args.facility_id };
       if (args.slot_date) body.slot_date = args.slot_date;
       if (args.slot_time) body.slot_time = args.slot_time;
       if (args.total_capacity) body.total_capacity = args.total_capacity;
@@ -650,12 +653,14 @@ async function executeTool(name, args) {
     case 'delete_slot': {
       const res = await fetch(`${API_BASE}/appointments/staff/slots/${args.slot_id}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ facility_id: args.facility_id }),
       });
       return res.ok ? { success: true } : { error: 'Could not delete slot' };
     }
 
     case 'book_walkin_for_patient': {
-      // First fetch the patient profile object since the route expects { profile: { id, ... } }
+      // The walk-in route expects a full profile object so we fetch it from Supabase before calling the endpoint
       const { data: profile } = await supabase
         .from('profiles')
         .select('id, name, surname, email, phone_number')
@@ -717,7 +722,7 @@ async function executeTool(name, args) {
     }
 
     case 'get_all_staff': {
-      // Include both staff (in staff_assignments) and admins (profiles with role=admin)
+      // Admins live in the profiles table with role=admin and not in staff_assignments so we need two separate queries to catch everyone
       const [staffRes, adminRes] = await Promise.all([
         supabase
           .from('staff_assignments')
@@ -754,7 +759,7 @@ async function executeTool(name, args) {
         .update({ role: 'patient' })
         .eq('id', args.profile_id);
       if (profileErr) return { error: profileErr.message };
-      // Also remove any staff_assignments entries
+      // When removing a role we also clean up leftover rows in staff_assignments so the data stays consistent
       await supabase.from('staff_assignments').delete().eq('profile_id', args.profile_id);
       return { success: true, message: `${args.name || args.profile_id} has been demoted to patient and removed from all clinic assignments.` };
     }
@@ -772,7 +777,7 @@ async function executeTool(name, args) {
   }
 }
 
-// ── System prompts ────────────────────────────────────────────────────────────
+// These are the system prompts we inject at the start of each conversation to tell GPT who it is and what it can do for each role────────────
 
 function buildSystemPrompt(context) {
   const { role, profile, facilityId, facilityName, pageContext } = context;
@@ -870,7 +875,7 @@ function getToolsForRole(role) {
   return [];
 }
 
-// ── /ai/chat endpoint ─────────────────────────────────────────────────────────
+// This is the main chat endpoint it receives messages from the frontend talks to GPT and runs any tool calls in a loop until GPT is done──────
 
 router.post('/chat', async (req, res) => {
   try {
