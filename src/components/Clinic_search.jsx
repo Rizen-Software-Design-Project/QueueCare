@@ -429,7 +429,7 @@ export default function ClinicSearch() {
           clinic.distance !== null && clinic.distance !== undefined
             ? `${clinic.distance.toFixed(1)} km away`
             : "Distance unknown";
-        const bookUrl = `/clinic?id=${clinic.id}&name=${encodeURIComponent(clinic.name)}`;
+        const bookUrl = `/clinic?id=${clinic.id}`;
         return (
           <div key={clinic.id} className="clinic-card">
             <div className="clinic-info">
