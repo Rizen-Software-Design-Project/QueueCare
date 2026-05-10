@@ -10,7 +10,7 @@ const DAYS = ["Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun"];
 const DAY_LABELS = {
   Mon: "Monday",
   Tues: "Tuesday",
-  Wed: "Wednesday",
+  Wed: "Wednesday",  
   Thurs: "Thursday",
   Fri: "Friday",
   Sat: "Saturday",
