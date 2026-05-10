@@ -116,6 +116,8 @@ async function checkStaff(staff_id) {
 
 export async function createSchedule(rows) {
   const staffId = rows?.[0]?.staff_id;
+ //Supposed to delete first to prevent duplicates
+ deleteSchedule(staffID);
 
   if (!staffId) {
     return { success: false, error: "Missing staff_id" };
