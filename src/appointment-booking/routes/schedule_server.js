@@ -16,7 +16,7 @@ async function read(staff_id) {
       .eq("staff_id", staff_id);
     if (error) throw error;
     const object = {};
-    for (const row of data) {
+    for (const row of data) {   
       object[row.day_of_week] = row;
     }
     return { success: true, data: object };
