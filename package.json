@@ -41,6 +41,12 @@
     "test:applications": "vitest run src/components/Applications.test.jsx",
     "coverage:applications": "vitest run --coverage src/components/Applications.test.jsx",
     
+    "test:pdashboard": "vitest run src/components/PatientDashboard.test.jsx",
+    "coverage:pdashboard": "vitest run --coverage src/components/PatientDashboard.test.jsx",
+
+    "test:sdashboard": "vitest run src/components/StaffDashboard.test.jsx",
+    "coverage:sdashboard": "vitest run --coverage src/components/StaffDashboard.test.jsx",
+
     "test:all": "vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx",
     "coverage:all": "vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx"
   

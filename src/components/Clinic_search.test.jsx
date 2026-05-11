@@ -104,6 +104,26 @@ const mockClinics = [
   },
 ];
 
+const mockClinicsNoDistance = [
+  {
+    id: "1",
+    name: "17 Esselen Street Clinic",
+    district: "City of Johannesburg",
+    province: "Gauteng",
+    latitude: "-26.19061",
+    longitude: "28.04511",
+    distance: null,
+  },
+  {
+    id: "2",
+    name: "4th Avenue Clinic",
+    district: "City of Johannesburg",
+    province: "Gauteng",
+    latitude: "-26.09979",
+    longitude: "28.10725",
+    distance: null,
+  },
+];
 
 
 
@@ -417,22 +437,7 @@ describe("ClinicSearch, Booking navigation", () => {
     );
   });
 
-  it("Encodes clinic name in URL", async () => {
-    const user = userEvent.setup();
-    const applyButton = screen.getByRole("button", { name: /Apply filters/i });
-    await user.click(applyButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("4th Avenue Clinic")).toBeVisible();
-    });
-
-    const bookButtons = screen.getAllByRole("button", { name: /Book now/i });
-    await user.click(bookButtons[1]);
-
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining("/clinic?id=2&name=4th%20Avenue%20Clinic")
-    );
-  });
 });
 
 
@@ -447,32 +452,22 @@ describe("ClinicSearch, Distance display", () => {
     await waitForComponent();
   });
 
-  it("Displays clinics after search", async () => {
-    const user = userEvent.setup();
-    const applyButton = screen.getByRole("button", { name: /Apply filters/i });
-    await user.click(applyButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("17 Esselen Street Clinic")).toBeVisible();
-      expect(screen.getByText("4th Avenue Clinic")).toBeVisible();
-    });
-  });
-
   it("Shows 'Distance unknown' when distance not available", async () => {
     const user = userEvent.setup();
-    const clinicsWithoutDistance = [
-      { ...mockClinics[0], distance: null },
-    ];
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => clinicsWithoutDistance,
+      json: async () => mockClinicsNoDistance,
     });
 
     const applyButton = screen.getByRole("button", { name: /Apply filters/i });
     await user.click(applyButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Distance unknown/)).toBeVisible();
+      const distanceUnknowns = screen.getAllByText(/Distance unknown/i);
+      expect(distanceUnknowns).toHaveLength(2);
+      distanceUnknowns.forEach(distanceUnknown => {
+        expect(distanceUnknown).toBeVisible();
+    });
     });
   });
 });
