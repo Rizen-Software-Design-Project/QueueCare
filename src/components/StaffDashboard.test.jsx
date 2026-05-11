@@ -143,7 +143,7 @@ describe("Sidebar", () => {
 //jump-overview
 describe("Clicked Overview", () => {
     beforeEach(async () => {
-        // StaffDashboard.load() fires 2 parallel queries: staff_assignments + notifications
+
         mockQuery.limit
             .mockResolvedValueOnce({ data: [], error: null }) // staff_assignments
             
@@ -220,9 +220,6 @@ describe("Clicked Overview", () => {
 
 describe("Clicked Overview - facility card", () => {
     it("shows the assigned facility name and district", async () => {
-        // staff_assignments resolved via .eq(), not .limit()
-        // So we need to make .eq() return the assignment data on the staff_assignments call.
-        // Since mockQuery.eq is shared, the cleanest fix is to mock supabase.from directly:
         const { supabase } = await import("#lib/supabase");
         supabase.from.mockImplementation((table) => {
             if (table === "staff_assignments") {
@@ -231,7 +228,7 @@ describe("Clicked Overview - facility card", () => {
                     eq:     vi.fn().mockResolvedValue({ data: [makeAssignment()], error: null }),
                 };
             }
-            return mockQuery; // notifications uses mockQuery with .limit()
+            return mockQuery;
         });
 
         mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
@@ -341,8 +338,6 @@ describe("Notifications Panel - content", () => {
     }
 
     it("shows 'No notifications.' when the list is empty", async () => {
-        // staff_assignments ends in .eq() — mockQuery.eq resolves to mockQuery (chained)
-        // notifications ends in .limit() — that's the only .limit() call
         mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
 
         await renderAndOpenNotifications();
