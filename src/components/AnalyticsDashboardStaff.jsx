@@ -9,7 +9,7 @@ import {
 } from '#hooks/useAnalytics'
 import { exportCSV, exportPDF } from '#utils/exportUtils'
 import AIAssistant from './AIAssistant'
-import './AnalyticsDashboard.css'
+import './AnalyticsDashboardStaff.css'
 
 const TABS = ['Wait Times', 'No-Show Rates', 'Custom View']
 

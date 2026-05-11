@@ -1,4 +1,4 @@
-/* ── WalkIn.css ───────────────────────────────────────────────────────────── */
+/* ── WalkIn.css – Green Theme (#8abc7b, #6cab5b, #10860a) ─────────────────── */
 
 /* ── Loading / error states ───────────────────────────────────────────────── */
 .wi-loading {
@@ -47,19 +47,22 @@
   transition: background 0.15s, box-shadow 0.15s;
 }
 
+/* Queue tab – medium green */
 .wi-tab--queue {
-  background: #1d4ed8;
-  box-shadow: 0 0 0 2px #60a5fa;
+  background: #6cab5b;
+  box-shadow: 0 0 0 2px #8abc7b;
 }
 
+/* Book tab – dark green */
 .wi-tab--book {
-  background: #15803d;
-  box-shadow: 0 0 0 2px #4ade80;
+  background: #10860a;
+  box-shadow: 0 0 0 2px #6cab5b;
 }
 
+/* Check‑in tab – light green */
 .wi-tab--checkin {
-  background: #b45309;
-  box-shadow: 0 0 0 2px #fbbf24;
+  background: #8abc7b;
+  box-shadow: 0 0 0 2px #10860a;
 }
 
 /* ── Tab description ──────────────────────────────────────────────────────── */
@@ -123,8 +126,8 @@
 .wi-profile-card {
   margin-bottom: 28px;
   padding: 16px;
-  background: #052e16;
-  border: 1px solid #166534;
+  background: #052e16;        /* dark green background */
+  border: 1px solid #10860a;  /* dark green border */
   border-radius: 10px;
 }
 
@@ -136,7 +139,7 @@
 }
 
 .wi-profile-check-icon {
-  color: #4ade80;
+  color: #8abc7b;  /* light green checkmark */
   font-size: 20px;
 }
 
@@ -154,13 +157,13 @@
 
 .wi-profile-detail {
   font-size: 13px;
-  color: #86efac;
+  color: #8abc7b;  /* light green text */
 }
 
-/* ── Step 2: check-in ─────────────────────────────────────────────────────── */
+/* ── Step 2: check‑in ─────────────────────────────────────────────────────── */
 .wi-checkin-btn {
   padding: 11px 24px;
-  background: #b45309;
+  background: #6cab5b;  /* medium green */
   color: white;
   border: none;
   border-radius: 8px;
@@ -176,7 +179,7 @@
 
 /* ── Step 2: slot + submit ────────────────────────────────────────────────── */
 .wi-no-slots-msg {
-  color: #f59e0b;
+  color: #8abc7b;  /* light green warning */
   font-size: 13px;
   margin: 0 0 8px;
 }
@@ -193,11 +196,11 @@
 }
 
 .wi-submit-btn--queue {
-  background: #1d4ed8;
+  background: #6cab5b;  /* medium green */
 }
 
 .wi-submit-btn--book {
-  background: #15803d;
+  background: #10860a;  /* dark green */
 }
 
 .wi-submit-btn:disabled {

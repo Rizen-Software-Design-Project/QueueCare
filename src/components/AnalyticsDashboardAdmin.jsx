@@ -52,7 +52,7 @@ function ExportBar({ onCSV, onPDF, disabled }) {
       <button
         onClick={onCSV}
         disabled={disabled}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200
+        className="flex items-center gap-4 px-3 py-1.5 rounded-lg border border-slate-200
                    text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors
                    disabled:opacity-40 disabled:cursor-not-allowed"
       >
@@ -61,7 +61,7 @@ function ExportBar({ onCSV, onPDF, disabled }) {
       <button
         onClick={onPDF}
         disabled={disabled}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+        className="flex items-center gap-4 px-3 py-1.5 rounded-lg
                    bg-teal-500 text-white text-xs font-medium hover:bg-teal-600
                    transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
@@ -101,7 +101,7 @@ function DateRange({ start, end, onStart, onEnd }) {
       <input type="date" value={start} onChange={e => onStart(e.target.value || null)}
         className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
                    bg-white focus:outline-none focus:ring-2 focus:ring-teal-400" />
-      <span className="text-slate-300 text-xs">—</span>
+      <span className="text-slate-300 text-xs"> to </span>
       <input type="date" value={end} onChange={e => onEnd(e.target.value || null)}
         className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
                    bg-white focus:outline-none focus:ring-2 focus:ring-teal-400" />
@@ -191,9 +191,9 @@ function WaitTimesReport({ facilities }) {
             <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} unit=" m" />
             <Tooltip {...TOOLTIP_STYLE} formatter={v => [`${v} min`]} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="Min Wait"  fill="#99f6e4" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="Avg Wait"  fill="#14b8a6" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="Max Wait"  fill="#0f766e" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="Min Wait"  fill="#8abc7b" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="Avg Wait"  fill="#6cab5b" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="Max Wait"  fill="#10860a" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>

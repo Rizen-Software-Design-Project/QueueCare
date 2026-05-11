@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 28px;
-  background: #10860a;
+  background: #145214;
   color: #fff;
 }
 
@@ -57,7 +57,7 @@
 .staff-card h2 {
   margin: 0 0 16px;
   font-size: 1.15rem;
-  color: #1976d2;
+  color: #145214;
 }
 
 .staff-form {
@@ -86,13 +86,13 @@
 .staff-form input:focus,
 .staff-form select:focus {
   outline: none;
-  border-color: #1976d2;
+  border-color: #145214;
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
 }
 
 .staff-form button {
   padding: 10px;
-  background: #1976d2;
+  background: #145214;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -103,7 +103,7 @@
 }
 
 .staff-form button:hover {
-  background: #1565c0;
+  background: #16a34a;
 }
 
 .staff-form button:disabled {
@@ -177,7 +177,7 @@
   color: #1565c0;
 }
 .staff-action-btn {
-  background: #1976d2;
+  background: #145214;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -188,7 +188,7 @@
 }
 
 .staff-action-btn:hover {
-  background: #1565c0;
+  background: #16a34a;
 }
 
 .staff-action-btn:disabled {
@@ -197,7 +197,7 @@
 }
 
 .staff-table button {
-  background: #1976d2;
+  background: #145214;
   color: white;
   border: none;
   padding: 4px 10px;
@@ -207,7 +207,7 @@
 }
 
 .staff-table button:hover {
-  background: #1565c0;
+  background: #16a34a;
 }
 .slot-quick-card {
   background: #f9fbff;
@@ -219,7 +219,7 @@
 
 .slot-quick-card h3 {
   margin: 0 0 4px;
-  color: #1976d2;
+  color: #145214;
   font-size: 1.05rem;
 }
 
@@ -259,7 +259,7 @@
 
 .slot-chip {
   background: #e3f2fd;
-  color: #1565c0;
+  color: #16a34a;
   border: 1px solid #90caf9;
   border-radius: 999px;
   padding: 5px 11px;

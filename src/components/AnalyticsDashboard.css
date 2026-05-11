@@ -19,6 +19,16 @@
   border: none;
   cursor: pointer;
   transition: 0.2s ease;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: white;
+  background: #10860a;
+  margin-bottom: 10px;
+  margin-top:10px ;
+  margin-left: 5px;
+
+
 }
 
 .analytics-dashboard button:hover {
@@ -33,6 +43,8 @@
   font-size: 13px;
   color: #475569;
   background: white;
+  margin-left: 5px;
+  margin-top: 5px;
 }
 
 .analytics-dashboard table {
@@ -73,6 +85,8 @@
     min-width: 900px;
   }
 }
+
+
 .ad-badge {
   display: inline-block;
   padding: 2px 8px;
