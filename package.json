@@ -23,9 +23,6 @@
     "test:authpage": "vitest run src/components/AuthPage.test.jsx",
     "coverage:authpage": "vitest run --coverage src/components/AuthPage.test.jsx",
 
-    "test:dashboard": "vitest run src/components/Dashboard.test.jsx",
-    "coverage:dashboard": "vitest run --coverage src/components/Dashboard.test.jsx",
-
     "coverage:welcome": "vitest run --coverage src/components/Welcome.test.jsx",
     "test:welcome": "vitest run src/components/Welcome.test.jsx",
 
@@ -41,11 +38,26 @@
     "test:applications": "vitest run src/components/Applications.test.jsx",
     "coverage:applications": "vitest run --coverage src/components/Applications.test.jsx",
     
+    "test:dashboard": "vitest run src/components/Dashboard.test.jsx",
+    "coverage:dashboard": "vitest run --coverage src/components/Dashboard.test.jsx",
+
     "test:pdashboard": "vitest run src/components/PatientDashboard.test.jsx",
     "coverage:pdashboard": "vitest run --coverage src/components/PatientDashboard.test.jsx",
 
     "test:sdashboard": "vitest run src/components/StaffDashboard.test.jsx",
     "coverage:sdashboard": "vitest run --coverage src/components/StaffDashboard.test.jsx",
+
+    "test:adashboard": "vitest run src/components/AdminDashboard.test.jsx",
+    "coverage:adashboard": "vitest run --coverage src/components/AdminDashboard.test.jsx",
+
+    "test:dashboards": "vitest run src/components/AdminDashboard.test.jsx src/components/StaffDashboard.test.jsx src/components/PatientDashboard.test.jsx src/components/Dashboard.test.jsx",
+    "coverage:dashboards": "vitest run --coverage src/components/AdminDashboard.test.jsx src/components/StaffDashboard.test.jsx src/components/PatientDashboard.test.jsx src/components/Dashboard.test.jsx",
+
+    "test:dashboardh": "vitest run src/components/DashboardHelpers.test.jsx",
+    "coverage:dashboardh": "vitest run --coverage src/components/DashboardHelpers.test.jsx",
+
+    "test:walkin": "vitest run src/components/Walkin.test.jsx",
+    "coverage:walkin": "vitest run --coverage src/components/Walkin.test.jsx",
 
     "test:all": "vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx",
     "coverage:all": "vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx"
