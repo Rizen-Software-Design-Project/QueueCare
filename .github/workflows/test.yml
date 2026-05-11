@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          
 
       - name: Install root dependencies
         run: npm install
@@ -66,12 +66,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: "src/appointment booking/package-lock.json"
+          
 
       - name: Install backend dependencies
         run: npm install
-        working-directory: "src/appointment booking"
+        working-directory: "src/appointment-booking"
 
       - name: Run backend tests with coverage
         run: |
@@ -83,4 +82,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           grep "Test Suites" jest-output.txt >> $GITHUB_STEP_SUMMARY
           grep "Tests:" jest-output.txt >> $GITHUB_STEP_SUMMARY
-        working-directory: "src/appointment booking"
+        working-directory: "src/appointment-booking"
