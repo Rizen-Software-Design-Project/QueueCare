@@ -59,6 +59,12 @@
     "test:walkin": "vitest run src/components/Walkin.test.jsx",
     "coverage:walkin": "vitest run --coverage src/components/Walkin.test.jsx",
 
+    "test:bookapp": "vitest run src/components/BookAppointment.test.jsx",
+    "coverage:bookapp": "vitest run --coverage src/components/BookAppointment.test.jsx",
+
+    "test:staffcm": "vitest run src/components/StaffClinicManagement.test.jsx",
+    "coverage:staffcm": "vitest run --coverage src/components/StaffClinicManagement.test.jsx",
+
     "test:all": "vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx",
     "coverage:all": "vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx"
   
