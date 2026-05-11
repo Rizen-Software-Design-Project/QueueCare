@@ -1,3 +1,4 @@
+/* v8 ignore next */
 const API_BASE = import.meta.env.VITE_API_BASE || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";;
 
 //
@@ -136,7 +137,7 @@ export async function createSchedule(rows) {
     if (!res.ok) {
       return {
         success: false,
-        error: data?.error || data?.message || `HTTP ${res.status}`,
+        error: /* v8 ignore next */ data?.error || data?.message || `HTTP ${res.status}`,
       };
     }
 

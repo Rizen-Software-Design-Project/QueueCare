@@ -206,8 +206,8 @@ describe("AdminStaff", () => {
     await user.click(screen.getByText("➕ Assign"));
 
     const selects = screen.getAllByRole("combobox");
-    await user.selectOptions(selects[0], "1");
-    await user.selectOptions(selects[1], "doctor");
+    await user.selectOptions(selects[2], "1");
+    await user.selectOptions(selects[3], "doctor");
 
     await user.click(screen.getByText("Save assignment"));
 

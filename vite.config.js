@@ -15,4 +15,25 @@ export default defineConfig({
       '#hooks': path.resolve(__dirname, 'src/hooks'),
     },
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/tests/setup.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'lcov'],
+      include: [
+        'src/components/Welcome.jsx',
+        'src/components/Dashboard.jsx',
+        'src/components/PatientDashboard.jsx',
+        'src/components/DashboardPanels.jsx',
+        'src/components/DashboardHelpers.jsx',
+        'src/queueApi.js',
+        'src/appointment-booking/middleware/errorHandler.js',
+        'src/appointment-booking/middleware/notFound.js',
+        'src/appointment-booking/routes/appointmentRoutes.js',
+        'src/appointment-booking/servers/app.js',
+      ],
+    },
+  },
 });

@@ -216,7 +216,7 @@ describe("ClinicSearch, Filter interactions", () => {
 
   it("Updates radius selection", async () => {
     const user = userEvent.setup();
-    const radiusSelect = screen.getAllByRole("combobox")[2];
+    const radiusSelect = screen.getAllByRole("combobox")[3];
     
     await user.selectOptions(radiusSelect, "25");
     

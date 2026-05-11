@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "#lib/supabase";
 import { FiUser, FiMapPin, FiTrash2, FiUsers, FiChevronLeft } from "react-icons/fi";
 import { FaHospital } from "react-icons/fa";
@@ -33,7 +33,8 @@ export default function AdminStaff() {
   // ── Selected clinic + its staff ────────────────────────────
   const [selectedClinic, setSelectedClinic]   = useState(null);
   const [clinicStaff, setClinicStaff]         = useState([]);
-  const [staffLoading, setStaffLoading]       = useState(false);
+  const [staffLoading, setStaffLoading]       = useState(true);
+  const [loadError, setLoadError]             = useState(null);
   const [staffSearch, setStaffSearch] = useState("");
   // ── Assign modal ───────────────────────────────────────────
   const [allFacilities, setAllFacilities]     = useState([]);
@@ -45,6 +46,26 @@ export default function AdminStaff() {
   const availableDistricts = useMemo(() =>
     province && districtsByProvince[province] ? districtsByProvince[province] : allDistricts,
   [province]);
+
+  // ── Initial load: all staff + all facilities ───────────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const [staffResult, facilityResult] = await Promise.all([
+          supabase.rpc("get_staff_with_assignments"),
+          supabase.from("facilities").select("id, name").order("name"),
+        ]);
+        if (staffResult.error) throw staffResult.error;
+        if (facilityResult.error) throw facilityResult.error;
+        setClinicStaff(staffResult.data || []);
+        setAllFacilities(facilityResult.data || []);
+      } catch (err) {
+        setLoadError(err.message);
+      } finally {
+        setStaffLoading(false);
+      }
+    })();
+  }, []);
 
   // ── Search clinics ─────────────────────────────────────────
   async function searchClinics() {
@@ -123,7 +144,7 @@ export default function AdminStaff() {
   function openAssign(member) {
     setAssigningTo(member);
     setForm({
-      facility_id: member.facility_id?.toString() || selectedClinic.id.toString(),
+      facility_id: member.facility_id?.toString() || selectedClinic?.id?.toString() || "",
       role: member.staff_role || "",
     });
     setActionStatus({ type: "", message: "" });
@@ -145,6 +166,17 @@ export default function AdminStaff() {
   setSaving(false);
   if (error || data?.error) {
     setActionStatus({ type: "error", message: error?.message || data?.error });
+    return;
+  }
+
+  if (!selectedClinic) {
+    // Global view: update staff member in place
+    setClinicStaff(prev => prev.map(s =>
+      s.profile_id === assigningTo.profile_id
+        ? { ...s, staff_role: form.role, facility_id: parseInt(form.facility_id) }
+        : s
+    ));
+    setAssigningTo(null);
     return;
   }
 
@@ -250,6 +282,40 @@ export default function AdminStaff() {
                 </div>
               ))}
             </div>
+
+            {/* ── Global staff list (loaded on mount) ── */}
+            {staffLoading ? (
+              <div className="status loading">Loading staff...</div>
+            ) : loadError ? (
+              <div className="status error">{loadError}</div>
+            ) : clinicStaff.length === 0 ? (
+              <div className="status error">No staff members found.</div>
+            ) : (
+              <div className="grid">
+                {visibleStaff.map(member => (
+                  <div key={member.profile_id} className="card">
+                    <div>
+                      <h3>{member.name} {member.surname}</h3>
+                      <p>{member.email || member.phone_number || "No contact info"}</p>
+                      <p><strong>Facility:</strong> {member.facility_name || "Unassigned"}</p>
+                      {member.staff_role && <p><strong>Role:</strong> {member.staff_role}</p>}
+                    </div>
+                    <div className="card-actions">
+                      {member.facility_id ? (
+                        <>
+                          <button className="btn edit" onClick={() => openAssign(member)}>🔄 Reassign</button>
+                          <button className="btn secondary" onClick={() => removeAssignment(member)}>
+                            <FiTrash2 /> Remove
+                          </button>
+                        </>
+                      ) : (
+                        <button className="btn primary" onClick={() => openAssign(member)}>➕ Assign</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         )}
 
@@ -309,52 +375,53 @@ export default function AdminStaff() {
               </div>
             )}
 
-            {/* Reassign modal */}
-            {assigningTo && (
-              <div className="modal-overlay" onClick={() => setAssigningTo(null)}>
-                <div className="modal" onClick={e => e.stopPropagation()}>
-                  <h3>Reassign {assigningTo.name} {assigningTo.surname}</h3>
-
-                  <div className="form-group">
-                    <label><FaHospital /> Facility</label>
-                    <select
-                      className="input"
-                      value={form.facility_id}
-                      onChange={e => setForm(p => ({ ...p, facility_id: e.target.value }))}
-                    >
-                      <option value="">Select a facility...</option>
-                      {allFacilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label><FiUser /> Role</label>
-                    <select
-                      className="input"
-                      value={form.role}
-                      onChange={e => setForm(p => ({ ...p, role: e.target.value }))}
-                    >
-                      <option value="">Select a role...</option>
-                      {STAFF_ROLES.map(r => (
-                        <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {actionStatus.message && (
-                    <div className={`status ${actionStatus.type}`}>{actionStatus.message}</div>
-                  )}
-
-                  <div className="modal-actions">
-                    <button className="btn secondary" onClick={() => setAssigningTo(null)}>Cancel</button>
-                    <button className="btn primary" onClick={saveAssignment} disabled={saving}>
-                      {saving ? "Saving..." : "Save assignment"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
+        )}
+
+        {/* ── Assign / Reassign modal (global) ── */}
+        {assigningTo && (
+          <div className="modal-overlay" onClick={() => setAssigningTo(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <h3>Assign {assigningTo.name} {assigningTo.surname}</h3>
+
+              <div className="form-group">
+                <label><FaHospital /> Facility</label>
+                <select
+                  className="input"
+                  value={form.facility_id}
+                  onChange={e => setForm(p => ({ ...p, facility_id: e.target.value }))}
+                >
+                  <option value="">Select a facility...</option>
+                  {allFacilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label><FiUser /> Role</label>
+                <select
+                  className="input"
+                  value={form.role}
+                  onChange={e => setForm(p => ({ ...p, role: e.target.value }))}
+                >
+                  <option value="">Select a role...</option>
+                  {STAFF_ROLES.map(r => (
+                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+
+              {actionStatus.message && (
+                <div className={`status ${actionStatus.type}`}>{actionStatus.message}</div>
+              )}
+
+              <div className="modal-actions">
+                <button className="btn secondary" onClick={() => setAssigningTo(null)}>Cancel</button>
+                <button className="btn primary" onClick={saveAssignment} disabled={saving}>
+                  {saving ? "Saving..." : "Save assignment"}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
       </div>

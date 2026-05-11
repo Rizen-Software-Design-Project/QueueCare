@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 
@@ -229,7 +229,7 @@ describe("Applications - Apply Mode", () => {
     expect(screen.getByPlaceholderText("Employee number")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Professional license")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Search clinic name")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Paste your CV link")).toBeInTheDocument();
+    expect(screen.getByText("Upload CV")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Why are you applying for this role?")).toBeInTheDocument();
   });
 
@@ -260,14 +260,13 @@ describe("Applications - Apply Mode", () => {
   });
 
   it("shows error when submitting empty required fields", async () => {
-    const user = userEvent.setup();
     const emptyIdentity = { auth_provider: "firebase", provider_user_id: "uid" };
     render(<Applications mode="apply" identity={emptyIdentity} selectedRole="staff" />);
 
-    await user.click(screen.getByText("Submit Application"));
+    fireEvent.submit(screen.getByText("Submit Application").closest("form"));
 
     await waitFor(() => {
-      expect(screen.getByText("Enter your first name.")).toBeInTheDocument();
+      expect(screen.getByText("First name must be at least 2 characters.")).toBeInTheDocument();
     });
   });
 
@@ -284,7 +283,7 @@ describe("Applications - Apply Mode", () => {
     const empInput = screen.getByPlaceholderText("Employee number");
     await user.type(empInput, "EMP001");
 
-    await user.click(screen.getByText("Submit Application"));
+    fireEvent.submit(screen.getByText("Submit Application").closest("form"));
 
     await waitFor(() => {
       expect(screen.getByText("The SA ID number does not contain a valid date of birth.")).toBeInTheDocument();

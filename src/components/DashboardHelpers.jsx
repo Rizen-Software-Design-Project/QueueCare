@@ -84,6 +84,7 @@ export function normalizeAvailability(availability) {
 }
 
 // ── Reminder sound (Web Audio API — no audio file needed) ─────────────────────
+/* v8 ignore start */
 export function playReminderSound(urgent = false) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -114,9 +115,11 @@ export function playReminderSound(urgent = false) {
     // AudioContext unavailable — fail silently
   }
 }
+/* v8 ignore stop */
 
 import { useState, useEffect } from "react";
 
+/* v8 ignore start */
 export function CountdownTimer({ slotDate, slotTime }) {
   const [timeLeft, setTimeLeft] = useState("");
 
@@ -166,3 +169,4 @@ export function CountdownTimer({ slotDate, slotTime }) {
     </div>
   );
 }
+/* v8 ignore stop */

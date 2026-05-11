@@ -1,9 +1,13 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+// @vitest-environment node
+import { beforeEach, describe, expect, vi, test } from 'vitest';
 import request from 'supertest';
+import app from '../servers/app.js';
 
-const mockSendMail = jest.fn();
-const mockGetUserById = jest.fn();
-const mockFrom = jest.fn();
+const { mockSendMail, mockGetUserById, mockFrom } = vi.hoisted(() => ({
+  mockSendMail: vi.fn(),
+  mockGetUserById: vi.fn(),
+  mockFrom: vi.fn(),
+}));
 
 function chainResult(response) {
   const chain = {
@@ -25,14 +29,14 @@ function chainResult(response) {
   return chain;
 }
 
-jest.unstable_mockModule('@supabase/supabase-js', () => ({
+vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
     from: (...args) => mockFrom(...args),
     auth: { admin: { getUserById: (...args) => mockGetUserById(...args) } },
   }),
 }));
 
-jest.unstable_mockModule('nodemailer', () => {
+vi.mock('nodemailer', () => {
   const transporterMock = {
     sendMail: (...args) => mockSendMail(...args),
     verify: () => Promise.resolve(true),
@@ -43,10 +47,8 @@ jest.unstable_mockModule('nodemailer', () => {
   };
 });
 
-const { default: app } = await import('../servers/app.js');
-
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.resetAllMocks();
 });
 
 // ── GET /appointments/:id ─────────────────────────────────────────────────────
@@ -100,18 +102,18 @@ describe('GET /appointments/my/:patient_id', () => {
   });
 });
 
-// ── POST /slots/available ─────────────────────────────────────────────────────
+// ── POST /appointments/slots/available ──────────────────────────────────────
 
-describe('POST /slots/available', () => {
+describe('POST /appointments/slots/available', () => {
   test('returns 400 when facility_id is missing', async () => {
-    const res = await request(app).post('/slots/available').send({});
+    const res = await request(app).post('/appointments/slots/available').send({});
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('facility_id is required');
   });
 
   test('returns 400 when supabase returns an error', async () => {
     mockFrom.mockReturnValue(chainResult({ data: null, error: { message: 'Query failed' } }));
-    const res = await request(app).post('/slots/available').send({ facility_id: 1 });
+    const res = await request(app).post('/appointments/slots/available').send({ facility_id: 1 });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Query failed');
   });
@@ -121,14 +123,14 @@ describe('POST /slots/available', () => {
       data: [{ id: 1, booked_count: 5, total_capacity: 5 }],
       error: null,
     }));
-    const res = await request(app).post('/slots/available').send({ facility_id: 1 });
+    const res = await request(app).post('/appointments/slots/available').send({ facility_id: 1 });
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toBe('No available slots for this clinic.');
   });
 
   test('returns 404 when no slots exist', async () => {
     mockFrom.mockReturnValue(chainResult({ data: [], error: null }));
-    const res = await request(app).post('/slots/available').send({ facility_id: 1 });
+    const res = await request(app).post('/appointments/slots/available').send({ facility_id: 1 });
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toBe('No available slots for this clinic.');
   });
@@ -138,7 +140,7 @@ describe('POST /slots/available', () => {
       { id: 1, booked_count: 0, total_capacity: 5, slot_time: '09:00', slot_date: '2026-04-20' },
     ];
     mockFrom.mockReturnValue(chainResult({ data: slots, error: null }));
-    const res = await request(app).post('/slots/available').send({ facility_id: 1 });
+    const res = await request(app).post('/appointments/slots/available').send({ facility_id: 1 });
     expect(res.statusCode).toBe(200);
     expect(res.body.count).toBe(1);
     expect(res.body.slots).toEqual(slots);
@@ -146,7 +148,7 @@ describe('POST /slots/available', () => {
 
   test('returns 500 when an unexpected error is thrown', async () => {
     mockFrom.mockImplementation(() => { throw new Error('DB down'); });
-    const res = await request(app).post('/slots/available').send({ facility_id: 1 });
+    const res = await request(app).post('/appointments/slots/available').send({ facility_id: 1 });
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('DB down');
   });
@@ -354,24 +356,24 @@ describe('PATCH /appointments/:appointment_id/reschedule', () => {
   });
 });
 
-// ── POST /queue/walk-in ───────────────────────────────────────────────────────
+// ── POST /appointments/queue/walk-in ────────────────────────────────────────
 
-describe('POST /queue/walk-in', () => {
+describe('POST /appointments/queue/walk-in', () => {
   test('returns 400 when patient_id is missing', async () => {
-    const res = await request(app).post('/queue/walk-in').send({ facility_id: 'f1' });
+    const res = await request(app).post('/appointments/queue/walk-in').send({ facility_id: 'f1' });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('patient_id is required');
   });
 
   test('returns 400 when facility_id is missing', async () => {
-    const res = await request(app).post('/queue/walk-in').send({ patient_id: 'p1' });
+    const res = await request(app).post('/appointments/queue/walk-in').send({ patient_id: 'p1' });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('facility_id is required');
   });
 
   test('returns 409 when patient is already in queue', async () => {
     mockFrom.mockReturnValue(chainResult({ data: { id: 'q1', status: 'waiting' }, error: null }));
-    const res = await request(app).post('/queue/walk-in').send({ patient_id: 'p1', facility_id: 'f1' });
+    const res = await request(app).post('/appointments/queue/walk-in').send({ patient_id: 'p1', facility_id: 'f1' });
     expect(res.statusCode).toBe(409);
     expect(res.body.error).toBe('You are already in the queue at this clinic.');
   });
@@ -382,7 +384,7 @@ describe('POST /queue/walk-in', () => {
       .mockReturnValueOnce(chainResult({ count: 0 }))
       .mockReturnValueOnce(chainResult({ data: { id: 'q1', queue_position: 1 }, error: null }))
       .mockReturnValueOnce(chainResult({ error: null }));
-    const res = await request(app).post('/queue/walk-in').send({ patient_id: 'p1', facility_id: 'f1' });
+    const res = await request(app).post('/appointments/queue/walk-in').send({ patient_id: 'p1', facility_id: 'f1' });
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toBe('You have joined the queue');
     expect(res.body.queue_position).toBe(1);
@@ -393,14 +395,14 @@ describe('POST /queue/walk-in', () => {
       .mockReturnValueOnce(chainResult({ data: null, error: null }))
       .mockReturnValueOnce(chainResult({ count: 0 }))
       .mockReturnValueOnce(chainResult({ data: null, error: { message: 'Insert failed' } }));
-    const res = await request(app).post('/queue/walk-in').send({ patient_id: 'p1', facility_id: 'f1' });
+    const res = await request(app).post('/appointments/queue/walk-in').send({ patient_id: 'p1', facility_id: 'f1' });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Insert failed');
   });
 
   test('returns 500 when an unexpected error is thrown', async () => {
     mockFrom.mockImplementation(() => { throw new Error('crash'); });
-    const res = await request(app).post('/queue/walk-in').send({ patient_id: 'p1', facility_id: 'f1' });
+    const res = await request(app).post('/appointments/queue/walk-in').send({ patient_id: 'p1', facility_id: 'f1' });
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('crash');
   });
@@ -538,11 +540,11 @@ describe('POST /appointments/remind', () => {
   });
 });
 
-// ── GET /staff/appointments ───────────────────────────────────────────────────
+// ── GET /appointments/staff/appointments ─────────────────────────────────────
 
-describe('GET /staff/appointments', () => {
+describe('GET /appointments/staff/appointments', () => {
   test('returns 400 when facility_id is missing', async () => {
-    const res = await request(app).get('/staff/appointments');
+    const res = await request(app).get('/appointments/staff/appointments');
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('facility_id is required');
   });
@@ -550,7 +552,7 @@ describe('GET /staff/appointments', () => {
   test('returns 200 with count and appointments', async () => {
     const appointments = [{ id: 'a1', facility_id: 'f1' }];
     mockFrom.mockReturnValue(chainResult({ data: appointments, error: null }));
-    const res = await request(app).get('/staff/appointments?facility_id=f1');
+    const res = await request(app).get('/appointments/staff/appointments?facility_id=f1');
     expect(res.statusCode).toBe(200);
     expect(res.body.count).toBe(1);
     expect(res.body.appointments).toEqual(appointments);
@@ -558,93 +560,93 @@ describe('GET /staff/appointments', () => {
 
   test('returns 400 when supabase returns an error', async () => {
     mockFrom.mockReturnValue(chainResult({ data: null, error: { message: 'DB error' } }));
-    const res = await request(app).get('/staff/appointments?facility_id=f1');
+    const res = await request(app).get('/appointments/staff/appointments?facility_id=f1');
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('DB error');
   });
 
   test('returns 500 when an unexpected error is thrown', async () => {
     mockFrom.mockImplementation(() => { throw new Error('crash'); });
-    const res = await request(app).get('/staff/appointments?facility_id=f1');
+    const res = await request(app).get('/appointments/staff/appointments?facility_id=f1');
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('crash');
   });
 });
 
-// ── PATCH /staff/appointments/:appointment_id ─────────────────────────────────
+// ── PATCH /appointments/staff/appointments/:appointment_id ────────────────────
 
-describe('PATCH /staff/appointments/:appointment_id', () => {
+describe('PATCH /appointments/staff/appointments/:appointment_id', () => {
   test('returns 400 when status is missing', async () => {
-    const res = await request(app).patch('/staff/appointments/a1').send({});
+    const res = await request(app).patch('/appointments/staff/appointments/a1').send({});
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('status is required');
   });
 
   test('returns 400 when status is invalid', async () => {
-    const res = await request(app).patch('/staff/appointments/a1').send({ status: 'invalid' });
+    const res = await request(app).patch('/appointments/staff/appointments/a1').send({ status: 'invalid', facility_id: 1 });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toContain('Invalid status');
   });
 
   test('returns 404 when appointment is not found', async () => {
     mockFrom.mockReturnValue(chainResult({ data: null, error: { message: 'No rows' } }));
-    const res = await request(app).patch('/staff/appointments/a1').send({ status: 'confirmed' });
+    const res = await request(app).patch('/appointments/staff/appointments/a1').send({ status: 'confirmed', facility_id: 1 });
     expect(res.statusCode).toBe(404);
     expect(res.body.error).toBe('Appointment not found');
   });
 
   test('returns 200 when appointment is updated', async () => {
     mockFrom
-      .mockReturnValueOnce(chainResult({ data: { id: 'a1', slot_id: 's1', status: 'booked', patient_id: 'p1' }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: { id: 'a1', slot_id: 's1', status: 'booked', patient_id: 'p1', facility_id: 1 }, error: null }))
       .mockReturnValueOnce(chainResult({ data: { id: 'a1', status: 'confirmed' }, error: null }));
-    const res = await request(app).patch('/staff/appointments/a1').send({ status: 'confirmed' });
+    const res = await request(app).patch('/appointments/staff/appointments/a1').send({ status: 'confirmed', facility_id: 1 });
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toContain('confirmed');
   });
 
   test('returns 200 and restores slot when status is cancelled', async () => {
     mockFrom
-      .mockReturnValueOnce(chainResult({ data: { id: 'a1', slot_id: 's1', status: 'booked', patient_id: 'p1' }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: { id: 'a1', slot_id: 's1', status: 'booked', patient_id: 'p1', facility_id: 1 }, error: null }))
       .mockReturnValueOnce(chainResult({ data: { id: 'a1', status: 'cancelled' }, error: null }))
       .mockReturnValueOnce(chainResult({ data: { booked_count: 2 }, error: null }))
       .mockReturnValueOnce(chainResult({ error: null }))
       .mockReturnValueOnce(chainResult({ error: null }));
-    const res = await request(app).patch('/staff/appointments/a1').send({ status: 'cancelled' });
+    const res = await request(app).patch('/appointments/staff/appointments/a1').send({ status: 'cancelled', facility_id: 1 });
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toContain('cancelled');
   });
 
   test('returns 400 when update fails', async () => {
     mockFrom
-      .mockReturnValueOnce(chainResult({ data: { id: 'a1', slot_id: 's1', status: 'booked', patient_id: 'p1' }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: { id: 'a1', slot_id: 's1', status: 'booked', patient_id: 'p1', facility_id: 1 }, error: null }))
       .mockReturnValueOnce(chainResult({ data: null, error: { message: 'Update failed' } }));
-    const res = await request(app).patch('/staff/appointments/a1').send({ status: 'confirmed' });
+    const res = await request(app).patch('/appointments/staff/appointments/a1').send({ status: 'confirmed', facility_id: 1 });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Update failed');
   });
 
   test('returns 500 when an unexpected error is thrown', async () => {
     mockFrom.mockImplementation(() => { throw new Error('crash'); });
-    const res = await request(app).patch('/staff/appointments/a1').send({ status: 'confirmed' });
+    const res = await request(app).patch('/appointments/staff/appointments/a1').send({ status: 'confirmed', facility_id: 1 });
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('crash');
   });
 });
 
-// ── POST /staff/slots ─────────────────────────────────────────────────────────
+// ── POST /appointments/staff/slots ───────────────────────────────────────────
 
-describe('POST /staff/slots', () => {
+describe('POST /appointments/staff/slots', () => {
   const validSlot = { facility_id: 1, slot_date: '2026-04-20', slot_time: '09:00', total_capacity: 5, duration_minutes: 30 };
 
   test('returns 400 when required fields are missing', async () => {
-    const res = await request(app).post('/staff/slots').send({ slot_time: '09:00' });
+    const res = await request(app).post('/appointments/staff/slots').send({ slot_time: '09:00' });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toContain('required');
   });
 
   test('returns 409 when a duplicate slot exists', async () => {
     mockFrom.mockReturnValue(chainResult({ data: { id: 99 }, error: null }));
-    const res = await request(app).post('/staff/slots').send(validSlot);
+    const res = await request(app).post('/appointments/staff/slots').send(validSlot);
     expect(res.statusCode).toBe(409);
     expect(res.body.error).toContain('already exists');
   });
@@ -653,7 +655,7 @@ describe('POST /staff/slots', () => {
     mockFrom
       .mockReturnValueOnce(chainResult({ data: null, error: null }))
       .mockReturnValueOnce(chainResult({ data: { id: 1, ...validSlot }, error: null }));
-    const res = await request(app).post('/staff/slots').send(validSlot);
+    const res = await request(app).post('/appointments/staff/slots').send(validSlot);
     expect(res.statusCode).toBe(201);
     expect(res.body.message).toBe('Slot created successfully');
     expect(res.body.slot.id).toBe(1);
@@ -663,83 +665,88 @@ describe('POST /staff/slots', () => {
     mockFrom
       .mockReturnValueOnce(chainResult({ data: null, error: null }))
       .mockReturnValueOnce(chainResult({ data: null, error: { message: 'Insert error' } }));
-    const res = await request(app).post('/staff/slots').send(validSlot);
+    const res = await request(app).post('/appointments/staff/slots').send(validSlot);
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Insert error');
   });
 
   test('returns 500 when an unexpected error is thrown', async () => {
     mockFrom.mockImplementation(() => { throw new Error('crash'); });
-    const res = await request(app).post('/staff/slots').send(validSlot);
+    const res = await request(app).post('/appointments/staff/slots').send(validSlot);
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('crash');
   });
 });
 
-// ── PATCH /staff/slots/:slot_id ───────────────────────────────────────────────
+// ── PATCH /appointments/staff/slots/:slot_id ─────────────────────────────────
 
-describe('PATCH /staff/slots/:slot_id', () => {
+describe('PATCH /appointments/staff/slots/:slot_id', () => {
   test('returns 400 when no fields are provided', async () => {
-    const res = await request(app).patch('/staff/slots/1').send({});
+    mockFrom.mockReturnValueOnce(chainResult({ data: { facility_id: 1 }, error: null }));
+    const res = await request(app).patch('/appointments/staff/slots/1').send({ facility_id: 1 });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('No fields provided to update');
   });
 
   test('returns 200 when slot is updated', async () => {
     const updatedSlot = { id: 1, slot_time: '10:00', slot_date: '2026-04-21' };
-    mockFrom.mockReturnValue(chainResult({ data: updatedSlot, error: null }));
-    const res = await request(app).patch('/staff/slots/1').send({ slot_time: '10:00', slot_date: '2026-04-21' });
+    mockFrom
+      .mockReturnValueOnce(chainResult({ data: { facility_id: 1 }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: updatedSlot, error: null }));
+    const res = await request(app).patch('/appointments/staff/slots/1').send({ slot_time: '10:00', slot_date: '2026-04-21', facility_id: 1 });
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Slot updated');
     expect(res.body.slot).toEqual(updatedSlot);
   });
 
   test('returns 400 when supabase returns an error', async () => {
-    mockFrom.mockReturnValue(chainResult({ data: null, error: { message: 'Update failed' } }));
-    const res = await request(app).patch('/staff/slots/1').send({ slot_time: '10:00' });
+    mockFrom
+      .mockReturnValueOnce(chainResult({ data: { facility_id: 1 }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: null, error: { message: 'Update failed' } }));
+    const res = await request(app).patch('/appointments/staff/slots/1').send({ slot_time: '10:00', facility_id: 1 });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Update failed');
   });
 
   test('returns 500 when an unexpected error is thrown', async () => {
     mockFrom.mockImplementation(() => { throw new Error('crash'); });
-    const res = await request(app).patch('/staff/slots/1').send({ slot_time: '10:00' });
+    const res = await request(app).patch('/appointments/staff/slots/1').send({ slot_time: '10:00', facility_id: 1 });
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('crash');
   });
 });
 
-// ── DELETE /staff/slots/:slot_id ──────────────────────────────────────────────
+// ── DELETE /appointments/staff/slots/:slot_id ──────────────────────────────────────────────
 
-describe('DELETE /staff/slots/:slot_id', () => {
+describe('DELETE /appointments/staff/slots/:slot_id', () => {
   test('returns 409 when slot has active bookings', async () => {
-    mockFrom.mockReturnValue(chainResult({ data: { booked_count: 2 }, error: null }));
-    const res = await request(app).delete('/staff/slots/1');
+    mockFrom.mockReturnValue(chainResult({ data: { booked_count: 2, facility_id: 1 }, error: null }));
+    const res = await request(app).delete('/appointments/staff/slots/1').send({ facility_id: 1 });
     expect(res.statusCode).toBe(409);
     expect(res.body.error).toContain('Cannot remove this slot');
   });
 
   test('returns 200 when slot is deactivated', async () => {
     mockFrom
-      .mockReturnValueOnce(chainResult({ data: { booked_count: 0 }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: { booked_count: 0, facility_id: 1 }, error: null }))
       .mockReturnValueOnce(chainResult({ error: null }));
-    const res = await request(app).delete('/staff/slots/1');
+    const res = await request(app).delete('/appointments/staff/slots/1').send({ facility_id: 1 });
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Slot deactivated successfully');
   });
 
   test('returns 400 when supabase update fails', async () => {
     mockFrom
-      .mockReturnValueOnce(chainResult({ data: { booked_count: 0 }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: { booked_count: 0, facility_id: 1 }, error: null }))
       .mockReturnValueOnce(chainResult({ error: { message: 'Update failed' } }));
-    const res = await request(app).delete('/staff/slots/1');
+    const res = await request(app).delete('/appointments/staff/slots/1').send({ facility_id: 1 });
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toBe('Update failed');
   });
 
   test('returns 500 when an unexpected error is thrown', async () => {
     mockFrom.mockImplementation(() => { throw new Error('crash'); });
-    const res = await request(app).delete('/staff/slots/1');
+    const res = await request(app).delete('/appointments/staff/slots/1').send({ facility_id: 1 });
     expect(res.statusCode).toBe(500);
     expect(res.body.error).toBe('crash');
   });
@@ -761,5 +768,183 @@ describe('Middleware', () => {
       .send('{ invalid json }');
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
     expect(res.body.error).toBeDefined();
+  });
+
+  test('error handler uses 500 fallback when error has no status', async () => {
+    mockFrom.mockImplementation(() => { const e = new Error('bare error'); delete e.status; throw e; });
+    const res = await request(app).get('/appointments/1');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('bare error');
+  });
+});
+
+// ── GET /health ───────────────────────────────────────────────────────────────
+
+describe('GET /health', () => {
+  test('returns 200 with status message', async () => {
+    const res = await request(app).get('/health');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe('API is running');
+  });
+});
+
+// ── POST /appointments/queue/send-status-email ────────────────────────────────
+
+describe('POST /appointments/queue/send-status-email', () => {
+  test('returns 400 when required fields are missing', async () => {
+    const res = await request(app)
+      .post('/appointments/queue/send-status-email')
+      .send({ status: 'waiting' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toContain('required');
+  });
+
+  test('returns 200 skipped when patient has no email', async () => {
+    mockFrom
+      .mockReturnValueOnce(chainResult({ data: { email: null, name: 'Jane' }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: { name: 'City Clinic' }, error: null }));
+    const res = await request(app)
+      .post('/appointments/queue/send-status-email')
+      .send({ patient_id: 'p1', status: 'waiting', facility_id: 'f1' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toContain('skipped');
+  });
+
+  test('returns 200 and sends email when patient has email', async () => {
+    mockFrom
+      .mockReturnValueOnce(chainResult({ data: { email: 'jane@test.com', name: 'Jane' }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: { name: 'City Clinic' }, error: null }));
+    mockSendMail.mockResolvedValue({});
+    const res = await request(app)
+      .post('/appointments/queue/send-status-email')
+      .send({ patient_id: 'p1', status: 'waiting', facility_id: 'f1', position: 2 });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toContain('email sent');
+  });
+
+  test('returns 500 when unexpected error is thrown', async () => {
+    mockFrom.mockImplementation(() => { throw new Error('crash'); });
+    const res = await request(app)
+      .post('/appointments/queue/send-status-email')
+      .send({ patient_id: 'p1', status: 'waiting', facility_id: 'f1' });
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('crash');
+  });
+});
+
+// ── POST /appointments/book-walkin ───────────────────────────────────────────
+
+describe('POST /appointments/book-walkin', () => {
+  test('returns 400 when required fields are missing', async () => {
+    const res = await request(app)
+      .post('/appointments/book-walkin')
+      .send({ slot_id: 's1' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('Missing parameters');
+  });
+
+  test('returns 400 when slot is not found', async () => {
+    mockFrom.mockReturnValue(chainResult({ data: null, error: null }));
+    const res = await request(app)
+      .post('/appointments/book-walkin')
+      .send({ profile: { id: 'p1' }, slot_id: 's1', facility_id: 'f1' });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('Slot not found');
+  });
+
+  test('returns 403 when slot belongs to different facility', async () => {
+    mockFrom.mockReturnValue(chainResult({ data: { id: 's1', facility_id: 'f2', booked_count: 0, total_capacity: 5 }, error: null }));
+    const res = await request(app)
+      .post('/appointments/book-walkin')
+      .send({ profile: { id: 'p1' }, slot_id: 's1', facility_id: 'f1' });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('Slot does not belong to this facility');
+  });
+
+  test('returns 400 when slot is full', async () => {
+    mockFrom.mockReturnValue(chainResult({ data: { id: 's1', facility_id: 1, booked_count: 5, total_capacity: 5 }, error: null }));
+    const res = await request(app)
+      .post('/appointments/book-walkin')
+      .send({ profile: { id: 'p1' }, slot_id: 's1', facility_id: 1 });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('Slot is full');
+  });
+
+  test('returns 200 with appointment when booking succeeds', async () => {
+    mockFrom
+      .mockReturnValueOnce(chainResult({ data: { id: 's1', facility_id: 1, booked_count: 0, total_capacity: 5 }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: { id: 'a1', status: 'booked' }, error: null }))
+      .mockReturnValueOnce(chainResult({ error: null }));
+    const res = await request(app)
+      .post('/appointments/book-walkin')
+      .send({ profile: { id: 'p1' }, slot_id: 's1', facility_id: 1 });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.appointment.id).toBe('a1');
+  });
+
+  test('returns 500 when appointment insert fails', async () => {
+    mockFrom
+      .mockReturnValueOnce(chainResult({ data: { id: 's1', facility_id: 1, booked_count: 0, total_capacity: 5 }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: null, error: { message: 'Insert failed' } }));
+    const res = await request(app)
+      .post('/appointments/book-walkin')
+      .send({ profile: { id: 'p1' }, slot_id: 's1', facility_id: 1 });
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Insert failed');
+  });
+});
+
+// ── PATCH /appointments/staff/slots — missing branch coverage ─────────────────
+
+describe('PATCH /appointments/staff/slots — extra branches', () => {
+  test('returns 404 when slot is not found', async () => {
+    mockFrom.mockReturnValueOnce(chainResult({ data: null, error: null }));
+    const res = await request(app).patch('/appointments/staff/slots/99').send({ slot_time: '10:00', facility_id: 1 });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Slot not found');
+  });
+
+  test('returns 403 when slot belongs to a different facility', async () => {
+    mockFrom.mockReturnValueOnce(chainResult({ data: { facility_id: 2 }, error: null }));
+    const res = await request(app).patch('/appointments/staff/slots/1').send({ slot_time: '10:00', facility_id: 1 });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('This slot does not belong to your facility');
+  });
+
+  test('updates with slot_date, total_capacity, and duration_minutes', async () => {
+    const updated = { id: 1, slot_date: '2026-06-01', total_capacity: 10, duration_minutes: 45 };
+    mockFrom
+      .mockReturnValueOnce(chainResult({ data: { facility_id: 1 }, error: null }))
+      .mockReturnValueOnce(chainResult({ data: updated, error: null }));
+    const res = await request(app)
+      .patch('/appointments/staff/slots/1')
+      .send({ slot_date: '2026-06-01', total_capacity: 10, duration_minutes: 45, facility_id: 1 });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.slot.slot_date).toBe('2026-06-01');
+  });
+});
+
+// ── DELETE /appointments/staff/slots — missing branch coverage ─────────────────
+
+describe('DELETE /appointments/staff/slots — extra branches', () => {
+  test('returns 400 when facility_id is missing', async () => {
+    const res = await request(app).delete('/appointments/staff/slots/1').send({});
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('facility_id is required');
+  });
+
+  test('returns 404 when slot is not found', async () => {
+    mockFrom.mockReturnValueOnce(chainResult({ data: null, error: null }));
+    const res = await request(app).delete('/appointments/staff/slots/99').send({ facility_id: 1 });
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Slot not found');
+  });
+
+  test('returns 403 when slot belongs to a different facility', async () => {
+    mockFrom.mockReturnValueOnce(chainResult({ data: { booked_count: 0, facility_id: 2 }, error: null }));
+    const res = await request(app).delete('/appointments/staff/slots/1').send({ facility_id: 1 });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error).toBe('This slot does not belong to your facility');
   });
 });
