@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  tests-sprint3:
+  dont-mind:
     name: Frontend Tests (Vitest)
     runs-on: ubuntu-latest
 
