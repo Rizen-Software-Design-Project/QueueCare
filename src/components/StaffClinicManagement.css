@@ -176,16 +176,7 @@
   background: #e3f2fd;
   color: #1565c0;
 }
-.staff-action-btn {
-  background: #145214;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
+
 
 .staff-action-btn:hover {
   background: #16a34a;
@@ -274,15 +265,29 @@
 
 .slot-block-row {
   display: grid;
-  grid-template-columns: 1.3fr 0.8fr 0.8fr 0.9fr 0.8fr auto auto;
+  grid-template-columns: 
+    minmax(120px, 1.3fr)
+    minmax(90px, 0.8fr)
+    minmax(90px, 0.8fr)
+    minmax(100px, 0.9fr)
+    minmax(90px, 0.8fr)
+    auto
+    auto;
   gap: 10px;
   align-items: end;
-  padding: 14px;
-  background: #ffffff;
-  border: 1px solid #eeeeee;
-  border-radius: 12px;
+  overflow-x: auto;
 }
-
+.staff-action-btn {
+  background: #145214;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
 .slot-block-row.disabled {
   opacity: 0.65;
   background: #f5f6fa;

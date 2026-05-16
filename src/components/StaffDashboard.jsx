@@ -32,14 +32,8 @@ export default function StaffDashboard({ profile: initialProfile }) {
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState({ type: "", message: "" });
 
-  const [editProfile,   setEditProfile]   = useState(false);
-  const [editForm,      setEditForm]      = useState({
-    name:         profile.name         || "",
-    surname:      profile.surname      || "",
-    phone_number: profile.phone_number || "",
-    dob:          profile.dob          || "",
-  });
-  const [savingProfile, setSavingProfile] = useState(false);
+  
+
 
   // ── Load data ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -81,12 +75,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
     setUnreadCount(0);
   }
 
-  async function saveProfile() {
-    setSavingProfile(true);
-    const { error } = await supabase.from("profiles").update(editForm).eq("id", profile.id);
-    if (!error) { setProfile((prev) => ({ ...prev, ...editForm })); setEditProfile(false); }
-    setSavingProfile(false);
-  }
+
 
   async function saveAvailability() {
     const assignment = staffAssignments[0];
@@ -142,6 +131,9 @@ function goTo(id) {
     
     case "schedule":
       navigate("/schedule", {state: navState});
+      return;
+    case "profile":
+      navigate("/profile", { state: { profile } });
       return;
 
     default:
@@ -204,21 +196,7 @@ function goTo(id) {
           />
         );
 
-      case "profile":
-        return (
-          <ProfilePanel
-            profile={profile}
-            editProfile={editProfile}
-            editForm={editForm}
-            savingProfile={savingProfile}
-            onEdit={() => setEditProfile(true)}
-            onCancel={() => setEditProfile(false)}
-            onSave={saveProfile}
-            onFormChange={(k, v) => setEditForm((p) => ({ ...p, [k]: v }))}
-          />
-        );
-
-      default:
+       default:
         return <div className="db-section"><h2>{activeTab}</h2></div>;
     }
   }

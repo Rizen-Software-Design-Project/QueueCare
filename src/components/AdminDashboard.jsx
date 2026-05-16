@@ -24,14 +24,7 @@ export default function AdminDashboard({ profile: initialProfile }) {
   const [activeTab,     setActiveTab]     = useState("overview");
   const [sidebarOpen,   setSidebarOpen]   = useState(false);
 
-  const [editProfile,   setEditProfile]   = useState(false);
-  const [editForm,      setEditForm]      = useState({
-    name:         profile.name         || "",
-    surname:      profile.surname      || "",
-    phone_number: profile.phone_number || "",
-    dob:          profile.dob          || "",
-  });
-  const [savingProfile, setSavingProfile] = useState(false);
+
 
   // ── Load notifications ────────────────────────────────────────────────────
   useEffect(() => {
@@ -61,15 +54,15 @@ export default function AdminDashboard({ profile: initialProfile }) {
     setUnreadCount(0);
   }
 
-  async function saveProfile() {
-    setSavingProfile(true);
-    const { error } = await supabase.from("profiles").update(editForm).eq("id", profile.id);
-    if (!error) { setProfile((prev) => ({ ...prev, ...editForm })); setEditProfile(false); }
-    setSavingProfile(false);
-  }
 
   // ── Content ───────────────────────────────────────────────────────────────
   function renderContent() {
+    const navState = {
+    admin: profile,
+    authProvider:  profile.auth_provider,
+    providerUserId: profile.provider_user_id,
+  };
+
     switch (activeTab) {
       case "overview":
         return (
@@ -128,20 +121,6 @@ export default function AdminDashboard({ profile: initialProfile }) {
           />
         );
 
-      case "profile":
-        return (
-          <ProfilePanel
-            profile={profile}
-            editProfile={editProfile}
-            editForm={editForm}
-            savingProfile={savingProfile}
-            onEdit={() => setEditProfile(true)}
-            onCancel={() => setEditProfile(false)}
-            onSave={saveProfile}
-            onFormChange={(k, v) => setEditForm((p) => ({ ...p, [k]: v }))}
-          />
-        );
-
       default:
         return <div className="db-section"><h2>{activeTab}</h2></div>;
     }
@@ -157,7 +136,15 @@ export default function AdminDashboard({ profile: initialProfile }) {
             <button
               key={item.id}
               className={`db-nav-item ${activeTab === item.id ? "db-nav-active" : ""}`}
-              onClick={() => { setSidebarOpen(false); setActiveTab(item.id); }}
+              onClick={() => {
+                setSidebarOpen(false);
+
+                if (item.id === "profile") {
+                  navigate("/profile", { state: { profile } }); // ✅ unified
+                } else {
+                  setActiveTab(item.id);
+                }
+              }}
             >
               {item.icon} {item.label}
             </button>

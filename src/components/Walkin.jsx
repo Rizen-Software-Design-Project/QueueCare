@@ -292,8 +292,9 @@ export default function WalkIn() {
   // ── Render ────────────────────────────────────────────────────────────────
   if (facilityLoading) {
     return (
-      <div className="staff-dash">
-        <div className="wi-loading">Loading facility…</div>
+       <div className="wi-splash">
+        <div className="wi-spinner" />
+        <p>Loading Walk-In Patients</p>
       </div>
     );
   }

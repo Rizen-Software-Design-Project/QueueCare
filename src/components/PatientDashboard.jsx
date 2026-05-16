@@ -51,15 +51,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
   const [queueData,     setQueueData]     = useState(null);
   const [reminderBanner, setReminderBanner] = useState(null);
 
-  const [editProfile,   setEditProfile]   = useState(false);
-  const [editForm,      setEditForm]      = useState({
-    name:         profile.name         || "",
-    surname:      profile.surname      || "",
-    phone_number: profile.phone_number || "",
-    dob:          profile.dob          || "",
-  });
-  const [savingProfile, setSavingProfile] = useState(false);
-
+  
   const [rescheduleAppt,   setRescheduleAppt]   = useState(null);
   const [rescheduleSlots,  setRescheduleSlots]  = useState([]);
   const [rescheduleSlotId, setRescheduleSlotId] = useState(null);
@@ -194,12 +186,6 @@ export default function PatientDashboard({ profile: initialProfile }) {
     setUnreadCount(0);
   }
 
-  async function saveProfile() {
-    setSavingProfile(true);
-    const { error } = await supabase.from("profiles").update(editForm).eq("id", profile.id);
-    if (!error) { setProfile((prev) => ({ ...prev, ...editForm })); setEditProfile(false); }
-    setSavingProfile(false);
-  }
 
   async function cancelAppointment(appt) {
     if (!confirm("Are you sure you want to cancel this appointment?")) return;
@@ -283,11 +269,21 @@ export default function PatientDashboard({ profile: initialProfile }) {
 
   // ── Content ───────────────────────────────────────────────────────────────
   function goTo(id) {
+    const navState = { 
+    patient: profile,
+    authProvider:  profile.auth_provider,
+    providerUserId: profile.provider_user_id,
+       };
+
   setSidebarOpen(false);
   switch (id) {
     case "find-clinic":
       navigate("/clinic-search");
       return;
+    case "profile":
+      navigate("/profile", {state: navState});
+      return;
+
     default:
       setActiveTab(id);
   }
@@ -325,7 +321,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
       case "appointments":  return <AppointmentsPanel profile={profile} appointments={appointments} onReschedule={openReschedule} onCancel={cancelAppointment} />;
       case "queue":         return <PatientQueuePanel queueData={queueData} slotDate={sharedProps.slotDate} slotTime={sharedProps.slotTime} />;
       case "notifications": return <NotificationsPanel notifications={notifications} unreadCount={unreadCount} onMarkAllRead={markAllRead} />;
-      case "profile":       return <ProfilePanel profile={profile} editProfile={editProfile} editForm={editForm} savingProfile={savingProfile} onEdit={() => setEditProfile(true)} onCancel={() => setEditProfile(false)} onSave={saveProfile} onFormChange={(k, v) => setEditForm((p) => ({ ...p, [k]: v }))} />;
+            
       default:              return <div className="db-section"><h2>{activeTab}</h2></div>;
     }
   }
