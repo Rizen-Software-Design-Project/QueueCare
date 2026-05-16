@@ -387,16 +387,15 @@ describe("Clicked Overview - last visited clinic", () => {
         await waitFor(() => expect(screen.getByRole("button", { name: /book again/i })).toBeVisible());
     });
 
-    it("Book Again navigates to the correct clinic page", async () => {
-        const user = userEvent.setup();
-        await waitFor(() => expect(screen.getByRole("button", { name: /book again/i })).toBeVisible());
-        await user.click(screen.getByRole("button", { name: /book again/i }));
-        await waitFor(() =>
-        expect(mockNavigate).toHaveBeenCalledWith(
-            `/clinic?id=fac-1&name=${encodeURIComponent("Test Clinic")}`
-        )
-        );
-    });
+   it("Book Again navigates to the correct clinic page", async () => {
+    const user = userEvent.setup();
+    await waitFor(() => expect(screen.getByRole("button", { name: /book again/i })).toBeVisible());
+    await user.click(screen.getByRole("button", { name: /book again/i }));
+    await waitFor(() =>
+        expect(mockNavigate).toHaveBeenCalledWith("/clinic?id=fac-1")
+    );
+});
+
 });
 
 
@@ -717,100 +716,19 @@ describe("Notifications Panel - content", () => {
 
 //jump-profile
 describe("Clicked Profile", () => {
-    beforeEach(async () => {
+    it("navigates to /profile when Profile nav button is clicked", async () => {
         const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
-        const allProfile = screen.getAllByText(/profile/i);
-        const profile = allProfile.find((link) => link.closest(".db-nav"));
-        await user.click(profile);
-    });
-
-    it("Renders Profile on topbar", () => {
-        const allProfile = screen.getAllByText(/profile/i);
-        const profile = allProfile.find((link) => link.closest(".db-topbar"));
-        expect(profile).toBeVisible();
-    });
-
-    it("Renders user name", () => {
-        expect(screen.getByText(new RegExp(`Hi, ${mockProfile.name}`, "i"))).toBeVisible();
-    });
-});
-
-
-describe("Profile Panel - content", () => {
-    async function renderAndOpenProfile() {
-        const user = userEvent.setup();
-        render(<PatientDashboard profile={mockProfile} />);
-        const profileNav = screen.getAllByText(/profile/i).find((btn) => btn.closest(".db-nav"));
+        const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
         await user.click(profileNav);
-        await waitFor(() => {
-            expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-        });
-        return user;
-    }
-
-    const getViewCard = () => screen.getByText(/Name:/i).closest(".db-card");
-    const getEditForm = () => document.querySelector(".db-card input");
-
-    it("displays the user's name, surname, and email in view mode", async () => {
-        await renderAndOpenProfile();
-
-        expect(screen.getByText(`Name: ${mockProfile.name}`)).toBeVisible();
-        expect(screen.getByText(`Surname: ${mockProfile.surname}`)).toBeVisible();
-        expect(screen.getByText(`Email: ${mockProfile.email}`)).toBeVisible();
-        expect(screen.getByRole("button", { name: /edit/i })).toBeVisible();
-        expect(screen.queryByRole("button", { name: /save/i })).not.toBeInTheDocument();
+        await waitFor(() =>
+            expect(mockNavigate).toHaveBeenCalledWith("/profile", expect.any(Object))
+        );
     });
 
-    it("switches to edit mode when Edit button is clicked", async () => {
-        const user = await renderAndOpenProfile();
-
-        const editBtn = screen.getByRole("button", { name: /edit/i });
-        await user.click(editBtn);
-
-        expect(screen.getByPlaceholderText("Name")).toHaveValue(mockProfile.name);
-        expect(screen.getByPlaceholderText("Surname")).toHaveValue(mockProfile.surname);
-        expect(screen.getByPlaceholderText("Phone")).toHaveValue(mockProfile.phone_number);
-        expect(screen.getByRole("button", { name: /save/i })).toBeVisible();
-        expect(screen.getByRole("button", { name: /cancel/i })).toBeVisible();
-        expect(screen.queryByRole("button", { name: /edit/i })).not.toBeInTheDocument();
-    });
-
-    it("cancels edit mode without saving changes", async () => {
-        const user = await renderAndOpenProfile();
-
-        await user.click(screen.getByRole("button", { name: /edit/i }));
-
-        const nameInput = screen.getByPlaceholderText("Name");
-        await user.clear(nameInput);
-        await user.type(nameInput, "Jane");
-
-        await user.click(screen.getByRole("button", { name: /cancel/i }));
-
-        expect(screen.getByText(`Name: ${mockProfile.name}`)).toBeVisible();
-        expect(screen.queryByPlaceholderText("Name")).not.toBeInTheDocument();
-    });
-
-    it("saves changes and updates the displayed profile", async () => {
-        mockQuery.update.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
-
-        const user = await renderAndOpenProfile();
-
-        await user.click(screen.getByRole("button", { name: /edit/i }));
-
-        const nameInput = screen.getByPlaceholderText("Name");
-        const phoneInput = screen.getByPlaceholderText("Phone");
-        await user.clear(nameInput);
-        await user.type(nameInput, "Jane");
-        await user.clear(phoneInput);
-        await user.type(phoneInput, "0839999999");
-
-        await user.click(screen.getByRole("button", { name: /save/i }));
-
-        await waitFor(() => {
-            expect(screen.getByText(`Name: Jane`)).toBeVisible();
-        });
-        expect(screen.queryByPlaceholderText("Name")).not.toBeInTheDocument();
+    it("renders the user greeting", () => {
+        render(<PatientDashboard profile={mockProfile} />);
+        expect(screen.getByText(/Hi, John/i)).toBeVisible();
     });
 });
 

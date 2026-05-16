@@ -103,7 +103,7 @@ async function renderAndWait() {
     const user = userEvent.setup();
     render(<WalkIn />);
     await waitFor(() =>
-        expect(screen.queryByText(/loading facility/i)).not.toBeInTheDocument()
+        expect(screen.getByText(/loading walk-in patients/i)).toBeInTheDocument()
     );
     return user;
 }
@@ -132,7 +132,7 @@ describe("Loading state", () => {
         localStorage.setItem("userIdentity", JSON.stringify(mockIdentity));
         mockQuery.maybeSingle.mockReturnValue(new Promise(() => {})); // never resolves
         render(<WalkIn />);
-        expect(screen.getByText(/loading facility/i)).toBeVisible();
+        expect(screen.getByText(/Loading Walk-In Patients/i)).toBeVisible();
     });
 });
 

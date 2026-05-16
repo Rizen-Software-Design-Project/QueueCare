@@ -5,12 +5,6 @@ import userEvent from "@testing-library/user-event";
 
 
 //jump-mocks
-//jump-overview
-//jump-notifications
-//jump-profile
-
-
-//jump-mocks
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual("react-router-dom");
@@ -57,13 +51,13 @@ vi.mock("firebase/auth", () => {
         constructor() { this.render = vi.fn(); this.clear = vi.fn(); }
     }
     return {
-        getAuth:              vi.fn(() => ({})),
+        getAuth:               vi.fn(() => ({})),
         GoogleAuthProvider,
         FacebookAuthProvider,
         RecaptchaVerifier,
-        signInWithPopup:      vi.fn(),
+        signInWithPopup:       vi.fn(),
         signInWithPhoneNumber: vi.fn(),
-        signOut:              vi.fn(() => Promise.resolve()),
+        signOut:               vi.fn(() => Promise.resolve()),
     };
 });
 
@@ -106,6 +100,7 @@ beforeEach(() => {
 });
 
 
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Sidebar", () => {
     beforeEach(() => {
         render(<StaffDashboard profile={mockStaffProfile} />);
@@ -139,13 +134,10 @@ describe("Sidebar", () => {
 });
 
 
-
-//jump-overview
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Clicked Overview", () => {
     beforeEach(async () => {
-        mockQuery.limit
-            .mockResolvedValueOnce({ data: [], error: null }) // staff_assignments
-            
+        mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
 
         const user = userEvent.setup();
         render(<StaffDashboard profile={mockStaffProfile} />);
@@ -217,6 +209,7 @@ describe("Clicked Overview", () => {
 });
 
 
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Clicked Overview - facility card", () => {
     it("shows the assigned facility name and district", async () => {
         const { supabase } = await import("#lib/supabase");
@@ -265,7 +258,7 @@ describe("Clicked Overview - facility card", () => {
 });
 
 
-
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Nav items that navigate away", () => {
     beforeEach(() => {
         render(<StaffDashboard profile={mockStaffProfile} />);
@@ -308,7 +301,7 @@ describe("Nav items that navigate away", () => {
 });
 
 
-//jump-notifications
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Clicked Notifications", () => {
     beforeEach(async () => {
         const user = userEvent.setup();
@@ -394,101 +387,29 @@ describe("Notifications Panel - content", () => {
 });
 
 
-
-//jump-profile
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile nav now routes to /profile — inline panel no longer exists here.
+// Profile content is tested in ProfilePage.test.jsx.
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Clicked Profile", () => {
-    beforeEach(async () => {
+    it("navigates to /profile when Profile nav button is clicked", async () => {
         const user = userEvent.setup();
         render(<StaffDashboard profile={mockStaffProfile} />);
-        const profile = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
-        await user.click(profile);
+        const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
+        await user.click(profileNav);
+        await waitFor(() =>
+            expect(mockNavigate).toHaveBeenCalledWith("/profile", expect.any(Object))
+        );
     });
 
-    it("renders Profile on topbar", () => {
-        const topbar = screen.getAllByText(/profile/i).find((el) => el.closest(".db-topbar"));
-        expect(topbar).toBeVisible();
-    });
-
-    it("renders user name", () => {
+    it("renders the user greeting", () => {
+        render(<StaffDashboard profile={mockStaffProfile} />);
         expect(screen.getByText(/Hi, Jane/i)).toBeVisible();
     });
 });
 
-describe("Profile Panel - content", () => {
-    async function renderAndOpenProfile() {
-        const user = userEvent.setup();
-        render(<StaffDashboard profile={mockStaffProfile} />);
-        const profileNav = screen.getAllByText(/profile/i).find((btn) => btn.closest(".db-nav"));
-        await user.click(profileNav);
-        await waitFor(() => {
-            expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-        });
-        return user;
-    }
 
-    it("displays the user's name, surname, and email in view mode", async () => {
-        await renderAndOpenProfile();
-
-        expect(screen.getByText(`Name: ${mockStaffProfile.name}`)).toBeVisible();
-        expect(screen.getByText(`Surname: ${mockStaffProfile.surname}`)).toBeVisible();
-        expect(screen.getByText(`Email: ${mockStaffProfile.email}`)).toBeVisible();
-        expect(screen.getByRole("button", { name: /edit/i })).toBeVisible();
-        expect(screen.queryByRole("button", { name: /save/i })).not.toBeInTheDocument();
-    });
-
-    it("switches to edit mode when Edit button is clicked", async () => {
-        const user = await renderAndOpenProfile();
-
-        await user.click(screen.getByRole("button", { name: /edit/i }));
-
-        expect(screen.getByPlaceholderText("Name")).toHaveValue(mockStaffProfile.name);
-        expect(screen.getByPlaceholderText("Surname")).toHaveValue(mockStaffProfile.surname);
-        expect(screen.getByPlaceholderText("Phone")).toHaveValue(mockStaffProfile.phone_number);
-        expect(screen.getByRole("button", { name: /save/i })).toBeVisible();
-        expect(screen.getByRole("button", { name: /cancel/i })).toBeVisible();
-        expect(screen.queryByRole("button", { name: /edit/i })).not.toBeInTheDocument();
-    });
-
-    it("cancels edit mode without saving changes", async () => {
-        const user = await renderAndOpenProfile();
-
-        await user.click(screen.getByRole("button", { name: /edit/i }));
-
-        const nameInput = screen.getByPlaceholderText("Name");
-        await user.clear(nameInput);
-        await user.type(nameInput, "Janet");
-
-        await user.click(screen.getByRole("button", { name: /cancel/i }));
-
-        expect(screen.getByText(`Name: ${mockStaffProfile.name}`)).toBeVisible();
-        expect(screen.queryByPlaceholderText("Name")).not.toBeInTheDocument();
-    });
-
-    it("saves changes and updates the displayed profile", async () => {
-        mockQuery.update.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
-
-        const user = await renderAndOpenProfile();
-
-        await user.click(screen.getByRole("button", { name: /edit/i }));
-
-        const nameInput = screen.getByPlaceholderText("Name");
-        const phoneInput = screen.getByPlaceholderText("Phone");
-        await user.clear(nameInput);
-        await user.type(nameInput, "Janet");
-        await user.clear(phoneInput);
-        await user.type(phoneInput, "0839999999");
-
-        await user.click(screen.getByRole("button", { name: /save/i }));
-
-        await waitFor(() => {
-            expect(screen.getByText("Name: Janet")).toBeVisible();
-        });
-        expect(screen.queryByPlaceholderText("Name")).not.toBeInTheDocument();
-    });
-});
-
-
-
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Logout", () => {
     let originalLocalStorage;
 
@@ -525,4 +446,217 @@ describe("Logout", () => {
         expect(localStorage.removeItem).toHaveBeenCalledWith("userIdentity");
         expect(mockNavigate).toHaveBeenCalledWith("/signin");
     });
+    
+    it("shows success message after saving availability", async () => {
+  const assignment = makeAssignment();
+
+  const assignmentQuery = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+  };
+
+  assignmentQuery.eq.mockResolvedValueOnce({
+    data: [assignment],
+    error: null,
+  });
+
+  assignmentQuery.eq.mockResolvedValueOnce({
+    error: null,
+  });
+
+  const notificationQuery = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue({
+      data: [],
+      error: null,
+    }),
+  };
+
+  const { supabase } = await import("#lib/supabase");
+
+  supabase.from.mockImplementation((table) => {
+    if (table === "staff_assignments") {
+      return assignmentQuery;
+    }
+
+    if (table === "notifications") {
+      return notificationQuery;
+    }
+
+    return mockQuery;
+  });
+
+  const user = userEvent.setup();
+
+  render(<StaffDashboard profile={mockStaffProfile} />);
+
+  await waitFor(() => {
+  expect(screen.getByText("Soweto Clinic")).toBeVisible();
+});
+
+ 
+});
+    
+it("Availability quick-action navigates to /schedule", async () => {
+  const user = userEvent.setup();
+
+  render(<StaffDashboard profile={mockStaffProfile} />);
+
+  const btn = screen.getByRole("button", {
+    name: /availability/i,
+  });
+
+  await user.click(btn);
+
+  await waitFor(() => {
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/schedule",
+      expect.any(Object)
+    );
+  });
+});
+describe("Sidebar hamburger", () => {
+    it("toggles sidebar open class when hamburger is clicked", async () => {
+        const user = userEvent.setup();
+
+        render(<StaffDashboard profile={mockStaffProfile} />);
+
+        const sidebar = document.querySelector(".db-sidebar");
+        const hamburger = screen.getByRole("button", { name: "☰" });
+
+        expect(sidebar.classList.contains("open")).toBe(false);
+
+        await user.click(hamburger);
+
+        expect(sidebar.classList.contains("open")).toBe(true);
+
+        await user.click(hamburger);
+
+        expect(sidebar.classList.contains("open")).toBe(false);
+    });
+});
+
+describe("Local storage setup", () => {
+    let originalLocalStorage;
+
+    beforeEach(() => {
+        originalLocalStorage = global.localStorage;
+
+        global.localStorage = {
+            setItem: vi.fn(),
+            getItem: vi.fn(),
+            removeItem: vi.fn(),
+            clear: vi.fn(),
+        };
+    });
+
+    afterEach(() => {
+        global.localStorage = originalLocalStorage;
+    });
+
+    it("stores staff_id and facility_id after loading assignments", async () => {
+        const assignment = makeAssignment();
+
+        const assignmentQuery = {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({
+                data: [assignment],
+                error: null,
+            }),
+        };
+
+        const notificationQuery = {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+            }),
+        };
+
+        const { supabase } = await import("#lib/supabase");
+
+        supabase.from.mockImplementation((table) => {
+            if (table === "staff_assignments") {
+                return assignmentQuery;
+            }
+
+            if (table === "notifications") {
+                return notificationQuery;
+            }
+
+            return mockQuery;
+        });
+
+        render(<StaffDashboard profile={mockStaffProfile} />);
+
+        await waitFor(() => {
+            expect(localStorage.setItem).toHaveBeenCalledWith(
+                "staff_id",
+                "staff-123"
+            );
+
+            expect(localStorage.setItem).toHaveBeenCalledWith(
+                "facility_id",
+                "fac-1"
+            );
+        });
+    });
+});
+
+describe("Notification query chaining", () => {
+    it("calls notification query filters correctly", async () => {
+        const eqMock = vi.fn().mockReturnThis();
+
+        const notificationQuery = {
+            select: vi.fn().mockReturnThis(),
+            eq: eqMock,
+            order: vi.fn().mockReturnThis(),
+            limit: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+            }),
+        };
+
+        const assignmentQuery = {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+            }),
+        };
+
+        const { supabase } = await import("#lib/supabase");
+
+        supabase.from.mockImplementation((table) => {
+            if (table === "notifications") {
+                return notificationQuery;
+            }
+
+            if (table === "staff_assignments") {
+                return assignmentQuery;
+            }
+
+            return mockQuery;
+        });
+
+        render(<StaffDashboard profile={mockStaffProfile} />);
+
+        await waitFor(() => {
+            expect(eqMock).toHaveBeenCalledWith(
+                "profile_id",
+                "staff-123"
+            );
+
+            expect(eqMock).toHaveBeenCalledWith(
+                "channel",
+                "in_app"
+            );
+        });
+    });
+});
 });

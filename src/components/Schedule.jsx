@@ -193,25 +193,7 @@ const facility_id =
     clearRef.current.close();
   }
 
-  async function update_time(day) {
-    setLoading(true);
-    const { start_time, end_time, appointment_status } = formSchedule[day];
-    const body = { staff_id, day_of_week: day, body: {} };
 
-    if (start_time) body.body.start_time = start_time;
-    if (end_time) body.body.end_time = end_time;
-    if (appointment_status) body.body.appointment_status = appointment_status;
-
-    const result = await updateDaySchedule(body);
-    setLoading(false);
-    if (!result?.success) {
-      alert(`Failed to update ${DAY_LABELS[day]}. Please try again.`);
-      return;
-    }
-    resetForm();
-    await read();
-    updateRef.current.close();
-  }
   const applyToDays = (targetDays, values) => {
   setFormSchedule((prev) => {
     const next = { ...prev };

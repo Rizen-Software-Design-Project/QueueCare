@@ -1,27 +1,18 @@
-// Dashboard.test.jsx
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import userEvent from "@testing-library/user-event";
 
-
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
 const mockOnAuthStateChanged = vi.hoisted(() => vi.fn());
-const mockSupabaseFrom = vi.hoisted(() => vi.fn());
-const mockSupabaseGetUser = vi.hoisted(() => vi.fn());
-const mockNavigate = vi.hoisted(() => vi.fn());
-
-
+const mockSupabaseFrom       = vi.hoisted(() => vi.fn());
+const mockSupabaseGetUser    = vi.hoisted(() => vi.fn());
+const mockNavigate           = vi.hoisted(() => vi.fn());
 
 vi.mock("firebase/auth", () => ({
     onAuthStateChanged: mockOnAuthStateChanged,
-}));
-
-vi.mock("firebase/auth", () => ({
-    onAuthStateChanged: vi.fn((auth, callback) => {
-        callback({ uid: "1233" });
-        return () => {};
-    }),
-    getAuth: vi.fn(() => ({})),
-    signOut: vi.fn(() => Promise.resolve()),
+    getAuth:  vi.fn(() => ({})),
+    signOut:  vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock("../firebase", () => ({
@@ -31,7 +22,7 @@ vi.mock("../firebase", () => ({
 vi.mock("#lib/supabase", () => ({
     supabase: {
         auth: { getUser: mockSupabaseGetUser },
-        from: mockSupabaseFrom,
+        from:  mockSupabaseFrom,
     },
 }));
 
@@ -40,161 +31,164 @@ vi.mock("react-router-dom", async () => {
     return { ...actual, useNavigate: () => mockNavigate };
 });
 
-
-
 vi.mock("./PatientDashboard", () => ({
     default: ({ profile }) => <div data-testid="patient-dashboard">{profile.role}</div>,
 }));
 vi.mock("./StaffDashboard", () => ({
-     default: ({ profile }) => <div data-testid="staff-dashboard">{profile.role}</div>,
+    default: ({ profile }) => <div data-testid="staff-dashboard">{profile.role}</div>,
 }));
 vi.mock("./AdminDashboard", () => ({
     default: ({ profile }) => <div data-testid="admin-dashboard">{profile.role}</div>,
 }));
 
-
-
 import Dashboard from "./Dashboard";
 
-
-
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function fireAuthChange(firebaseUser) {
-    const unsubscribe = vi.fn();
     mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
         cb(firebaseUser);
-        return unsubscribe;
+        return vi.fn();
     });
-    return unsubscribe;
 }
-
-
 
 function makeQueryMock(data) {
-    const chain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
+    return {
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        order:       vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({ data }),
     };
-    return chain;
 }
 
-function renderDashboard() {
-    return render(
+async function renderDashboard() {
+    render(
         <MemoryRouter>
-        <Dashboard />
+            <Dashboard />
         </MemoryRouter>
+    );
+    await waitFor(() =>
+        expect(screen.queryByText(/loading your dashboard/i)).not.toBeInTheDocument()
     );
 }
 
-
-
+// ── Global reset ──────────────────────────────────────────────────────────────
 beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     mockSupabaseGetUser.mockResolvedValue({ data: { user: null } });
+    // default: profiles query returns null so Dashboard navigates to /signin
+    mockSupabaseFrom.mockReturnValue({
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        order:       vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+    });
 });
 
-
-
+// ─────────────────────────────────────────────────────────────────────────────
+// Loading state
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Dashboard loading state", () => {
-    it("shows the loading spinner", () => {
+    it("shows the loading spinner before auth resolves", () => {
+        // Never call the callback so loading stays true
         mockOnAuthStateChanged.mockReturnValue(vi.fn());
 
-        renderDashboard();
+        render(
+            <MemoryRouter>
+                <Dashboard />
+            </MemoryRouter>
+        );
 
         expect(screen.getByText(/loading your dashboard/i)).toBeInTheDocument();
         expect(document.querySelector(".db-spinner")).toBeInTheDocument();
     });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Unauthenticated
+// ─────────────────────────────────────────────────────────────────────────────
 describe("Dashboard unauthenticated user", () => {
-    it("redirects to /signin", async () => {
-        fireAuthChange(null); // no firebase user
+    it("redirects to /signin when no Firebase or Supabase session exists", async () => {
+        fireAuthChange(null);
         mockSupabaseGetUser.mockResolvedValue({ data: { user: null } });
 
-        renderDashboard();
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
         await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith("/signin", { replace: true });
+            expect(mockNavigate).toHaveBeenCalledWith("/signin", { replace: true });
         });
     });
 });
 
-describe("Dashboard Firebase authenticated user", () => {
+// ─────────────────────────────────────────────────────────────────────────────
+// Firebase authenticated user
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Dashboard – Firebase authenticated user", () => {
     const firebaseUser = { uid: "fb-uid-123" };
 
-    it("stores identity in localStorage after Firebase auth", async () => {
+    it("stores Firebase identity in localStorage after auth", async () => {
         fireAuthChange(firebaseUser);
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "patient", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+        );
 
-        const profileData = { role: "patient", auth_provider: "firebase", provider_user_id: "fb-uid-123" };
-        mockSupabaseFrom.mockReturnValue(makeQueryMock(profileData));
-
-        renderDashboard();
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
         await waitFor(() => {
-        const stored = JSON.parse(localStorage.getItem("userIdentity"));
-        expect(stored).toEqual({ auth_provider: "firebase", provider_user_id: "fb-uid-123" });
+            const stored = JSON.parse(localStorage.getItem("userIdentity"));
+            expect(stored).toEqual({ auth_provider: "firebase", provider_user_id: "fb-uid-123" });
         });
     });
 
-    it("renders PatientDashboard for patient", async () => {
+    it("renders PatientDashboard for role: patient", async () => {
         fireAuthChange(firebaseUser);
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "patient", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+            makeQueryMock({ role: "patient", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
         );
 
-        renderDashboard();
+        await renderDashboard();
 
-        await waitFor(() =>
-        expect(screen.getByTestId("patient-dashboard")).toBeInTheDocument()
-        );
+        expect(screen.getByTestId("patient-dashboard")).toBeInTheDocument();
     });
 
-    it("renders StaffDashboard for staff", async () => {
+    it("renders StaffDashboard for role: staff", async () => {
         fireAuthChange(firebaseUser);
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "staff", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+            makeQueryMock({ role: "staff", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
         );
 
-        renderDashboard();
+        await renderDashboard();
 
-        await waitFor(() =>
-        expect(screen.getByTestId("staff-dashboard")).toBeInTheDocument()
-        );
+        expect(screen.getByTestId("staff-dashboard")).toBeInTheDocument();
     });
 
-    it("renders AdminDashboard for admin", async () => {
+    it("renders AdminDashboard for role: admin", async () => {
         fireAuthChange(firebaseUser);
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "admin", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+            makeQueryMock({ role: "admin", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
         );
 
-        renderDashboard();
+        await renderDashboard();
 
-        await waitFor(() =>
-        expect(screen.getByTestId("admin-dashboard")).toBeInTheDocument()
-        );
+        expect(screen.getByTestId("admin-dashboard")).toBeInTheDocument();
     });
 
-    it("shows Unknown role message for an unrecognised role", async () => {
+    it("shows unknown role message for an unrecognised role", async () => {
         fireAuthChange(firebaseUser);
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "lost", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+            makeQueryMock({ role: "lost", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
         );
 
-        renderDashboard();
+        await renderDashboard();
 
-        await waitFor(() =>
-        expect(screen.getByText(/unknown role: lost/i)).toBeInTheDocument()
-        );
+        expect(screen.getByText(/unknown role: lost/i)).toBeInTheDocument();
     });
 });
 
-
-
-
-describe("Dashboard Supabase authenticated user (no Firebase session)", () => {
+// ─────────────────────────────────────────────────────────────────────────────
+// Supabase authenticated user (no Firebase session)
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Dashboard – Supabase authenticated user", () => {
     const supabaseUser = { id: "sb-uid-456" };
 
     beforeEach(() => {
@@ -202,83 +196,73 @@ describe("Dashboard Supabase authenticated user (no Firebase session)", () => {
         mockSupabaseGetUser.mockResolvedValue({ data: { user: supabaseUser } });
     });
 
-    it("stores supabase identity in localStorage", async () => {
+    it("stores Supabase identity in localStorage after auth", async () => {
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "patient", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+            makeQueryMock({ role: "patient", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
         );
 
-        renderDashboard();
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
         await waitFor(() => {
-        const stored = JSON.parse(localStorage.getItem("userIdentity"));
-        expect(stored).toEqual({ auth_provider: "supabase", provider_user_id: "sb-uid-456" });
+            const stored = JSON.parse(localStorage.getItem("userIdentity"));
+            expect(stored).toEqual({ auth_provider: "supabase", provider_user_id: "sb-uid-456" });
         });
     });
 
-    it("renders PatientDashboard for patient", async () => {
+    it("renders PatientDashboard for role: patient", async () => {
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "patient", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+            makeQueryMock({ role: "patient", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
         );
 
-        renderDashboard();
+        await renderDashboard();
 
-        await waitFor(() =>
-        expect(screen.getByTestId("patient-dashboard")).toBeInTheDocument()
-        );
+        expect(screen.getByTestId("patient-dashboard")).toBeInTheDocument();
     });
 
-    it("renders StaffDashboard for staff", async () => {
+    it("renders StaffDashboard for role: staff", async () => {
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "staff", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+            makeQueryMock({ role: "staff", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
         );
 
-        renderDashboard();
+        await renderDashboard();
 
-        await waitFor(() =>
-        expect(screen.getByTestId("staff-dashboard")).toBeInTheDocument()
-        );
+        expect(screen.getByTestId("staff-dashboard")).toBeInTheDocument();
     });
 
-    it("renders AdminDashboard for admin", async () => {
+    it("renders AdminDashboard for role: admin", async () => {
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "admin", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+            makeQueryMock({ role: "admin", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
         );
 
-        renderDashboard();
+        await renderDashboard();
 
-        await waitFor(() =>
-        expect(screen.getByTestId("admin-dashboard")).toBeInTheDocument()
-        );
+        expect(screen.getByTestId("admin-dashboard")).toBeInTheDocument();
     });
 
-    it("shows Unknown role message for an unrecognised role", async () => {
+    it("shows unknown role message for an unrecognised role", async () => {
         mockSupabaseFrom.mockReturnValue(
-        makeQueryMock({ role: "lost", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+            makeQueryMock({ role: "lost", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
         );
 
-        renderDashboard();
+        await renderDashboard();
 
-        await waitFor(() =>
-        expect(screen.getByText(/unknown role: lost/i)).toBeInTheDocument()
-        );
+        expect(screen.getByText(/unknown role: lost/i)).toBeInTheDocument();
     });
 });
 
-
-
-
-describe("Dashboard profile not found (role_applications fallback)", () => {
-  const firebaseUser = { uid: "fb-uid-789" };
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile not found — role_applications fallback
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Dashboard – profile not found (role_applications fallback)", () => {
+    const firebaseUser = { uid: "fb-uid-789" };
 
     it("redirects with pending message when application is pending", async () => {
         fireAuthChange(firebaseUser);
-
-        // profiles query → null; role_applications query → pending app
         mockSupabaseFrom
-        .mockReturnValueOnce(makeQueryMock(null))
-        .mockReturnValueOnce(makeQueryMock({ requested_role: "staff", status: "pending" }));
+            .mockReturnValueOnce(makeQueryMock(null))
+            .mockReturnValueOnce(makeQueryMock({ requested_role: "staff", status: "pending" }));
 
-        renderDashboard();
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith("/signin", {
@@ -290,12 +274,11 @@ describe("Dashboard profile not found (role_applications fallback)", () => {
 
     it("redirects with rejection message when application was rejected", async () => {
         fireAuthChange(firebaseUser);
-
         mockSupabaseFrom
-        .mockReturnValueOnce(makeQueryMock(null))
-        .mockReturnValueOnce(makeQueryMock({ requested_role: "admin", status: "rejected" }));
+            .mockReturnValueOnce(makeQueryMock(null))
+            .mockReturnValueOnce(makeQueryMock({ requested_role: "admin", status: "rejected" }));
 
-        renderDashboard();
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith("/signin", {
@@ -307,19 +290,17 @@ describe("Dashboard profile not found (role_applications fallback)", () => {
 
     it("redirects without state message when no application exists", async () => {
         fireAuthChange(firebaseUser);
-
         mockSupabaseFrom
-        .mockReturnValueOnce(makeQueryMock(null))
-        .mockReturnValueOnce(makeQueryMock(null));
+            .mockReturnValueOnce(makeQueryMock(null))
+            .mockReturnValueOnce(makeQueryMock(null));
 
-        renderDashboard();
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
         await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith("/signin", { 
-                replace: true ,
-                state: undefined
+            expect(mockNavigate).toHaveBeenCalledWith("/signin", {
+                replace: true,
+                state: undefined,
             });
         });
     });
 });
-

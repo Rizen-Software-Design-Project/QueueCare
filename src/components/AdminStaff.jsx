@@ -223,7 +223,10 @@ export default function AdminStaff() {
       p_facility_id: member.facility_id,
     });
     if (error || data?.error) {
-      setActionStatus({ type: "error", message: error?.message || data?.error });
+      setActionStatus({
+    type: "error",
+    message: String(error?.message || data?.error || "Unknown error"),
+  });
       return;
     }
     setClinicStaff(prev => prev.filter(s => s.profile_id !== member.profile_id));

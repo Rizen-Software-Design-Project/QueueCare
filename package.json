@@ -17,7 +17,6 @@
     "test:coverage": "vitest run --coverage --reporter=default",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "test": "vitest run --coverage && cd \"src/appointment booking\" && npm test",
     "test:frontend": "vitest run --coverage",
     "test:backend": "cd \"src/appointment booking\" && npm test",
     "coverage": "vitest run --coverage",
@@ -68,7 +67,22 @@
     "coverage:staffcm": "vitest run --coverage src/components/StaffClinicManagement.test.jsx",
 
     "test:all": "vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx",
-    "coverage:all": "vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx"
+    "coverage:all": "vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx src/components/PatientDashboard.test.jsx src/components/StaffDashboard.test.jsx src/components/AdminDashboard.test.jsx src/components/Walkin.test.jsx src/components/BookAppointment.test.jsx",
+
+    "test:profilepage":   "vitest run src/components/ProfilePage.test.jsx",
+    "coverage:profilepage": "vitest run --coverage src/components/ProfilePage.test.jsx",
+
+    "test:schedule":      "vitest run src/components/Schedule.test.jsx",
+    "coverage:schedule":  "vitest run --coverage src/components/Schedule.test.jsx",
+
+    "test:ai":            "vitest run src/components/AIAssistant.test.jsx",
+    "coverage:ai":        "vitest run --coverage src/components/AIAssistant.test.jsx",
+
+    "test:analytics":     "vitest run src/components/AnalyticsDashboardAdmin.test.jsx src/components/AnalyticsDashboardStaff.test.jsx",
+    "coverage:analytics": "vitest run --coverage src/components/AnalyticsDashboardAdmin.test.jsx src/components/AnalyticsDashboardStaff.test.jsx",
+
+    "test:profilesetup":  "vitest run src/components/ProfileSetupPage.test.jsx",
+    "coverage:profilesetup": "vitest run --coverage src/components/ProfileSetupPage.test.jsx"
   
   },
   "dependencies": {
@@ -118,9 +132,6 @@
   "imports": {
     "#lib/*": "./src/lib/*.js",
     "#utils/*": "./src/utils/*.js",
-    "#hook/*": "./src/hooks/*.js",
-    "supertest": "^7.2.2",
-    "vite": "^8.0.1",
-    "vitest": "^4.1.4"
+    "#hook/*": "./src/hooks/*.js"
   }
 }

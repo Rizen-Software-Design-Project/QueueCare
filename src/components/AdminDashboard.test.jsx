@@ -335,95 +335,22 @@ describe("Notifications Panel - content", () => {
 
 //jump-profile
 describe("Clicked Profile", () => {
-    beforeEach(async () => {
-        mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
-
+    it("navigates to /profile when Profile nav button is clicked", async () => {
         const user = userEvent.setup();
         render(<AdminDashboard profile={mockAdminProfile} />);
-        const profile = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
-        await user.click(profile);
+        const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
+        await user.click(profileNav);
+        await waitFor(() =>
+            expect(mockNavigate).toHaveBeenCalledWith("/profile", expect.any(Object))
+        );
     });
 
-    it("renders Profile on topbar", () => {
-        const topbar = screen.getAllByText(/profile/i).find((el) => el.closest(".db-topbar"));
-        expect(topbar).toBeVisible();
-    });
-
-    it("renders user name", () => {
+    it("renders the user greeting", () => {
+        render(<AdminDashboard profile={mockAdminProfile} />);
         expect(screen.getByText(/Hi, Alice/i)).toBeVisible();
     });
 });
 
-describe("Profile Panel - content", () => {
-    async function renderAndOpenProfile() {
-        mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
-        const user = userEvent.setup();
-        render(<AdminDashboard profile={mockAdminProfile} />);
-        const profileNav = screen.getAllByText(/profile/i).find((btn) => btn.closest(".db-nav"));
-        await user.click(profileNav);
-        return user;
-    }
-
-    it("displays the user's name, surname, and email in view mode", async () => {
-        await renderAndOpenProfile();
-
-        expect(screen.getByText(`Name: ${mockAdminProfile.name}`)).toBeVisible();
-        expect(screen.getByText(`Surname: ${mockAdminProfile.surname}`)).toBeVisible();
-        expect(screen.getByText(`Email: ${mockAdminProfile.email}`)).toBeVisible();
-        expect(screen.getByRole("button", { name: /edit/i })).toBeVisible();
-        expect(screen.queryByRole("button", { name: /save/i })).not.toBeInTheDocument();
-    });
-
-    it("switches to edit mode when Edit button is clicked", async () => {
-        const user = await renderAndOpenProfile();
-
-        await user.click(screen.getByRole("button", { name: /edit/i }));
-
-        expect(screen.getByPlaceholderText("Name")).toHaveValue(mockAdminProfile.name);
-        expect(screen.getByPlaceholderText("Surname")).toHaveValue(mockAdminProfile.surname);
-        expect(screen.getByPlaceholderText("Phone")).toHaveValue(mockAdminProfile.phone_number);
-        expect(screen.getByRole("button", { name: /save/i })).toBeVisible();
-        expect(screen.getByRole("button", { name: /cancel/i })).toBeVisible();
-        expect(screen.queryByRole("button", { name: /edit/i })).not.toBeInTheDocument();
-    });
-
-    it("cancels edit mode without saving changes", async () => {
-        const user = await renderAndOpenProfile();
-
-        await user.click(screen.getByRole("button", { name: /edit/i }));
-
-        const nameInput = screen.getByPlaceholderText("Name");
-        await user.clear(nameInput);
-        await user.type(nameInput, "Bob");
-
-        await user.click(screen.getByRole("button", { name: /cancel/i }));
-
-        expect(screen.getByText(`Name: ${mockAdminProfile.name}`)).toBeVisible();
-        expect(screen.queryByPlaceholderText("Name")).not.toBeInTheDocument();
-    });
-
-    it("saves changes and updates the displayed profile", async () => {
-        mockQuery.update.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
-
-        const user = await renderAndOpenProfile();
-
-        await user.click(screen.getByRole("button", { name: /edit/i }));
-
-        const nameInput = screen.getByPlaceholderText("Name");
-        const phoneInput = screen.getByPlaceholderText("Phone");
-        await user.clear(nameInput);
-        await user.type(nameInput, "Alicia");
-        await user.clear(phoneInput);
-        await user.type(phoneInput, "0829999999");
-
-        await user.click(screen.getByRole("button", { name: /save/i }));
-
-        await waitFor(() => {
-            expect(screen.getByText("Name: Alicia")).toBeVisible();
-        });
-        expect(screen.queryByPlaceholderText("Name")).not.toBeInTheDocument();
-    });
-});
 
 
 describe("Logout", () => {

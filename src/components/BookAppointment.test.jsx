@@ -85,6 +85,9 @@ beforeEach(() => {
                   data: {
                     id: 99,
                     email: "test@test.com",
+                    first_name: "Jane",       // ← add these
+                    last_name: "Doe",
+                    surname: "Doe",
                   },
                   error: null,
                 }),
@@ -145,11 +148,15 @@ beforeEach(() => {
 
 
 describe("BookAppointment", () => {
-  it("renders clinic name", async () => {
-    render(<BookAppointment />);
+ it("renders clinic name", async () => {
+  render(<BookAppointment />);
 
-    expect(await screen.findByText("Test Clinic")).toBeInTheDocument();
+  const heading = await screen.findByRole("heading", {
+    level: 3,
+    name: "Test Clinic",
   });
+  expect(heading).toBeInTheDocument();
+});
 
   it("shows available slot", async () => {
     render(<BookAppointment />);

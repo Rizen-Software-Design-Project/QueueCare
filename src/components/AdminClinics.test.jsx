@@ -342,4 +342,261 @@ describe("AdminClinics", () => {
       expect(global.fetch).toHaveBeenCalled();
     });
   });
+  it("updates district options when province changes", async () => {
+  const user = userEvent.setup();
+
+  render(<AdminClinics />);
+
+  const selects = screen.getAllByRole("combobox");
+  const provinceSelect = selects[0];
+  const districtSelect = selects[1];
+
+  await user.selectOptions(provinceSelect, "Gauteng");
+
+  expect(districtSelect).toHaveTextContent("City of Johannesburg");
+  expect(districtSelect).toHaveTextContent("City of Tshwane");
+
+  expect(districtSelect).not.toHaveTextContent("Cape Winelands");
+});
+
+it("opens modal with preselected services", async () => {
+  const user = userEvent.setup();
+
+  mockFetchJson.mockResolvedValueOnce([
+    {
+      id: 7,
+      name: "Preset Clinic",
+      district: "Tshwane",
+      province: "Gauteng",
+      is_active: true,
+      services_offered: ["Vaccination", "TB Screening"],
+      operating_hours: {},
+    },
+  ]);
+
+  render(<AdminClinics />);
+
+  await user.click(screen.getByText("Search"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Preset Clinic")).toBeInTheDocument();
+  });
+
+  await user.click(screen.getByText("✏️ Edit facility"));
+
+  expect(screen.getByText(/✓ Vaccination/)).toBeInTheDocument();
+  expect(screen.getByText(/✓ TB Screening/)).toBeInTheDocument();
+});
+
+it("toggles facility active checkbox", async () => {
+  const user = userEvent.setup();
+
+  mockFetchJson.mockResolvedValueOnce([
+    {
+      id: 8,
+      name: "Checkbox Clinic",
+      district: "Tshwane",
+      province: "Gauteng",
+      is_active: true,
+      services_offered: [],
+      operating_hours: {},
+    },
+  ]);
+
+  render(<AdminClinics />);
+
+  await user.click(screen.getByText("Search"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Checkbox Clinic")).toBeInTheDocument();
+  });
+
+  await user.click(screen.getByText("✏️ Edit facility"));
+
+  const checkbox = screen.getByRole("checkbox");
+
+  expect(checkbox).toBeChecked();
+
+  await user.click(checkbox);
+
+  expect(checkbox).not.toBeChecked();
+});
+
+it("applies quick fill preset", async () => {
+  const user = userEvent.setup();
+
+  mockFetchJson.mockResolvedValueOnce([
+    {
+      id: 9,
+      name: "Preset Hours Clinic",
+      district: "Tshwane",
+      province: "Gauteng",
+      is_active: true,
+      services_offered: [],
+      operating_hours: {},
+    },
+  ]);
+
+  render(<AdminClinics />);
+
+  await user.click(screen.getByText("Search"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Preset Hours Clinic")).toBeInTheDocument();
+  });
+
+  await user.click(screen.getByText("✏️ Edit facility"));
+
+  await user.click(screen.getByText(/24 \/ 7/i));
+
+  const timeInputs = screen.getAllByDisplayValue("00:00");
+
+  expect(timeInputs.length).toBeGreaterThan(0);
+});
+
+it("marks a day as closed", async () => {
+  const user = userEvent.setup();
+
+  mockFetchJson.mockResolvedValueOnce([
+    {
+      id: 10,
+      name: "Closed Day Clinic",
+      district: "Tshwane",
+      province: "Gauteng",
+      is_active: true,
+      services_offered: [],
+      operating_hours: {},
+    },
+  ]);
+
+  render(<AdminClinics />);
+
+  await user.click(screen.getByText("Search"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Closed Day Clinic")).toBeInTheDocument();
+  });
+
+  await user.click(screen.getByText("✏️ Edit facility"));
+
+  const closedButtons = screen.getAllByText("Closed");
+
+  await user.click(closedButtons[0]);
+
+  expect(screen.getAllByText("Closed").length).toBeGreaterThan(1);
+});
+
+it("shows saving state while saving facility changes", async () => {
+  const user = userEvent.setup();
+
+  mockRpc.mockImplementation(
+    () =>
+      new Promise((resolve) =>
+        setTimeout(() => {
+          resolve({ data: { success: true }, error: null });
+        }, 100)
+      )
+  );
+
+  mockFetchJson.mockResolvedValueOnce([
+    {
+      id: 11,
+      name: "Saving Clinic",
+      district: "Tshwane",
+      province: "Gauteng",
+      is_active: true,
+      services_offered: [],
+      operating_hours: {},
+    },
+  ]);
+
+  render(<AdminClinics />);
+
+  await user.click(screen.getByText("Search"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Saving Clinic")).toBeInTheDocument();
+  });
+
+  await user.click(screen.getByText("✏️ Edit facility"));
+
+  await user.click(screen.getByText("Save changes"));
+
+  expect(screen.getByText("Saving...")).toBeInTheDocument();
+});
+
+it("handles facility update failure", async () => {
+  const user = userEvent.setup();
+
+  mockRpc.mockResolvedValueOnce({
+    data: null,
+    error: { message: "Update failed" },
+  });
+
+  mockFetchJson.mockResolvedValueOnce([
+    {
+      id: 12,
+      name: "Failure Clinic",
+      district: "Tshwane",
+      province: "Gauteng",
+      is_active: true,
+      services_offered: [],
+      operating_hours: {},
+    },
+  ]);
+
+  render(<AdminClinics />);
+
+  await user.click(screen.getByText("Search"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Failure Clinic")).toBeInTheDocument();
+  });
+
+  await user.click(screen.getByText("✏️ Edit facility"));
+
+  await user.click(screen.getByText("Save changes"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Update failed")).toBeInTheDocument();
+  });
+});
+
+it("closes modal when overlay is clicked", async () => {
+  const user = userEvent.setup();
+
+  mockFetchJson.mockResolvedValueOnce([
+    {
+      id: 13,
+      name: "Overlay Clinic",
+      district: "Tshwane",
+      province: "Gauteng",
+      is_active: true,
+      services_offered: [],
+      operating_hours: {},
+    },
+  ]);
+
+  render(<AdminClinics />);
+
+  await user.click(screen.getByText("Search"));
+
+  await waitFor(() => {
+    expect(screen.getByText("Overlay Clinic")).toBeInTheDocument();
+  });
+
+  await user.click(screen.getByText("✏️ Edit facility"));
+
+  expect(screen.getByText("✏️ Overlay Clinic")).toBeInTheDocument();
+
+  const overlay = document.querySelector(".modal-overlay");
+
+  await user.click(overlay);
+
+  await waitFor(() => {
+    expect(
+      screen.queryByText("✏️ Overlay Clinic")
+    ).not.toBeInTheDocument();
+  });
+});
 });
