@@ -26,7 +26,7 @@ jobs:
         run: npm install
 
       - name: Run frontend tests with coverage
-        run: npx vitest run --coverage 2>&1 | tee vitest-output.txt
+        run: npx vitest run --coverage --coverage.reportsDirectory=coverage/frontend 2>&1 | tee vitest-output.txt
 
       - name: Generate coverage badge
         if: github.event_name == 'push'
@@ -57,7 +57,7 @@ jobs:
           grep "Tests " vitest-output.txt >> $GITHUB_STEP_SUMMARY || true
 
   backend-tests:
-    name: Backend Tests (Jest)
+    name: Backend Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -72,10 +72,13 @@ jobs:
         run: npm install
 
       - name: Run backend tests with coverage
+        run: npx vitest run --project backend --coverage --coverage.reportsDirectory=coverage/backend 2>&1 | tee backend-output.txt
+      
+      - name: Coverage summary
+        if: always()
         run: |
-          npx vitest run --project backend--coverage 2>&1 | tee jest-output.txt
           echo "## Backend Coverage (Vitest)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          grep -E "Test Files|Tests|Coverage|All files" backend-output.txt >> $GITHUB_STEP_SUMMARY || true
+          grep -E "%|File|All files|---|Test Files|Tests" backend-output.txt >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
-        working-directory: "src/appointment-booking"
+      
