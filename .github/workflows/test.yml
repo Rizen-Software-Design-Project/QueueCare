@@ -31,7 +31,7 @@ jobs:
       - name: Generate coverage badge
         if: github.event_name == 'push'
         run: |
-          COVERAGE=$(node -e "const c = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf8')); console.log(c.total.statements.pct)")
+          COVERAGE=$(node -e "const c = JSON.parse(require('fs').readFileSync('coverage/frontend/coverage-summary.json', 'utf8')); console.log(c.total.statements.pct)")
           if (( $(echo "$COVERAGE >= 80" | bc -l) )); then COLOR=brightgreen
           elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then COLOR=yellow
           else COLOR=red; fi
