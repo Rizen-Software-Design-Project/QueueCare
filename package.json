@@ -20,70 +20,48 @@
     "test:frontend": "vitest run --coverage",
     "test:backend": "cd \"src/appointment booking\" && npm test",
     "coverage": "vitest run --coverage",
-
     "test:authpage": "vitest run src/components/AuthPage.test.jsx",
     "coverage:authpage": "vitest run --coverage src/components/AuthPage.test.jsx",
-
     "coverage:welcome": "vitest run --coverage src/components/Welcome.test.jsx",
     "test:welcome": "vitest run src/components/Welcome.test.jsx",
-
     "test:clinicsearch": "vitest run src/components/Clinic_search.test.jsx",
     "coverage:clinicsearch": "vitest run --coverage src/components/Clinic_search.test.jsx",
-
     "test:adminclinics": "vitest run src/components/AdminClinics.test.jsx",
     "coverage:adminclinics": "vitest run --coverage src/components/AdminClinics.test.jsx",
-
     "test:adminstaff": "vitest run src/components/AdminStaff.test.jsx",
     "coverage:adminstaff": "vitest run --coverage src/components/AdminStaff.test.jsx",
-
     "test:applications": "vitest run src/components/Applications.test.jsx",
     "coverage:applications": "vitest run --coverage src/components/Applications.test.jsx",
-    
     "test:dashboard": "vitest run src/components/Dashboard.test.jsx",
     "coverage:dashboard": "vitest run --coverage src/components/Dashboard.test.jsx",
-
     "test:pdashboard": "vitest run src/components/PatientDashboard.test.jsx",
     "coverage:pdashboard": "vitest run --coverage src/components/PatientDashboard.test.jsx",
-
     "test:sdashboard": "vitest run src/components/StaffDashboard.test.jsx",
     "coverage:sdashboard": "vitest run --coverage src/components/StaffDashboard.test.jsx",
-
     "test:adashboard": "vitest run src/components/AdminDashboard.test.jsx",
     "coverage:adashboard": "vitest run --coverage src/components/AdminDashboard.test.jsx",
-
     "test:dashboards": "vitest run src/components/AdminDashboard.test.jsx src/components/StaffDashboard.test.jsx src/components/PatientDashboard.test.jsx src/components/Dashboard.test.jsx",
     "coverage:dashboards": "vitest run --coverage src/components/AdminDashboard.test.jsx src/components/StaffDashboard.test.jsx src/components/PatientDashboard.test.jsx src/components/Dashboard.test.jsx",
-
     "test:dashboardh": "vitest run src/components/DashboardHelpers.test.jsx",
     "coverage:dashboardh": "vitest run --coverage src/components/DashboardHelpers.test.jsx",
-
     "test:walkin": "vitest run src/components/Walkin.test.jsx",
     "coverage:walkin": "vitest run --coverage src/components/Walkin.test.jsx",
-
     "test:bookapp": "vitest run src/components/BookAppointment.test.jsx",
     "coverage:bookapp": "vitest run --coverage src/components/BookAppointment.test.jsx",
-
     "test:staffcm": "vitest run src/components/StaffClinicManagement.test.jsx",
     "coverage:staffcm": "vitest run --coverage src/components/StaffClinicManagement.test.jsx",
-
     "test:all": "vitest run src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx",
     "coverage:all": "vitest run --coverage src/components/AuthPage.test.jsx src/components/Dashboard.test.jsx src/components/Welcome.test.jsx src/components/Clinic_search.test.jsx src/components/AdminClinics.test.jsx src/components/AdminStaff.test.jsx src/components/Applications.test.jsx src/components/PatientDashboard.test.jsx src/components/StaffDashboard.test.jsx src/components/AdminDashboard.test.jsx src/components/Walkin.test.jsx src/components/BookAppointment.test.jsx",
-
-    "test:profilepage":   "vitest run src/components/ProfilePage.test.jsx",
+    "test:profilepage": "vitest run src/components/ProfilePage.test.jsx",
     "coverage:profilepage": "vitest run --coverage src/components/ProfilePage.test.jsx",
-
-    "test:schedule":      "vitest run src/components/Schedule.test.jsx",
-    "coverage:schedule":  "vitest run --coverage src/components/Schedule.test.jsx",
-
-    "test:ai":            "vitest run src/components/AIAssistant.test.jsx",
-    "coverage:ai":        "vitest run --coverage src/components/AIAssistant.test.jsx",
-
-    "test:analytics":     "vitest run src/components/AnalyticsDashboardAdmin.test.jsx src/components/AnalyticsDashboardStaff.test.jsx",
+    "test:schedule": "vitest run src/components/Schedule.test.jsx",
+    "coverage:schedule": "vitest run --coverage src/components/Schedule.test.jsx",
+    "test:ai": "vitest run src/components/AIAssistant.test.jsx",
+    "coverage:ai": "vitest run --coverage src/components/AIAssistant.test.jsx",
+    "test:analytics": "vitest run src/components/AnalyticsDashboardAdmin.test.jsx src/components/AnalyticsDashboardStaff.test.jsx",
     "coverage:analytics": "vitest run --coverage src/components/AnalyticsDashboardAdmin.test.jsx src/components/AnalyticsDashboardStaff.test.jsx",
-
-    "test:profilesetup":  "vitest run src/components/ProfileSetupPage.test.jsx",
+    "test:profilesetup": "vitest run src/components/ProfileSetupPage.test.jsx",
     "coverage:profilesetup": "vitest run --coverage src/components/ProfileSetupPage.test.jsx"
-  
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
@@ -127,6 +105,7 @@
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2",
     "vite": "^8.0.1",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.5"
   },
   "imports": {
