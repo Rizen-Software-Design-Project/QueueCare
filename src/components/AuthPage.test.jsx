@@ -4,6 +4,8 @@ import AuthPage from "./AuthPage";
 import { signInWithPopup, signInWithPhoneNumber } from "firebase/auth";
 import userEvent from "@testing-library/user-event";
 
+import { strengthScore, normaliseSAPhone, isProfileComplete } from './AuthPage'; // adjust path if needed
+
 // *****THE COMMENTS ARE NECESSARY*****
 //mocks
 //opening pages
@@ -110,6 +112,24 @@ async function selectRole(role) {
 
 
 //opening pages
+function openInitialSignInPage(){
+  it("Renders Welcome message", async() => {
+    expect(screen.getByText(/Welcome/i)).toBeVisible();
+  });
+
+  it("Renders Continue as Patient button", async() => {
+    expect(screen.getByRole("button", {name: "Continue as Patient"}));
+  });
+
+  it("Renders Continue as Staff button", async() => {
+    expect(screen.getByRole("button", {name: "Continue as Staff"}));
+  });
+
+  it("Renders Continue as Admin button", async() => {
+    expect(screen.getByRole("button", {name: "Continue as Admin"}));
+  });
+}
+
 function openSignInWelcomePage(){
   it("Renders the Continue with Google button", async() => {
     const googleButton = screen.getByRole("button", {name:"Continue with Google"});
@@ -453,17 +473,69 @@ async function fillSubmitCompleteProfile() {
 
 
 
-
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 //tests(describes)
-//Sign in -> Continue with Google, Continue with Facebook... PAGE
-describe("Sign in - Welcome PAGE", () => {
+describe("Home - Signin page", () => {
+  beforeEach(async() => {
+    render(<AuthPage/>);
+  });
+
+  openInitialSignInPage();
+});
+
+
+describe("Continue as patient clicked", () => {
   beforeEach(async() => {
     render(<AuthPage/>);
     await selectRole("patient");
   });
 
+  it("Renders Sign in page for patient", async() => {
+    expect(screen.getByText(/patient/i)).toBeVisible();
+  });
+
   openSignInWelcomePage();
+});
+
+describe("Continue as staff clicked", () => {
+  beforeEach(async() => {
+    render(<AuthPage/>);
+    await selectRole("staff");
+  });
+
+  it("Renders Sign in page for staff", async() => {
+    expect(screen.getByText(/staff/i)).toBeVisible();
+  });
+
+  openSignInWelcomePage();
+});
+
+describe("Continue as admin clicked", () => {
+  beforeEach(async() => {
+    render(<AuthPage/>);
+    await selectRole("admin");
+  });
+
+  it("Renders Sign in page for admin", async() => {
+    expect(screen.getByText(/admin/i)).toBeVisible();
+  });
+
+  openSignInWelcomePage();
+});
+
+describe("Back button clicked from Sign in home page", () => {
+  beforeEach(async() => {
+    render(<AuthPage/>);
+    
+    await selectRole("patient");
+
+    await backButtonClicked();
+  });
+
+  openInitialSignInPage();
 });
 
 describe("Continue with Google button clicked", () => {
@@ -482,6 +554,7 @@ describe("Continue with Google button clicked", () => {
     //opens dashboard OR complete profile
   });
 });
+
 
 describe("Continue with Facebook button clicked", () => {
   it("Triggers Firebase", async() => {
@@ -675,6 +748,8 @@ describe("Send OTP button clicked", () => {
   openPhoneOtpPage();
 });
 
+
+
 //Phone OTP PAGE
 describe("Back button clicked from Phone OTP page", () => {
   beforeEach(async() => {
@@ -689,44 +764,95 @@ describe("Back button clicked from Phone OTP page", () => {
   openPhoneSignInPage();
 });
 
-// describe("Verify button clicked", () => {
-//   beforeEach(async() => { 
-//     const user = userEvent.setup();
-//     render(<AuthPage/>);
-//     await selectRole("patient");
+describe("Verify button clicked", () => {
+  beforeEach(async () => {
+    const user = await navigateToPhoneSignIn();
+    await fillSubmitPhoneSignIn();
 
-//     const phoneButton = screen.getByRole("button", {name:"Continue with Phone"});
-//     await user.click(phoneButton);
+    await waitFor(() => {
+      expect(signInWithPhoneNumber).toHaveBeenCalled();
+    });
+  });
 
-//     const phoneField = screen.getByPlaceholderText("821234567");
-//     await user.type(phoneField, "0820000000")
+  it("accepts correct OTP code", async () => {
+    const user = userEvent.setup();
+    const mockConfirm = vi.fn(() => Promise.resolve({ user: { uid: "phone-uid" } }));
+    window.confirmationResult = { confirm: mockConfirm };
 
-//     const sendOTPButton = screen.getByRole("button", {name:"Send OTP"});
-//     await user.click(sendOTPButton);
+    const boxes = [
+      screen.getByTestId("otp-input-0"),
+      screen.getByTestId("otp-input-1"),
+      screen.getByTestId("otp-input-2"),
+      screen.getByTestId("otp-input-3"),
+      screen.getByTestId("otp-input-4"),
+      screen.getByTestId("otp-input-5"),
+    ];
+    for (let i = 0; i < boxes.length; i++) {
+      await user.type(boxes[i], "1");
+    }
 
-//     await waitFor(() => {
-//       expect(signInWithPhoneNumber).toHaveBeenCalled();
-//     });
+    const verifyButton = screen.getByRole("button", { name: "Verify" });
+    await user.click(verifyButton);
 
-//     const boxes = [
-//       screen.getByTestId("otp-input-0"),
-//       screen.getByTestId("otp-input-1"),
-//       screen.getByTestId("otp-input-2"),
-//       screen.getByTestId("otp-input-3"),
-//       screen.getByTestId("otp-input-4"),
-//       screen.getByTestId("otp-input-5"),
-//     ];
+    expect(window.confirmationResult.confirm).toHaveBeenCalledWith("111111");
+  });
 
-//     for (let i = 0; i < boxes.length; i++) {
-//       await user.type(boxes[i], "1");
-//     }
+  it("shows error message when OTP code is wrong", async () => {
+    const user = userEvent.setup();
+    const mockConfirm = vi.fn(() => Promise.reject(new Error("Wrong code")));
+    window.confirmationResult = { confirm: mockConfirm };
 
-//     const verifyButton = screen.getByRole("button", {name:"Verify"});
-//     await user.click(verifyButton);
-//   });
+    const boxes = [
+      screen.getByTestId("otp-input-0"),
+      screen.getByTestId("otp-input-1"),
+      screen.getByTestId("otp-input-2"),
+      screen.getByTestId("otp-input-3"),
+      screen.getByTestId("otp-input-4"),
+      screen.getByTestId("otp-input-5"),
+    ];
+    for (let i = 0; i < boxes.length; i++) {
+      await user.type(boxes[i], "1");
+    }
 
-//   //opening dashboard OR complete profile
-// });
+    const verifyButton = screen.getByRole("button", { name: "Verify" });
+    await user.click(verifyButton);
+
+    expect(window.confirmationResult.confirm).toHaveBeenCalledWith("111111");
+
+    await waitFor(() => {
+      const all = screen.getAllByText(/Wrong code/i)
+      all.forEach((one) => {
+        expect(one).toBeVisible()
+      });
+    });
+  });
+
+  it("shows error when less than 6 digits are entered", async () => {
+    const user = userEvent.setup();
+    window.confirmationResult = { confirm: vi.fn() };
+
+    const boxes = [
+      screen.getByTestId("otp-input-0"),
+      screen.getByTestId("otp-input-1"),
+      screen.getByTestId("otp-input-2"),
+    ];
+    for (let i = 0; i < boxes.length; i++) {
+      await user.type(boxes[i], "1");
+    }
+
+    const verifyButton = screen.getByRole("button", { name: "Verify" });
+    await user.click(verifyButton);
+
+    expect(window.confirmationResult.confirm).not.toHaveBeenCalled();
+
+    await waitFor(() => {
+      const all = screen.getAllByText(/Enter all 6 digits/i)
+      all.forEach((one) => {
+        expect(one).toBeVisible()
+      });
+    });
+  });
+});
 
 
 describe("Resend OTP clicked", () => {
@@ -782,3 +908,131 @@ describe("Resend OTP clicked", () => {
 // describe("Go to dashboard clicked", () => {
 //   //open dashboard
 // });
+
+
+describe("strengthScore", () => {
+  it("returns 0 for empty string", () => {
+    expect(strengthScore("")).toBe(0);
+  });
+
+  it("returns 0 for short password (<8 chars)", () => {
+    expect(strengthScore("abcd")).toBe(0);
+  });
+
+  it("returns 1 for length >=8 only", () => {
+    expect(strengthScore("abcdefgh")).toBe(1);
+  });
+
+  it("returns 2 for length >=8 + uppercase", () => {
+    expect(strengthScore("Abcdefgh")).toBe(2);
+  });
+
+  it("returns 3 for length >=8 + uppercase + digit", () => {
+    expect(strengthScore("Abcdefg1")).toBe(3);
+  });
+
+  it("returns 4 for length >=8 + uppercase + digit + special char", () => {
+    expect(strengthScore("Abcdefg1!")).toBe(4);
+  });
+
+  it("handles mixed case but counts uppercase once", () => {
+    expect(strengthScore("ABCDEFGH")).toBe(2);
+  });
+});
+
+describe("normaliseSAPhone", () => {
+  it("converts 10 digit SA number starting with 0", () => {
+    expect(normaliseSAPhone("0821234567")).toBe('+27821234567');
+  });
+
+  it("converts 9 digit SA number", () => {
+    expect(normaliseSAPhone("821234567")).toBe('+27821234567');
+  });
+
+  it("keeps number already starting with +", () => {
+    expect(normaliseSAPhone("+27821234567")).toBe('+27821234567');
+  });
+
+  it("removes spaces before normalising", () => {
+    expect(normaliseSAPhone("082 123 4567")).toBe('+27821234567');
+    expect(normaliseSAPhone("821 234 567")).toBe('+27821234567');
+  });
+
+  it('returns null for invalid length(less than 9)', () => {
+    expect(normaliseSAPhone("82123456")).toBeNull();
+  });
+
+  it("returns null for empty string", () => {
+    expect(normaliseSAPhone("")).toBeNull();
+  });
+
+  it("returns null for invalid length(greater than 10)", () => {
+    expect(normaliseSAPhone('082123456789')).toBeNull();
+  });
+});
+
+
+
+
+describe('isProfileComplete', () => {
+  it('returns true when all required fields are present', () => {
+    const profile = {
+      name: 'John',
+      surname: 'Doe',
+      sex: 'male',
+      id_number: 'hash123',
+    };
+    expect(isProfileComplete(profile)).toBe(true);
+  });
+
+  it('returns false when name is missing', () => {
+    const profile = {
+      surname: 'Doe',
+      sex: 'male',
+      id_number: 'hash123',
+    };
+    expect(isProfileComplete(profile)).toBe(false);
+  });
+
+  it('returns false when surname is missing', () => {
+    const profile = {
+      name: 'John',
+      sex: 'male',
+      id_number: 'hash123',
+    };
+    expect(isProfileComplete(profile)).toBe(false);
+  });
+
+  it('returns false when sex is missing', () => {
+    const profile = {
+      name: 'John',
+      surname: 'Doe',
+      id_number: 'hash123',
+    };
+    expect(isProfileComplete(profile)).toBe(false);
+  });
+
+  it('returns false when id_number is missing', () => {
+    const profile = {
+      name: 'John',
+      surname: 'Doe',
+      sex: 'male',
+    };
+    expect(isProfileComplete(profile)).toBe(false);
+  });
+
+  it('returns false when profile is null or undefined', () => {
+    expect(isProfileComplete(null)).toBe(false);
+    expect(isProfileComplete(undefined)).toBe(false);
+  });
+
+  it('returns false when fields are empty strings', () => {
+    const profile = {
+      name: '',
+      surname: 'Doe',
+      sex: 'male',
+      id_number: 'hash123',
+    };
+    expect(isProfileComplete(profile)).toBe(false);
+  });
+});

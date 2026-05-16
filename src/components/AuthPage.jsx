@@ -40,6 +40,8 @@ function normaliseSAPhone(raw) {
   return null;
 }
 
+export { strengthScore, normaliseSAPhone };
+
 // ── Routing helpers ───────────────────────────────────────────────────────────
 async function fetchProfile(identity) {
   const { data } = await supabase
@@ -66,6 +68,8 @@ async function fetchLatestApplication(identity) {
 function isProfileComplete(profile) {
   return !!(profile?.name && profile?.surname && profile?.sex && profile?.id_number);
 }
+
+export { isProfileComplete };
 
 // ── Reusable UI Components ────────────────────────────────────────────────────
 const Logo = () => (
