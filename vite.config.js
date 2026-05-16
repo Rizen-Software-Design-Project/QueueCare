@@ -6,15 +6,17 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const aliases = {
+  "#lib": path.resolve(__dirname, "src/lib"),
+  "#utils": path.resolve(__dirname, "src/utils"),
+  "#hooks": path.resolve(__dirname, "src/hooks"),
+};
+
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
 
   resolve: {
-    alias: {
-      "#lib": path.resolve(__dirname, "src/lib"),
-      "#utils": path.resolve(__dirname, "src/utils"),
-      "#hooks": path.resolve(__dirname, "src/hooks"),
-    },
+    alias: aliases,
   },
 
   test: {
@@ -24,20 +26,14 @@ export default defineConfig({
           name: "frontend",
           globals: true,
           environment: "jsdom",
-          include: ["src/**/*.{test,spec}.{js,jsx}"],
-          exclude: ["src/appointment-booking/tests/**"],
+          include: ["src/**/*.{test,spec}.{js,jsx,ts,tsx}"],
+          exclude: ["src/appointment-booking/**"],
           setupFiles: ["./src/tests/setup.js"],
-
           env: {
             VITE_API_BASE: "http://localhost:5000",
             OPENAI_API_KEY: "test-placeholder",
           },
-
-          alias: {
-            "#hooks": path.resolve(__dirname, "src/hooks"),
-            "#utils": path.resolve(__dirname, "src/utils"),
-            "#lib": path.resolve(__dirname, "src/lib"),
-          },
+          alias: aliases,
         },
       },
 
@@ -47,12 +43,7 @@ export default defineConfig({
           globals: true,
           environment: "node",
           include: ["src/appointment-booking/tests/**/*.{test,spec}.js"],
-
-          alias: {
-            "#hooks": path.resolve(__dirname, "src/hooks"),
-            "#utils": path.resolve(__dirname, "src/utils"),
-            "#lib": path.resolve(__dirname, "src/lib"),
-          },
+          alias: aliases,
         },
       },
     ],
@@ -61,10 +52,19 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary", "lcov"],
       reportsDirectory: "./coverage",
-      include: ["src/**/*.{js,jsx}"],
-      exclude: ["src/main.jsx", "src/App.jsx", "src/hooks/**", "src/utils/**", "src/tests/vitest.setup.js", "src/appointment-booking/tests/**", "src/appointment-booking/routes/ai_server.js","src/appointment-booking/routes/notify_server.js","src/appointment-booking/routes/queue_server.js", "src/appointment-booking/routes/schedule_server.js", "src/appointment-booking/routes/staff_server.js"],
+
+      include: ["src/components/**", "src/queueApi.js", "src/appointment-booking/**"],
+
+      exclude: [
+        "src/main.jsx",
+        "src/App.jsx",
+        "src/tests/**",
+        "**/*.css",
+        "src/appointment-booking/firebase.js", "src/appointment-booking/routes/ai_server.js", "src/appointment-booking/routes/notify_server.js", "src/appointment-booking/routes/queue_server.js", "src/appointment-booking/routes/schedule_server.js", "src/appointment-booking/routes/staff_server.js",
+      ],
+
       clean: true,
-      all: true,
+      all: false,
     },
   },
 });

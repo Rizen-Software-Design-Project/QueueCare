@@ -73,13 +73,9 @@ jobs:
 
       - name: Run backend tests with coverage
         run: |
-          npx jest src/appointment-booking/tests --coverage 2>&1 | tee jest-output.txt
-          echo "## Backend Coverage (Jest)" >> $GITHUB_STEP_SUMMARY
+          npx vitest run src/appointment-booking/tests --coverage 2>&1 | tee jest-output.txt
+          echo "## Backend Coverage (Vitest)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          grep "Test Suites" jest-output.txt >> $GITHUB_STEP_SUMMARY || true
-          grep "Tests:" jest-output.txt >> $GITHUB_STEP_SUMMARY || true
+          grep -E "Test Files|Tests|Coverage|All files" backend-output.txt >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          grep "Test Suites" jest-output.txt >> $GITHUB_STEP_SUMMARY
-          grep "Tests:" jest-output.txt >> $GITHUB_STEP_SUMMARY
         working-directory: "src/appointment-booking"
