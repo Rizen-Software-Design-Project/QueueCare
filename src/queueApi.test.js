@@ -13,26 +13,17 @@ import {
   deleteSchedule,
 } from "./queueApi";
 
-<<<<<<< HEAD
-const API_BASE = "http://localhost:5000";
-=======
-const API_BASE =
-  "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
->>>>>>> 3629985701de4eb4c4085d61b9a19a2bc896b707
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 const mockJson = vi.fn();
 
 beforeEach(() => {
   vi.restoreAllMocks();
-<<<<<<< HEAD
-  global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: mockJson }));
-=======
-
->>>>>>> 3629985701de4eb4c4085d61b9a19a2bc896b707
   mockJson.mockResolvedValue({ success: true });
 
   global.fetch = vi.fn(() =>
     Promise.resolve({
+      ok: true, 
       json: mockJson,
     })
   );
@@ -41,16 +32,6 @@ beforeEach(() => {
 describe("addToQueue", () => {
   it("sends POST to /queue/add_to_queue with JSON body", async () => {
     const result = await addToQueue("john@example.com", 42);
-<<<<<<< HEAD
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${API_BASE}/queue/add_to_queue`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact_details: "john@example.com", facility_id: 42 }),
-      }
-    );
-=======
 
     expect(global.fetch).toHaveBeenCalledWith(`${API_BASE}/queue/add_to_queue`, {
       method: "POST",
@@ -63,7 +44,6 @@ describe("addToQueue", () => {
       }),
     });
 
->>>>>>> 3629985701de4eb4c4085d61b9a19a2bc896b707
     expect(result).toEqual({ success: true });
   });
 });
@@ -108,16 +88,6 @@ describe("viewFullQueue", () => {
 describe("updateQueueStatus", () => {
   it("sends PATCH to /queue/update_status with JSON body", async () => {
     const result = await updateQueueStatus("user@test.com", 3, "In-consultation");
-<<<<<<< HEAD
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${API_BASE}/queue/update_status`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact_details: "user@test.com", facility_id: 3, status: "In-consultation" }),
-      }
-    );
-=======
 
     expect(global.fetch).toHaveBeenCalledWith(`${API_BASE}/queue/update_status`, {
       method: "PATCH",
@@ -131,7 +101,6 @@ describe("updateQueueStatus", () => {
       }),
     });
 
->>>>>>> 3629985701de4eb4c4085d61b9a19a2bc896b707
     expect(result).toEqual({ success: true });
   });
 });

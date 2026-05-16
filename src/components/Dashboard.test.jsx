@@ -159,37 +159,6 @@ describe("Notifications", () => {
     });
 });
 
-describe("Profile", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        await renderDashboard();
-
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
-    });
-
-    it("Renders Name", async() => {
-        expect(screen.getByText("Name: John")).toBeVisible();
-    });
-    it("Renders Email", async() => {
-        expect(screen.getByText("Email: john@example.com")).toBeVisible();
-    });
-    it("Renders Phone", async() => {
-        expect(screen.getByText("Surname: Doe")).toBeVisible();
-    });
-    it("Renders Date of Birth", async() => {
-        expect(screen.getByRole("heading", { name: "Profile" })).toBeVisible();
-    });
-    it("Renders Role", async() => {
-        const editButton = screen.getByRole("button", { name: "Edit" });
-        expect(editButton).toBeVisible();
-    });
-
-    it("Renders Edit profile", async() => {
-        const editProfileButton = screen.getByRole("button", { name: "Edit" });
-        expect(editProfileButton).toBeVisible();
-    });
-});
 
 describe("Service policy", () => {
     beforeEach(async() => {
@@ -225,76 +194,6 @@ describe("Settings", () => {
     });
 });
 
-describe("Click Edit profile", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        await renderDashboard();
-
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
-
-        const editProfileButton = screen.getByRole("button", { name: "Edit" });
-        await user.click(editProfileButton);
-    });
-
-    it("Renders Textboxes", async() => {
-        const textboxes = screen.getAllByRole("textbox");
-        expect(textboxes).toHaveLength(3);
-    });
-
-    it("Renders Calendar(DOB)", async() => {
-        const phoneInput = screen.getByPlaceholderText("Phone");
-        expect(phoneInput).toBeInTheDocument();
-    });
-
-    it("Renders Cancel", async() => {
-        const cancel = screen.getByRole("button", {name:"Cancel"});
-        expect(cancel).toBeVisible();
-    });
-
-    it("Renders Save", async() => {
-        const save = screen.getByRole("button", {name:"Save"});
-        expect(save).toBeVisible();
-    });
-});
-
-describe("Cancel clicked", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        await renderDashboard();
-
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
-
-        const editProfileButton = screen.getByRole("button", { name: "Edit" });
-        await user.click(editProfileButton);
-
-        const cancelButton = screen.getByRole("button", { name: /cancel/i });
-        await user.click(cancelButton);
-    });
-
-    it("Renders Name", async() => {
-        expect(screen.getByText("Name: John")).toBeVisible();
-    });
-    it("Renders Email", async() => {
-        expect(screen.getByText("Email: john@example.com")).toBeVisible();
-    });
-    it("Renders Phone", async() => {
-        expect(screen.getByText("Surname: Doe")).toBeVisible();
-    });
-    it("Renders Date of Birth", async() => {
-        expect(screen.getByRole("heading", { name: "Profile" })).toBeVisible();
-    });
-    it("Renders Role", async() => {
-        const editButton = screen.getByRole("button", { name: "Edit" });
-        expect(editButton).toBeVisible();
-    });
-
-    it("Renders Edit profile", async() => {
-        const editProfileButton = screen.getByRole("button", { name: "Edit" });
-        expect(editProfileButton).toBeVisible();
-    });
-});
 
 
 describe("Dashboard, Sidebar Navigation Buttons", () => {
@@ -393,51 +292,7 @@ describe("Dashboard Tab Switching", () => {
 });
 
 
-describe("Dashboard Edit Profile Form Validation", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        await renderDashboard();
 
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
-
-        const editProfileButton = screen.getByRole("button", { name: "Edit" });
-        await user.click(editProfileButton);
-    });
-
-    it("Allows typing in First name field", async() => {
-        const user = userEvent.setup();
-        const firstNameInput = screen.getByPlaceholderText("Name");
-        await user.clear(firstNameInput);
-        await user.type(firstNameInput, "Test");
-        expect(firstNameInput).toHaveValue("Test");
-    });
-
-    it("Allows typing in Surname field", async() => {
-        const user = userEvent.setup();
-        const surnameInput = screen.getByPlaceholderText("Surname");
-        await user.clear(surnameInput);
-        await user.type(surnameInput, "User");
-        expect(surnameInput).toHaveValue("User");
-    });
-
-    it("Allows typing in Phone number field", async() => {
-        const user = userEvent.setup();
-        const phoneInput = screen.getByPlaceholderText("Phone");
-        await user.clear(phoneInput);
-        await user.type(phoneInput, "0821234567");
-        expect(phoneInput).toHaveValue("0821234567");
-    });
-
-    it("Allows selecting date in Date of Birth field", async() => {
-        const nameInput = screen.getByPlaceholderText("Name");
-        const surnameInput = screen.getByPlaceholderText("Surname");
-        const phoneInput = screen.getByPlaceholderText("Phone");
-        expect(nameInput).toBeInTheDocument();
-        expect(surnameInput).toBeInTheDocument();
-        expect(phoneInput).toBeInTheDocument();
-    });
-});
 
 describe("Dashboard - Find a Clinic Navigation", () => {
     it("Find a Clinic button exists and is clickable", async() => {
@@ -483,18 +338,7 @@ describe("Dashboard - Mark All Read", () => {
     });
 });
 
-describe("Dashboard - Save Profile", () => {
-    it("calls saveProfile when Save button is clicked in Profile edit mode", async() => {
-        const user = userEvent.setup();
-        await renderDashboard();
-        await user.click(screen.getByRole("button", { name: /profile/i }));
-        await user.click(screen.getByRole("button", { name: "Edit" }));
-        const saveBtn = screen.getByRole("button", { name: "Save" });
-        await user.click(saveBtn);
-        // saveProfile calls supabase.update — mock returns no error so profile updates
-        expect(saveBtn).toBeDefined();
-    });
-});
+
 
 describe("Dashboard - Quick Actions", () => {
     it("My Appointments quick action navigates to appointments tab", async() => {

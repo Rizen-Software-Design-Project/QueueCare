@@ -26,18 +26,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'lcov'],
-      include: [
-        'src/components/Welcome.jsx',
-        'src/components/Dashboard.jsx',
-        'src/components/PatientDashboard.jsx',
-        'src/components/DashboardPanels.jsx',
-        'src/components/DashboardHelpers.jsx',
-        'src/queueApi.js',
-        'src/appointment-booking/middleware/errorHandler.js',
-        'src/appointment-booking/middleware/notFound.js',
-        'src/appointment-booking/routes/appointmentRoutes.js',
-        'src/appointment-booking/servers/app.js',
-      ],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{js,jsx}'],
+      exclude: ['src/tests/**','src/**/*.test.{js,jsx}','src/main.jsx'
+  ],
+      clean: false,
+      all: true,
     },
   },
 });
