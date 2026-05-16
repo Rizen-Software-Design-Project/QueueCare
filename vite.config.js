@@ -65,7 +65,7 @@ export default defineConfig({
       ],
 
       clean: true,
-      all: false,
+      all: true,
     },
   },
 });
