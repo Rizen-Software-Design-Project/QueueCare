@@ -44,6 +44,18 @@ const applicationEmailHtml = (name, role, status) => {
             color: '#dc2626',
             message: `Unfortunately, your application for the <strong>${role}</strong> role was not approved at this time. Please contact support if you have any questions.`,
         },
+        reassigned: {
+            icon: '🔄',
+            heading: `Role Reassigned`,
+            color: '#f59e0b',
+            message: `Your role has been updated to <strong>${role}</strong>. Please sign in to see your new permissions and dashboard.`,
+        },
+        removed: {
+            icon: '🗑️',
+            heading: `Assignment Removed`,
+            color: '#dc2626',
+            message: `You are no longer assigned to a clinic. Please contact support if you believe this is a mistake.`,
+            }
     };
 
     const cfg = configs[status] || configs.submitted;
@@ -68,7 +80,7 @@ const sendApplicationEmail = async (req, res) => {
         if (!email || !name || !role || !status) {
             return res.status(400).json({ error: 'email, name, role, and status are required' });
         }
-        const validStatuses = ["submitted", "approved", "rejected"];
+        const validStatuses = ["submitted", "approved", "rejected", "reassigned", "removed"];
 
         if (!validStatuses.includes(status)) {
           return res.status(400).json({ error: "Invalid application status" });
@@ -78,6 +90,8 @@ const sendApplicationEmail = async (req, res) => {
             submitted: `Application Received – ${role} role`,
             approved:  `Application Approved – ${role} role`,
             rejected:  `Application Update – ${role} role`,
+            reassigned: `Role Reassigned – ${role} role`,
+            removed: `Role Removed – ${role} role`,
         };
 
         await transporter.sendMail({

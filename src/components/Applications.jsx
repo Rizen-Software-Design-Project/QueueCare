@@ -316,6 +316,8 @@ const uploadedCvUrl = publicUrlData.publicUrl;
             status: 'submitted',
         }),
     }).catch(err => console.warn('Application email failed:', err.message));
+
+    
     if (onSubmitted) onSubmitted();
   }
   

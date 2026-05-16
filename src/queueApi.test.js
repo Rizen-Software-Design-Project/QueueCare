@@ -13,19 +13,35 @@ import {
   deleteSchedule,
 } from "./queueApi";
 
+<<<<<<< HEAD
 const API_BASE = "http://localhost:5000";
+=======
+const API_BASE =
+  "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
+>>>>>>> 3629985701de4eb4c4085d61b9a19a2bc896b707
 
 const mockJson = vi.fn();
 
 beforeEach(() => {
   vi.restoreAllMocks();
+<<<<<<< HEAD
   global.fetch = vi.fn(() => Promise.resolve({ ok: true, json: mockJson }));
+=======
+
+>>>>>>> 3629985701de4eb4c4085d61b9a19a2bc896b707
   mockJson.mockResolvedValue({ success: true });
+
+  global.fetch = vi.fn(() =>
+    Promise.resolve({
+      json: mockJson,
+    })
+  );
 });
 
 describe("addToQueue", () => {
   it("sends POST to /queue/add_to_queue with JSON body", async () => {
     const result = await addToQueue("john@example.com", 42);
+<<<<<<< HEAD
     expect(global.fetch).toHaveBeenCalledWith(
       `${API_BASE}/queue/add_to_queue`,
       {
@@ -34,6 +50,20 @@ describe("addToQueue", () => {
         body: JSON.stringify({ contact_details: "john@example.com", facility_id: 42 }),
       }
     );
+=======
+
+    expect(global.fetch).toHaveBeenCalledWith(`${API_BASE}/queue/add_to_queue`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contact_details: "john@example.com",
+        facility_id: 42,
+      }),
+    });
+
+>>>>>>> 3629985701de4eb4c4085d61b9a19a2bc896b707
     expect(result).toEqual({ success: true });
   });
 });
@@ -41,9 +71,11 @@ describe("addToQueue", () => {
 describe("getMyQueue", () => {
   it("sends GET to /queue/my_queue with encoded query params", async () => {
     const result = await getMyQueue("jane@test.com", 5);
+
     expect(global.fetch).toHaveBeenCalledWith(
       `${API_BASE}/queue/my_queue?contact_details=jane%40test.com&facility_id=5`
     );
+
     expect(result).toEqual({ success: true });
   });
 });
@@ -51,10 +83,12 @@ describe("getMyQueue", () => {
 describe("removeFromQueue", () => {
   it("sends DELETE to /queue/remove_queue with encoded query params", async () => {
     const result = await removeFromQueue("user@test.com", 10);
+
     expect(global.fetch).toHaveBeenCalledWith(
       `${API_BASE}/queue/remove_queue?contact_details=user%40test.com&facility_id=10`,
       { method: "DELETE" }
     );
+
     expect(result).toEqual({ success: true });
   });
 });
@@ -62,9 +96,11 @@ describe("removeFromQueue", () => {
 describe("viewFullQueue", () => {
   it("sends GET to /queue/full_queue with facility_id", async () => {
     const result = await viewFullQueue(7);
+
     expect(global.fetch).toHaveBeenCalledWith(
       `${API_BASE}/queue/full_queue?facility_id=7`
     );
+
     expect(result).toEqual({ success: true });
   });
 });
@@ -72,6 +108,7 @@ describe("viewFullQueue", () => {
 describe("updateQueueStatus", () => {
   it("sends PATCH to /queue/update_status with JSON body", async () => {
     const result = await updateQueueStatus("user@test.com", 3, "In-consultation");
+<<<<<<< HEAD
     expect(global.fetch).toHaveBeenCalledWith(
       `${API_BASE}/queue/update_status`,
       {
@@ -80,6 +117,21 @@ describe("updateQueueStatus", () => {
         body: JSON.stringify({ contact_details: "user@test.com", facility_id: 3, status: "In-consultation" }),
       }
     );
+=======
+
+    expect(global.fetch).toHaveBeenCalledWith(`${API_BASE}/queue/update_status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contact_details: "user@test.com",
+        facility_id: 3,
+        status: "In-consultation",
+      }),
+    });
+
+>>>>>>> 3629985701de4eb4c4085d61b9a19a2bc896b707
     expect(result).toEqual({ success: true });
   });
 });
@@ -87,9 +139,11 @@ describe("updateQueueStatus", () => {
 describe("notifyPatient", () => {
   it("sends GET to /notify/notify_patient with encoded query params", async () => {
     const result = await notifyPatient("patient@email.com", 15);
+
     expect(global.fetch).toHaveBeenCalledWith(
       `${API_BASE}/notify/notify_patient?email=patient%40email.com&facility_id=15`
     );
+
     expect(result).toEqual({ success: true });
   });
 });
