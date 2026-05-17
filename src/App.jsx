@@ -37,7 +37,7 @@ function App() {
         <Route path="/analytics-staff"        element={<AnalyticsDashboardStaff />} />
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/ServicePolicy" element={<QueueCarePolicy />} />
+        <Route path="/service-policy" element={<QueueCarePolicy />} />
         <Route path="/appointment-history" element={<AppointmentHistory />} />
 
         <Route path="*"              element={<Navigate to="/" replace />} />

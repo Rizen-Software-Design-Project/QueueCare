@@ -13,7 +13,6 @@ export const PATIENT_NAV = [
   { id: "profile",       icon: <FiUser />,      label: "Profile" },
   { id: "find-clinic",   icon: <FaHospital />,  label: "Find a Clinic" },
   { id: "policy",        icon: <FiFileText />,  label: "Service Policy" },
-  { id: "settings",      icon: <FiSettings />,  label: "Settings" },
 ];
 
 export const STAFF_NAV = [
@@ -25,6 +24,7 @@ export const STAFF_NAV = [
   { id: "analytics",          icon: <FiBarChart2 />, label: "Analytics"},
   { id: "notifications",      icon: <FiBell />,     label: "Notifications" },
   { id: "profile",            icon: <FiUser />,     label: "Profile" },
+  { id: "policy",        icon: <FiFileText />,  label: "Service Policy" },
 ];
 
 export const ADMIN_NAV = [
@@ -35,6 +35,7 @@ export const ADMIN_NAV = [
   {id: "analytics",      icon: <FiBarChart2 />, label: "Analytics"},
   { id: "notifications", icon: <FiBell />,     label: "Notifications" },
   { id: "profile",       icon: <FiUser />,     label: "Profile" },
+  { id: "policy",        icon: <FiFileText />,  label: "Service Policy" },
 ];
 
 export const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];

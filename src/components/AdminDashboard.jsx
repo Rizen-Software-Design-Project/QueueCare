@@ -111,6 +111,9 @@ export default function AdminDashboard({ profile: initialProfile }) {
       case "staff":   return <AdminStaff />;
       case "clinics": return <AdminClinics />;
       case "analytics": return <AnalyticsAdmin />;
+      case "policy":
+        navigate("/service-policy");
+        return;
         
       case "notifications":
         return (

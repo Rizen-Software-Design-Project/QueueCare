@@ -146,6 +146,10 @@ function goTo(id) {
       navigate("/profile", { state: { profile } });
       return;
 
+    case "policy":
+      navigate("/service-policy");
+      return;
+
     default:
       setActiveTab(id);
   }

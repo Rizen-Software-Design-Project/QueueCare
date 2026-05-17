@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import "./ServicePolicy.css";
 
 const sections = [
   {
@@ -164,14 +166,21 @@ const sections = [
 ];
 
 export default function QueueCarePolicy() {
+  const navigate = useNavigate();
   return (
     <section style={{ padding: "20px" }}>
+      <button
+        onClick={() => navigate("/dashboard")}
+        className="qc-back-btn">
+        ← Back
+      </button>
       <h1>QueueCare Policies</h1>
       <p>This page outlines the terms and operational policies of QueueCare.</p>
 
       <hr />
 
       <section>
+
         <p>
           QueueCare operates under the Protection of Personal Information Act
           (POPIA) 4 of 2013, the National Health Act 61 of 2003, and the

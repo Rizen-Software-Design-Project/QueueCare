@@ -292,6 +292,11 @@ export default function PatientDashboard({ profile: initialProfile }) {
     case "profile":
       navigate("/profile", {state: navState});
       return;
+
+    case "policy":
+      navigate("/service-policy");
+      return;
+
     default:
       setActiveTab(id);
   }
@@ -332,7 +337,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
       case "appointments":  return <PatientHistoryView profile={profile} onReschedule={openReschedule} onCancel={cancelAppointment} />;
       case "queue":         return <PatientQueuePanel queueData={queueData} slotDate={sharedProps.slotDate} slotTime={sharedProps.slotTime} />;
       case "notifications": return <NotificationsPanel notifications={notifications} unreadCount={unreadCount} onMarkAllRead={markAllRead} />;
-            
+
       default:              return <div className="db-section"><h2>{activeTab}</h2></div>;
     }
   }
