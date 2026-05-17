@@ -15,7 +15,7 @@ const QUEUE_STATUS_OPTIONS = [
   { value: "completed", label: "Completed" },
 ];
 
-export default function StaffClinicManagement({ facilityId, facilityName, authProvider, providerUserId }) {
+export default function StaffClinicManagement({ facilityId, facilityName, authProvider, providerUserId, queueOnly = false }) {
   const [appointments,    setAppointments]    = useState([]);
   const [apptLoading,     setApptLoading]     = useState(true);
   const [apptError,       setApptError]       = useState("");
@@ -41,16 +41,16 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
   const [queueList,       setQueueList]       = useState([]);
   const [queueLoading,    setQueueLoading]    = useState(false);
 
-  const [rescheduleModalOpen,    setRescheduleModalOpen]    = useState(false);
-  const [rescheduleAppointment,  setRescheduleAppointment]  = useState(null);
-  const [rescheduleSlotId,       setRescheduleSlotId]       = useState("");
-  const [rescheduling,           setRescheduling]           = useState(false);
-  const [rescheduleMsg,          setRescheduleMsg]          = useState({ type: "", text: "" });
+  const [rescheduleModalOpen,   setRescheduleModalOpen]   = useState(false);
+  const [rescheduleAppointment, setRescheduleAppointment] = useState(null);
+  const [rescheduleSlotId,      setRescheduleSlotId]      = useState("");
+  const [rescheduling,          setRescheduling]          = useState(false);
+  const [rescheduleMsg,         setRescheduleMsg]         = useState({ type: "", text: "" });
 
   const [slotBlocks, setSlotBlocks] = useState([
-    { id: crypto.randomUUID(), label: "Morning",      start: "08:00", end: "12:00", duration: "15", capacity: "5", enabled: true },
-    { id: crypto.randomUUID(), label: "Lunch break",  start: "12:00", end: "13:00", duration: "15", capacity: "0", enabled: false },
-    { id: crypto.randomUUID(), label: "Afternoon",    start: "13:00", end: "16:00", duration: "30", capacity: "3", enabled: true },
+    { id: crypto.randomUUID(), label: "Morning",     start: "08:00", end: "12:00", duration: "15", capacity: "5", enabled: true  },
+    { id: crypto.randomUUID(), label: "Lunch break", start: "12:00", end: "13:00", duration: "15", capacity: "0", enabled: false },
+    { id: crypto.randomUUID(), label: "Afternoon",   start: "13:00", end: "16:00", duration: "30", capacity: "3", enabled: true  },
   ]);
 
   function getTodayString() {
@@ -76,9 +76,9 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
     if (!start || !end || !durationMinutes) return result;
     const [startH, startM] = start.split(":").map(Number);
     const [endH, endM]     = end.split(":").map(Number);
-    let current  = startH * 60 + startM;
-    const endTotal  = endH * 60 + endM;
-    const duration  = Number(durationMinutes);
+    let current        = startH * 60 + startM;
+    const endTotal     = endH * 60 + endM;
+    const duration     = Number(durationMinutes);
     while (current + duration <= endTotal) {
       const h = String(Math.floor(current / 60)).padStart(2, "0");
       const m = String(current % 60).padStart(2, "0");
@@ -348,66 +348,69 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
     <div className="staff-dash">
       <header className="staff-dash-header">
         <div>
-          <h1>Staff Dashboard</h1>
+          <h1>{queueOnly ? "Live Patient Queue" : "Staff Dashboard"}</h1>
           {facilityName && <p style={{ margin: 0, fontSize: 14, color: "#ccc" }}>📍 {facilityName}</p>}
         </div>
       </header>
 
       <div className="staff-dash-grid">
+
         {/* Appointments Table */}
-        <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
-            <h2 style={{ margin: 0 }}>{appointmentView === "today" ? "Today's Appointments" : "Upcoming Appointments"}</h2>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="button" onClick={() => setAppointmentView("today")} style={{ padding: "10px 16px", background: appointmentView === "today" ? "#1d4ed8" : "#2563eb", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>Today</button>
-              <button type="button" onClick={() => setAppointmentView("upcoming")} style={{ padding: "10px 16px", background: appointmentView === "upcoming" ? "#15803d" : "#16a34a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>View Upcoming</button>
-              {facilityId && <button type="button" onClick={() => fetchAppointments(facilityId)} style={{ padding: "10px 16px", background: "#111827", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>{apptLoading ? "Refreshing..." : "Refresh"}</button>}
+        {!queueOnly && (
+          <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+              <h2 style={{ margin: 0 }}>{appointmentView === "today" ? "Today's Appointments" : "Upcoming Appointments"}</h2>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="button" onClick={() => setAppointmentView("today")} style={{ padding: "10px 16px", background: appointmentView === "today" ? "#1d4ed8" : "#2563eb", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>Today</button>
+                <button type="button" onClick={() => setAppointmentView("upcoming")} style={{ padding: "10px 16px", background: appointmentView === "upcoming" ? "#15803d" : "#16a34a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>View Upcoming</button>
+                {facilityId && <button type="button" onClick={() => fetchAppointments(facilityId)} style={{ padding: "10px 16px", background: "#111827", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>{apptLoading ? "Refreshing..." : "Refresh"}</button>}
+              </div>
             </div>
-          </div>
-          {apptLoading && <p style={{ color: "#888" }}>Loading appointments...</p>}
-          {apptError && <p className="staff-error">{apptError}</p>}
-          {!apptLoading && !apptError && visibleAppointments.length === 0 && <p style={{ color: "#888" }}>{appointmentView === "today" ? "No appointments found for today." : "No upcoming appointments found."}</p>}
-          {!apptLoading && visibleAppointments.length > 0 && (
-            <div style={{ overflowX: "auto" }}>
-              <table className="staff-table">
-                <thead>
-                  <tr><th>Patient</th><th>Email</th><th>Phone</th><th>Date</th><th>Time</th><th>Duration</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                  {visibleAppointments.map((a) => (
-                    <tr key={a.id}>
-                      <td>{a.profiles?.name ? `${a.profiles.name} ${a.profiles.surname || ""}` : a.patient_id.slice(0, 8) + "…"}</td>
-                      <td>{a.profiles?.email || "—"}</td>
-                      <td>{a.profiles?.phone_number || "—"}</td>
-                      <td>{formatDate(a.appointment_slots?.slot_date)}</td>
-                      <td>{formatTime(a.appointment_slots?.slot_time)}</td>
-                      <td>{a.appointment_slots?.duration_minutes ?? "—"} min</td>
-                      <td>{a.reason || "—"}</td>
-                      <td><span className={`staff-badge staff-badge-${a.status}`}>{a.status}</span></td>
-                      <td>
-                        {a.status === "complete" || a.status === "cancelled" || a.status === "no_show" ? (
-                          <span style={{ color: "#9ca3af", fontSize: 12 }}>—</span>
-                        ) : (
-                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                            <button type="button" className="staff-action-btn" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => openRescheduleModal(a)}>Reschedule</button>
-                            {STATUS_OPTIONS.filter((s) => s !== a.status).map((s) => (
-                              <button key={s} className="staff-back-btn" style={{ fontSize: 11, padding: "3px 8px" }} disabled={updatingId === a.id} onClick={() => updateStatus(a.id, s)}>
-                                {updatingId === a.id ? "..." : s}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+            {apptLoading && <p style={{ color: "#888" }}>Loading appointments...</p>}
+            {apptError && <p className="staff-error">{apptError}</p>}
+            {!apptLoading && !apptError && visibleAppointments.length === 0 && <p style={{ color: "#888" }}>{appointmentView === "today" ? "No appointments found for today." : "No upcoming appointments found."}</p>}
+            {!apptLoading && visibleAppointments.length > 0 && (
+              <div style={{ overflowX: "auto" }}>
+                <table className="staff-table">
+                  <thead>
+                    <tr><th>Patient</th><th>Email</th><th>Phone</th><th>Date</th><th>Time</th><th>Duration</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
+                  </thead>
+                  <tbody>
+                    {visibleAppointments.map((a) => (
+                      <tr key={a.id}>
+                        <td>{a.profiles?.name ? `${a.profiles.name} ${a.profiles.surname || ""}` : a.patient_id.slice(0, 8) + "…"}</td>
+                        <td>{a.profiles?.email || "—"}</td>
+                        <td>{a.profiles?.phone_number || "—"}</td>
+                        <td>{formatDate(a.appointment_slots?.slot_date)}</td>
+                        <td>{formatTime(a.appointment_slots?.slot_time)}</td>
+                        <td>{a.appointment_slots?.duration_minutes ?? "—"} min</td>
+                        <td>{a.reason || "—"}</td>
+                        <td><span className={`staff-badge staff-badge-${a.status}`}>{a.status}</span></td>
+                        <td>
+                          {a.status === "complete" || a.status === "cancelled" || a.status === "no_show" ? (
+                            <span style={{ color: "#9ca3af", fontSize: 12 }}>—</span>
+                          ) : (
+                            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                              <button type="button" className="staff-action-btn" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => openRescheduleModal(a)}>Reschedule</button>
+                              {STATUS_OPTIONS.filter((s) => s !== a.status).map((s) => (
+                                <button key={s} className="staff-back-btn" style={{ fontSize: 11, padding: "3px 8px" }} disabled={updatingId === a.id} onClick={() => updateStatus(a.id, s)}>
+                                  {updatingId === a.id ? "..." : s}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Reschedule Modal */}
-        {rescheduleModalOpen && rescheduleAppointment && (
+        {!queueOnly && rescheduleModalOpen && rescheduleAppointment && (
           <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
             <h2>Reschedule Appointment</h2>
             <div style={{ marginBottom: 16, padding: 12, background: "#f3f4f6", borderRadius: 6 }}>
@@ -437,7 +440,7 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
           </section>
         )}
 
-        {/* Live Patient Queue */}
+        {/* Live Patient Queue — always shown */}
         <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
           <h2>Live Patient Queue</h2>
           {queueLoading && <p style={{ color: "#888" }}>Loading queue...</p>}
@@ -447,7 +450,9 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
             !queueLoading && (
               <div style={{ overflowX: "auto", minHeight: 220 }}>
                 <table className="staff-table">
-                  <thead><tr><th>Position</th><th>Patient</th><th>Reason</th><th>Slot Time</th><th>End Time</th><th>Status</th><th>Actions</th></tr></thead>
+                  <thead>
+                    <tr><th>Position</th><th>Patient</th><th>Reason</th><th>Slot Time</th><th>End Time</th><th>Status</th><th>Actions</th></tr>
+                  </thead>
                   <tbody>
                     {queueList.map((entry, i) => {
                       const contact = entry.profiles?.email || entry.profiles?.phone_number;
@@ -483,115 +488,120 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
         </section>
 
         {/* Create Appointment Slots */}
-        <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <h2 style={{ margin: 0 }}>Create Appointment Slots</h2>
-              <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 14 }}>Add distributed slots with breaks, lunch time, and custom capacity.</p>
+        {!queueOnly && (
+          <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <div>
+                <h2 style={{ margin: 0 }}>Create Appointment Slots</h2>
+                <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 14 }}>Add distributed slots with breaks, lunch time, and custom capacity.</p>
+              </div>
+              <button type="button" className="staff-action-btn" onClick={() => setShowCreateSlots((prev) => !prev)} style={{ fontSize: 20, width: 40, height: 40, borderRadius: "50%" }}>{showCreateSlots ? "−" : "+"}</button>
             </div>
-            <button type="button" className="staff-action-btn" onClick={() => setShowCreateSlots((prev) => !prev)} style={{ fontSize: 20, width: 40, height: 40, borderRadius: "50%" }}>{showCreateSlots ? "−" : "+"}</button>
-          </div>
 
-          {showCreateSlots && (
-            <>
-              <form onSubmit={handleCreateBatchSlots} className="staff-form" style={{ marginTop: 18 }}>
-                <div className="slot-quick-card">
-                  <h3>Slot distribution</h3>
-                  <p>Create slots in blocks. Disable lunch or admin time so no appointments are created during breaks.</p>
-                  <label>Date<input type="date" value={slotBatchDate} onChange={(e) => setSlotBatchDate(e.target.value)} required /></label>
-                  <div className="slot-blocks">
-                    {slotBlocks.map((block) => (
-                      <div key={block.id} className={`slot-block-row ${!block.enabled ? "disabled" : ""}`}>
-                        <label>Block name<input type="text" value={block.label} onChange={(e) => updateSlotBlock(block.id, "label", e.target.value)} /></label>
-                        <label>Start<input type="time" value={block.start} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "start", e.target.value)} /></label>
-                        <label>End<input type="time" value={block.end} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "end", e.target.value)} /></label>
-                        <label>Duration
-                          <select value={block.duration} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "duration", e.target.value)}>
-                            <option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option>
-                            <option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option>
-                          </select>
-                        </label>
-                        <label>Capacity<input type="number" min="1" value={block.capacity} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "capacity", e.target.value)} /></label>
-                        <label className="slot-toggle"><input type="checkbox" checked={block.enabled} onChange={(e) => updateSlotBlock(block.id, "enabled", e.target.checked)} />Create slots</label>
-                        <button type="button" className="staff-action-btn" onClick={() => removeSlotBlock(block.id)} disabled={slotBlocks.length === 1}>Remove</button>
-                      </div>
-                    ))}
+            {showCreateSlots && (
+              <>
+                <form onSubmit={handleCreateBatchSlots} className="staff-form" style={{ marginTop: 18 }}>
+                  <div className="slot-quick-card">
+                    <h3>Slot distribution</h3>
+                    <p>Create slots in blocks. Disable lunch or admin time so no appointments are created during breaks.</p>
+                    <label>Date<input type="date" value={slotBatchDate} onChange={(e) => setSlotBatchDate(e.target.value)} required /></label>
+                    <div className="slot-blocks">
+                      {slotBlocks.map((block) => (
+                        <div key={block.id} className={`slot-block-row ${!block.enabled ? "disabled" : ""}`}>
+                          <label>Block name<input type="text" value={block.label} onChange={(e) => updateSlotBlock(block.id, "label", e.target.value)} /></label>
+                          <label>Start<input type="time" value={block.start} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "start", e.target.value)} /></label>
+                          <label>End<input type="time" value={block.end} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "end", e.target.value)} /></label>
+                          <label>Duration
+                            <select value={block.duration} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "duration", e.target.value)}>
+                              <option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option>
+                              <option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option>
+                            </select>
+                          </label>
+                          <label>Capacity<input type="number" min="1" value={block.capacity} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "capacity", e.target.value)} /></label>
+                          <label className="slot-toggle"><input type="checkbox" checked={block.enabled} onChange={(e) => updateSlotBlock(block.id, "enabled", e.target.checked)} />Create slots</label>
+                          <button type="button" className="staff-action-btn" onClick={() => removeSlotBlock(block.id)} disabled={slotBlocks.length === 1}>Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                    <button type="button" className="staff-action-btn" onClick={addSlotBlock}>+ Add time block</button>
                   </div>
-                  <button type="button" className="staff-action-btn" onClick={addSlotBlock}>+ Add time block</button>
-                </div>
-                <div className="slot-preview">
-                  <strong>Preview:</strong>
-                  <div className="slot-preview-list">
-                    {distributedSlotPreview.map((slot) => (
-                      <span key={`${slot.blockLabel}-${slot.time}`} className="slot-chip">{slot.time} · {slot.duration}min · cap {slot.capacity}</span>
-                    ))}
+                  <div className="slot-preview">
+                    <strong>Preview:</strong>
+                    <div className="slot-preview-list">
+                      {distributedSlotPreview.map((slot) => (
+                        <span key={`${slot.blockLabel}-${slot.time}`} className="slot-chip">{slot.time} · {slot.duration}min · cap {slot.capacity}</span>
+                      ))}
+                    </div>
+                    {distributedSlotPreview.length === 0 && <p style={{ color: "#888", marginTop: 8 }}>No slots will be created yet.</p>}
                   </div>
-                  {distributedSlotPreview.length === 0 && <p style={{ color: "#888", marginTop: 8 }}>No slots will be created yet.</p>}
-                </div>
-                <button type="submit" disabled={creatingSlot || !facilityId}>{creatingSlot ? "Creating slots..." : "Create Distributed Slots"}</button>
-              </form>
-              {createSlotMsg.text && <p className={createSlotMsg.type === "error" ? "staff-error" : "staff-success"}>{createSlotMsg.text}</p>}
-            </>
-          )}
-        </section>
+                  <button type="submit" disabled={creatingSlot || !facilityId}>{creatingSlot ? "Creating slots..." : "Create Distributed Slots"}</button>
+                </form>
+                {createSlotMsg.text && <p className={createSlotMsg.type === "error" ? "staff-error" : "staff-success"}>{createSlotMsg.text}</p>}
+              </>
+            )}
+          </section>
+        )}
 
         {/* Available Slots */}
-        <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
-            <h2 style={{ margin: 0 }}>Available Appointment Slots</h2>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-              <input type="date" className="slot-date-filter" value={slotDateFilter} onChange={(e) => setSlotDateFilter(e.target.value)} />
-              {slotDateFilter && <button type="button" className="staff-action-btn" onClick={() => setSlotDateFilter("")}>Clear date</button>}
-              {facilityId && <button className="staff-back-btn" onClick={() => fetchSlots(facilityId)} disabled={slotsLoading}>{slotsLoading ? "Refreshing..." : "↻ Refresh"}</button>}
+        {!queueOnly && (
+          <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+              <h2 style={{ margin: 0 }}>Available Appointment Slots</h2>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <input type="date" className="slot-date-filter" value={slotDateFilter} onChange={(e) => setSlotDateFilter(e.target.value)} />
+                {slotDateFilter && <button type="button" className="staff-action-btn" onClick={() => setSlotDateFilter("")}>Clear date</button>}
+                {facilityId && <button className="staff-back-btn" onClick={() => fetchSlots(facilityId)} disabled={slotsLoading}>{slotsLoading ? "Refreshing..." : "↻ Refresh"}</button>}
+              </div>
             </div>
-          </div>
-          {slotsLoading && <p style={{ color: "#888" }}>Loading slots...</p>}
-          {slotsError && <p className="staff-error">{slotsError}</p>}
-          {!slotsLoading && !slotsError && filteredSlots.length === 0 && <p style={{ color: "#888" }}>No slots found for this facility.</p>}
-          {!slotsLoading && filteredSlots.length > 0 && (
-            <div style={{ overflowX: "auto" }}>
-              <table className="staff-table">
-                <thead><tr><th>Date</th><th>Time</th><th>Duration</th><th>Capacity</th><th>Booked</th><th>Available</th><th>Actions</th></tr></thead>
-                <tbody>
-                  {filteredSlots.map((slot) => (
-                    <tr key={slot.id}>
-                      <td>{formatDate(slot.slot_date)}</td>
-                      <td>{formatTime(slot.slot_time)}</td>
-                      <td>{slot.duration_minutes ?? "—"} min</td>
-                      <td>{slot.total_capacity ?? 0}</td>
-                      <td>{slot.booked_count ?? 0}</td>
-                      <td>{(slot.total_capacity ?? 0) - (slot.booked_count ?? 0)}</td>
-                      <td>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                          <button type="button" className="staff-action-btn" onClick={() => startEditSlot(slot)}>Edit</button>
-                          <button type="button" className="staff-action-btn" style={{ background: "#dc2626" }} disabled={deletingSlotId === slot.id || (slot.booked_count ?? 0) > 0} onClick={() => handleDeleteSlot(slot)} title={(slot.booked_count ?? 0) > 0 ? "Cannot delete booked slots" : "Delete slot"}>
-                            {deletingSlotId === slot.id ? "Deleting..." : "Delete"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {editingSlotId && (
-            <section className="staff-card">
-              <h2>Edit Slot</h2>
-              <form onSubmit={(e) => { e.preventDefault(); handleUpdateSlot(editingSlotId); }} className="staff-form">
-                <label>Date<input type="date" value={editSlotDate} onChange={(e) => setEditSlotDate(e.target.value)} required /></label>
-                <label>Time<input type="time" value={editSlotTime} onChange={(e) => setEditSlotTime(e.target.value)} required /></label>
-                <label>Capacity<input type="number" min="1" value={editSlotCapacity} onChange={(e) => setEditSlotCapacity(e.target.value)} required /></label>
-                <label>Duration (min)<input type="number" min="5" value={editSlotDuration} onChange={(e) => setEditSlotDuration(e.target.value)} required /></label>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button type="submit" disabled={updatingSlot}>{updatingSlot ? "Saving..." : "Save Changes"}</button>
-                  <button type="button" className="staff-action-btn" onClick={cancelEditSlot}>Cancel</button>
-                </div>
-              </form>
-              {updateSlotMsg.text && <p className={updateSlotMsg.type === "error" ? "staff-error" : "staff-success"}>{updateSlotMsg.text}</p>}
-            </section>
-          )}
-        </section>
+            {slotsLoading && <p style={{ color: "#888" }}>Loading slots...</p>}
+            {slotsError && <p className="staff-error">{slotsError}</p>}
+            {!slotsLoading && !slotsError && filteredSlots.length === 0 && <p style={{ color: "#888" }}>No slots found for this facility.</p>}
+            {!slotsLoading && filteredSlots.length > 0 && (
+              <div style={{ overflowX: "auto" }}>
+                <table className="staff-table">
+                  <thead><tr><th>Date</th><th>Time</th><th>Duration</th><th>Capacity</th><th>Booked</th><th>Available</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {filteredSlots.map((slot) => (
+                      <tr key={slot.id}>
+                        <td>{formatDate(slot.slot_date)}</td>
+                        <td>{formatTime(slot.slot_time)}</td>
+                        <td>{slot.duration_minutes ?? "—"} min</td>
+                        <td>{slot.total_capacity ?? 0}</td>
+                        <td>{slot.booked_count ?? 0}</td>
+                        <td>{(slot.total_capacity ?? 0) - (slot.booked_count ?? 0)}</td>
+                        <td>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <button type="button" className="staff-action-btn" onClick={() => startEditSlot(slot)}>Edit</button>
+                            <button type="button" className="staff-action-btn" style={{ background: "#dc2626" }} disabled={deletingSlotId === slot.id || (slot.booked_count ?? 0) > 0} onClick={() => handleDeleteSlot(slot)} title={(slot.booked_count ?? 0) > 0 ? "Cannot delete booked slots" : "Delete slot"}>
+                              {deletingSlotId === slot.id ? "Deleting..." : "Delete"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {editingSlotId && (
+              <section className="staff-card">
+                <h2>Edit Slot</h2>
+                <form onSubmit={(e) => { e.preventDefault(); handleUpdateSlot(editingSlotId); }} className="staff-form">
+                  <label>Date<input type="date" value={editSlotDate} onChange={(e) => setEditSlotDate(e.target.value)} required /></label>
+                  <label>Time<input type="time" value={editSlotTime} onChange={(e) => setEditSlotTime(e.target.value)} required /></label>
+                  <label>Capacity<input type="number" min="1" value={editSlotCapacity} onChange={(e) => setEditSlotCapacity(e.target.value)} required /></label>
+                  <label>Duration (min)<input type="number" min="5" value={editSlotDuration} onChange={(e) => setEditSlotDuration(e.target.value)} required /></label>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button type="submit" disabled={updatingSlot}>{updatingSlot ? "Saving..." : "Save Changes"}</button>
+                    <button type="button" className="staff-action-btn" onClick={cancelEditSlot}>Cancel</button>
+                  </div>
+                </form>
+                {updateSlotMsg.text && <p className={updateSlotMsg.type === "error" ? "staff-error" : "staff-success"}>{updateSlotMsg.text}</p>}
+              </section>
+            )}
+          </section>
+        )}
+
       </div>
 
       <AIAssistant context={{ role: "staff", facilityId, facilityName, pageContext: "clinic management - appointments, queue, slots" }} />

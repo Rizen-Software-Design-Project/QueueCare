@@ -35,18 +35,18 @@ const mockProfile = {
     role:         "patient",
     dob:          "1990-01-01",
 };
-
-function renderProfile(profileOverride = mockProfile) {
+function renderProfile({ profile = mockProfile, ...rest } = {}) {
     return render(
         <MemoryRouter>
-            <ProfilePage profile={profileOverride} />
+            <ProfilePage profile={profile} {...rest} />
         </MemoryRouter>
     );
 }
 
 // ── View mode ─────────────────────────────────────────────────────────────────
 describe("ProfilePage – view mode", () => {
-    beforeEach(() => renderProfile());
+    beforeEach(() => renderProfile({ onBack: vi.fn() }));
+
 
     it("renders the My Profile heading", () => {
         expect(screen.getByRole("heading", { name: "My Profile" })).toBeVisible();
@@ -184,10 +184,11 @@ describe("ProfilePage – save profile", () => {
 
 // ── Back navigation ───────────────────────────────────────────────────────────
 describe("ProfilePage – back button", () => {
-    it("calls navigate(-1) when Back is clicked", async () => {
-        renderProfile();
-        await userEvent.click(screen.getByRole("button", { name: /back/i }));
-        expect(mockNavigate).toHaveBeenCalledWith(-1);
+    it("calls onBack when Back is clicked", async () => {
+        const mockOnBack = vi.fn();
+        renderProfile({ onBack: mockOnBack }); // ← now correctly passed as prop
+        await userEvent.click(screen.getByRole("button", { name: /← Back/i }));
+        expect(mockOnBack).toHaveBeenCalled();
     });
 });
 

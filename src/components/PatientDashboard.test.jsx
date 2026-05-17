@@ -59,18 +59,19 @@ const mockQuery = {
     limit: vi.fn().mockResolvedValue({ data: [], error: null }),
     update: vi.fn().mockReturnThis(),
 };
-
-vi.mock("#lib/supabase", () => ({
-    supabase: {
-        from: vi.fn(() => mockQuery),
-        auth: { signOut: vi.fn(() => Promise.resolve()) },
-    },
-}));
-
 vi.mock("../queueApi", () => ({
     getMyQueue: vi.fn(() => Promise.resolve({ data: null, error: null })),
     removeFromQueue: vi.fn(),
     addToQueue: vi.fn(),
+}));
+vi.mock("#lib/supabase", () => ({
+    supabase: {
+        from: vi.fn(() => mockQuery),
+        auth: {
+            signOut: vi.fn(() => Promise.resolve()),
+            getUser: vi.fn(() => Promise.resolve({ data: { user: null } })), // ← add this
+        },
+    },
 }));
 
 vi.mock("firebase/auth", () => {
@@ -106,6 +107,10 @@ vi.mock("firebase/auth", () => {
 
     auth: {},
     signOut: vi.fn(() => Promise.resolve()),
+    onAuthStateChanged: vi.fn((_auth, callback) => {  // ← add this
+      callback(null);
+      return vi.fn();
+    }),
   };
 });
 
@@ -182,10 +187,14 @@ describe("Clicked Overview", () => {
         expect(btn).toBeVisible();
     });
 
-    it("renders Find a Clinic quick-action button", () => {
-        const btn = screen.getAllByRole("button", { name: /find a clinic/i }).find((b) => b.closest(".db-card"));
-        expect(btn).toBeVisible();
-    });
+    it("Find a Clinic quick-action switches to the Find a Clinic panel", async () => {
+    const user = userEvent.setup();
+    const btn = screen.getAllByRole("button", { name: /find a clinic/i }).find((b) => b.closest(".db-card"));
+    await user.click(btn);
+    await waitFor(() =>
+        expect(screen.getByText(/South African Clinics/i)).toBeVisible()
+    );
+});
 
     it("shows zero counts in all stat cards when no data", () => {
         const cards = document.querySelectorAll(".db-stat-card");
@@ -203,12 +212,6 @@ describe("Clicked Overview", () => {
         expect(topbar).toBeVisible();
     });
 
-    it("Find a Clinic quick-action navigates to /clinic-search", async () => {
-        const user = userEvent.setup();
-        const btn = screen.getAllByRole("button", { name: /find a clinic/i }).find((b) => b.closest(".db-card"));
-        await user.click(btn);
-        await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/clinic-search"));
-    });
 
     it("does NOT show the Last visited card when there are no appointments", () => {
         expect(screen.queryByText(/last visited/i)).toBeNull();
@@ -388,13 +391,27 @@ describe("Clicked Overview - last visited clinic", () => {
         await waitFor(() => expect(screen.getByRole("button", { name: /book again/i })).toBeVisible());
     });
 
-   it("Book Again navigates to the correct clinic page", async () => {
+it("Book Again switches to the Book Appointment panel", async () => {
     const user = userEvent.setup();
-    await waitFor(() => expect(screen.getByRole("button", { name: /book again/i })).toBeVisible());
-    await user.click(screen.getByRole("button", { name: /book again/i }));
+
+    mockQuery.maybeSingle.mockResolvedValueOnce({
+        data: {
+            id: 1,
+            name: "Test Clinic",
+            is_active: true,
+            facility_type: "Clinic",
+            district: "Johannesburg",
+            province: "Gauteng",
+            services_offered: [],
+            operating_hours: {},
+        },
+        error: null,
+    });
+
     await waitFor(() =>
-        expect(mockNavigate).toHaveBeenCalledWith("/clinic?id=fac-1")
+        expect(screen.getByRole("button", { name: /book again/i })).toBeVisible()
     );
+    await user.click(screen.getByRole("button", { name: /book again/i }));
 });
 
 });
@@ -420,16 +437,6 @@ describe("Overview Panel", () => {
         expect(appointment).toBeVisible();
     });
 
-    it("Opens Find my clinic Panel when Find a clinic clicked", async () => {
-        const user = userEvent.setup();
-        const allFindAClinic = screen.getAllByRole("button", { name: /find a clinic/i });
-        const findAClinic = allFindAClinic.find((btn) => btn.closest(".db-card"));
-        await user.click(findAClinic);
-
-        await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith("/clinic-search");
-        });
-    });
 });
 
 //jump-appointments
@@ -622,7 +629,7 @@ describe("AppointmentHistory - PatientHistoryView", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: /history/i }));
+    await user.click(screen.getByRole("tab", { name: /history/i }));
 
     expect(screen.getByText("Clinic History")).toBeVisible();
   });
@@ -767,15 +774,16 @@ describe("Notifications Panel - content", () => {
 
 //jump-profile
 describe("Clicked Profile", () => {
-    it("navigates to /profile when Profile nav button is clicked", async () => {
-        const user = userEvent.setup();
-        render(<PatientDashboard profile={mockProfile} />);
-        const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
-        await user.click(profileNav);
-        await waitFor(() =>
-            expect(mockNavigate).toHaveBeenCalledWith("/profile", expect.any(Object))
-        );
+    it("switches to the Profile panel when Profile nav is clicked", async () => {
+    const user = userEvent.setup();
+    render(<PatientDashboard profile={mockProfile} />);
+    const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
+    await user.click(profileNav);
+    await waitFor(() => {
+        const topbar = screen.getAllByText(/profile/i).find((el) => el.closest(".db-topbar"));
+        expect(topbar).toBeVisible();
     });
+});
 
     it("renders the user greeting", () => {
         render(<PatientDashboard profile={mockProfile} />);

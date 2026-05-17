@@ -36,7 +36,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
   // ── Load data ─────────────────────────────────────────────────────────────
   useEffect(() => {
     async function load() {
-      const [{ data: assignments }, { data: notif }] = await Promise.all([
+      const results = await Promise.all([
         supabase
           .from("staff_assignments")
           .select("*, facilities(name, district, province)")
@@ -49,6 +49,8 @@ export default function StaffDashboard({ profile: initialProfile }) {
           .order("sent_at", { ascending: false })
           .limit(30),
       ]);
+      const assignments = results[0]?.data ?? [];
+      const notif       = results[1]?.data ?? [];
       localStorage.setItem("staff_id", profile.id);
       localStorage.setItem("facility_id", assignments?.[0]?.facility_id ?? "");
       setStaffAssignments(assignments || []);
@@ -144,10 +146,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
             </div>
           </>
         );
-
       case "staff-appointments":
-      case "patients":
-      case "staff-queue":
         return (
           <StaffClinicManagement
             facilityId={facilityId}
@@ -189,7 +188,16 @@ export default function StaffDashboard({ profile: initialProfile }) {
             onMarkAllRead={markAllRead}
           />
         );
-
+        case "staff-queue":
+          return (
+            <StaffClinicManagement
+              facilityId={facilityId}
+              facilityName={facilityName}
+              authProvider={profile.auth_provider}
+              providerUserId={profile.provider_user_id}
+              queueOnly
+            />
+          );
       case "profile":
         return <ProfilePage profile={profile} onBack={() => goTo("overview")} />;
 

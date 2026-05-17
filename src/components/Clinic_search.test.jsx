@@ -134,12 +134,13 @@ async function waitForComponent() {
   }, { timeout: 3000 });
 }
 
-
+let mockOnBook;
 
 beforeEach(() => {
   mockFetch.mockReset();
   mockGeolocation.getCurrentPosition.mockReset();
   mockNavigate.mockReset();
+  mockOnBook = vi.fn();
   mockFetch.mockResolvedValue({
     ok: true,
     json: async () => [],
@@ -412,18 +413,14 @@ describe("ClinicSearch, Nearby clinics", () => {
 
 describe("ClinicSearch, Booking navigation", () => {
   beforeEach(async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => mockClinics,
-    });
-    render(<ClinicSearch />);
+    mockFetch.mockResolvedValue({ ok: true, json: async () => mockClinics });
+    render(<ClinicSearch onBook={mockOnBook} />);
     await waitForComponent();
   });
 
-  it("Navigates to booking page when Book now button is clicked", async () => {
+  it("calls onBook with the clinic id when Book now is clicked", async () => {
     const user = userEvent.setup();
-    const applyButton = screen.getByRole("button", { name: /Apply filters/i });
-    await user.click(applyButton);
+    await user.click(screen.getByRole("button", { name: /Apply filters/i }));
 
     await waitFor(() => {
       expect(screen.getByText("17 Esselen Street Clinic")).toBeVisible();
@@ -432,12 +429,8 @@ describe("ClinicSearch, Booking navigation", () => {
     const bookButtons = screen.getAllByRole("button", { name: /Book now/i });
     await user.click(bookButtons[0]);
 
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining("/clinic?id=1")
-    );
+    expect(mockOnBook).toHaveBeenCalledWith("1");
   });
-
-
 });
 
 

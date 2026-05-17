@@ -525,6 +525,16 @@ dialog::backdrop {
 .day-card:nth-child(6) { animation-delay: 0.18s; }
 .day-card:nth-child(7) { animation-delay: 0.21s; }
 
+dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  max-height: 90vh;
+  max-width: 90vw;
+  overflow-y: auto;
+}
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 850px) {
   .avail-header {
@@ -603,4 +613,5 @@ dialog::backdrop {
   .quick-fill-actions .btn {
     width: 100%;
   }
+
 }

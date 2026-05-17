@@ -707,7 +707,7 @@ describe("Error messages clear when navigating between pages", () => {
 describe("Branding", () => {
   it("shows the MediAccess name on every page", async () => {
     render(<AuthPage />);
-    expect(screen.getByText("MediAccess")).toBeInTheDocument();
+    expect(screen.getByText("Welcome to QueueCare")).toBeInTheDocument();
   });
 
   it("shows the tagline on every page", async () => {
@@ -717,7 +717,7 @@ describe("Branding", () => {
 
   it("still shows branding after navigating to the email sign-in page", async () => {
     await navigateToEmailSignIn();
-    expect(screen.getByText("MediAccess")).toBeInTheDocument();
+    expect(screen.getByText("QueueAccess")).toBeInTheDocument();
   });
 });
 

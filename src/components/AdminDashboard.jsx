@@ -174,8 +174,8 @@ export default function AdminDashboard({ profile: initialProfile }) {
     return <AnalyticsAdmin />;
 
   case "policy":
-    navigate("/service-policy");
-    return;
+     return(<ServicePolicy />);
+    
 
   case "notifications":
     return (

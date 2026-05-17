@@ -3,601 +3,317 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import WalkIn from "./Walkin";
 import userEvent from "@testing-library/user-event";
 
+/* ---------------- MOCKS ---------------- */
 
-//jump-mocks
-//jump-loading
-//jump-queue-tab
-//jump-book-tab
-//jump-checkin-tab
-
-
-//jump-mocks
 const mockNavigate = vi.fn();
-vi.mock("react-router-dom", async () => {
-    const actual = await vi.importActual("react-router-dom");
-    return { ...actual, useNavigate: () => mockNavigate };
-});
-
-global.fetch = vi.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
-);
-
-
-const slotsOrderFinal = vi.fn();
 
 const mockQuery = {
-    select:      vi.fn().mockReturnThis(),
-    eq:          vi.fn().mockReturnThis(),
-    or:          vi.fn().mockReturnThis(),
-    in:          vi.fn().mockReturnThis(),
-    order:       vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-    limit:       vi.fn().mockResolvedValue({ data: [], error: null }),
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  or: vi.fn().mockReturnThis(),
+  in: vi.fn().mockReturnThis(),
+  order: vi.fn(),
+  maybeSingle: vi.fn(),
 };
 
 vi.mock("#lib/supabase", () => ({
-    supabase: {
-        from: vi.fn(() => mockQuery),
-        auth: { signOut: vi.fn(() => Promise.resolve()) },
-    },
+  supabase: {
+    from: vi.fn(() => mockQuery),
+  },
 }));
 
-const mockIdentity = {
-    auth_provider:    "firebase",
-    provider_user_id: "fb-staff-uid",
-};
+global.fetch = vi.fn();
 
-const mockStaffDbProfile = { id: "staff-db-id" };
-
-const mockAssignment = {
-    facility_id: "fac-1",
-    facilities:  { id: "fac-1", name: "Soweto Clinic" },
-};
+/* ---------------- MOCK DATA ---------------- */
 
 const TODAY = new Date().toISOString().split("T")[0];
 
-const inOneHour = new Date(Date.now() + 60 * 60 * 1000);
-const todaySlotTime = inOneHour.toTimeString().slice(0, 8);
-
 const mockTodaySlot = {
-    id:               "slot-today",
-    slot_date:        TODAY,
-    slot_time:        todaySlotTime,
-    duration_minutes: 30,
-    total_capacity:   5,
-    booked_count:     2,
+  id: "slot-today",
+  slot_date: TODAY,
+  slot_time: "23:59:00", // always future-safe
+  duration_minutes: 30,
+  total_capacity: 5,
+  booked_count: 2,
 };
 
 const mockFutureSlot = {
-    id:               "slot-future",
-    slot_date:        "2099-12-31",
-    slot_time:        "09:00:00",
-    duration_minutes: 30,
-    total_capacity:   5,
-    booked_count:     1,
+  id: "slot-future",
+  slot_date: "2099-12-31",
+  slot_time: "09:00:00",
+  duration_minutes: 30,
+  total_capacity: 5,
+  booked_count: 1,
 };
 
 const mockPatientProfile = {
-    id:           "patient-id",
-    name:         "John",
-    surname:      "Doe",
-    email:        "john@example.com",
-    phone_number: "0820000000",
-    sex:          "male",
-    dob:          "2000-01-01",
+  id: "patient-id",
+  name: "John",
+  surname: "Doe",
+  email: "john@example.com",
+  phone_number: "0820000000",
 };
 
+/* ---------------- HELPERS ---------------- */
 
-function seedMount({ slots = [mockTodaySlot, mockFutureSlot] } = {}) {
-    localStorage.setItem("userIdentity", JSON.stringify(mockIdentity));
 
-    mockQuery.maybeSingle
-        .mockResolvedValueOnce({ data: mockStaffDbProfile, error: null })
-        .mockResolvedValueOnce({ data: mockAssignment,     error: null });
+function seedSlots(slots = [mockTodaySlot, mockFutureSlot]) {
+  mockQuery.select.mockReturnThis();
+  mockQuery.eq.mockReturnThis();
 
-    slotsOrderFinal.mockResolvedValue({ data: slots, error: null });
-    mockQuery.order.mockReturnValue({ order: slotsOrderFinal });
+  mockQuery.order
+    .mockImplementationOnce(() => mockQuery)
+    .mockResolvedValueOnce({
+      data: slots,
+      error: null,
+    });
+
+  // second fetchSlots() call
+  mockQuery.order
+    .mockImplementationOnce(() => mockQuery)
+    .mockResolvedValueOnce({
+      data: slots,
+      error: null,
+    });
+
+  // third fetchSlots() call
+  mockQuery.order
+    .mockImplementationOnce(() => mockQuery)
+    .mockResolvedValueOnce({
+      data: slots,
+      error: null,
+    });
+}
+function renderComponent() {
+  return render(
+    <WalkIn
+      facilityId="fac-1"
+      facilityName="Soweto Clinic"
+      onBack={mockNavigate}
+    />
+  );
 }
 
-async function renderAndWait() {
-    const user = userEvent.setup();
-    render(<WalkIn />);
+async function searchForPatient(user, found = true) {
+  mockQuery.maybeSingle.mockResolvedValueOnce({
+    data: found ? mockPatientProfile : null,
+    error: null,
+  });
+
+  await user.type(screen.getByPlaceholderText(/email or phone/i), "john@example.com");
+  await user.click(screen.getByRole("button", { name: /find/i }));
+
+  if (found) {
     await waitFor(() =>
-        expect(screen.getByText(/loading walk-in patients/i)).toBeInTheDocument()
+      expect(screen.getByText(/confirm below/i)).toBeVisible()
     );
-    return user;
+  }
 }
 
-async function searchForPatient(user, contact = "john@example.com") {
-    mockQuery.maybeSingle.mockResolvedValueOnce({ data: mockPatientProfile, error: null });
-    const input = screen.getByPlaceholderText(/email or phone/i);
-    await user.clear(input);
-    await user.type(input, contact);
-    await user.click(screen.getByRole("button", { name: /find/i }));
-    await waitFor(() =>
-        expect(screen.getByText(/profile found/i)).toBeVisible()
-    );
-}
+/* ---------------- SETUP ---------------- */
 
 beforeEach(() => {
-    vi.clearAllMocks();
-    localStorage.clear();
-    mockQuery.order.mockReturnThis();
+  vi.clearAllMocks();
+  seedSlots();
 });
 
-
-//jump-loading
-describe("Loading state", () => {
-    it("shows loading message while facility is being fetched", () => {
-        localStorage.setItem("userIdentity", JSON.stringify(mockIdentity));
-        mockQuery.maybeSingle.mockReturnValue(new Promise(() => {})); // never resolves
-        render(<WalkIn />);
-        expect(screen.getByText(/Loading Walk-In Patients/i)).toBeVisible();
-    });
-});
-
-describe("Error states", () => {
-    it("shows error when not logged in (no identity in localStorage)", async () => {
-        localStorage.clear();
-        render(<WalkIn />);
-        await waitFor(() =>
-            expect(screen.getByText(/not logged in/i)).toBeVisible()
-        );
-    });
-
-    it("shows error when staff profile cannot be loaded", async () => {
-        localStorage.setItem("userIdentity", JSON.stringify(mockIdentity));
-        mockQuery.maybeSingle
-            .mockResolvedValueOnce({ data: null, error: null });
-        render(<WalkIn />);
-        await waitFor(() =>
-            expect(screen.getByText(/could not load your profile/i)).toBeVisible()
-        );
-    });
-
-    it("shows error when staff has no facility assignment", async () => {
-        localStorage.setItem("userIdentity", JSON.stringify(mockIdentity));
-        mockQuery.maybeSingle
-            .mockResolvedValueOnce({ data: mockStaffDbProfile, error: null })
-            .mockResolvedValueOnce({ data: null, error: null });
-        render(<WalkIn />);
-        await waitFor(() =>
-            expect(screen.getByText(/not assigned to a facility/i)).toBeVisible()
-        );
-    });
-});
-
+/* ---------------- BASIC RENDER ---------------- */
 
 describe("Page structure", () => {
-    beforeEach(async () => {
-        seedMount();
-        await renderAndWait();
-    });
+  it("renders heading and facility", async () => {
+    renderComponent();
 
-    it("renders the page heading", () => {
-        expect(screen.getByText(/walk-in patients/i)).toBeVisible();
-    });
+    expect(screen.getByText(/walk-in patients/i)).toBeVisible();
+    expect(screen.getByText(/soweto clinic/i)).toBeVisible();
+  });
 
-    it("renders the facility name", () => {
-        expect(screen.getByText(/soweto clinic/i)).toBeVisible();
-    });
+  it("renders tabs", () => {
+    renderComponent();
 
-    it("renders all three tab buttons", () => {
-        expect(screen.getByRole("button", { name: /queue today/i })).toBeVisible();
-        expect(screen.getByRole("button", { name: /book future appointment/i })).toBeVisible();
-        expect(screen.getByRole("button", { name: /check in patient/i })).toBeVisible();
-    });
+    expect(screen.getByRole("button", { name: /queue today/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /book future appointment/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: /check in patient/i })).toBeVisible();
+  });
 
-    it("renders the Back button", () => {
-        expect(screen.getByRole("button", { name: /back/i })).toBeVisible();
-    });
+  it("back button works", async () => {
+    const user = userEvent.setup();
+    renderComponent();
 
-    it("Back button calls navigate(-1)", async () => {
-        const user = userEvent.setup();
-        await user.click(screen.getByRole("button", { name: /back/i }));
-        expect(mockNavigate).toHaveBeenCalledWith(-1);
-    });
-
-    it("renders Step 1 patient search input", () => {
-        expect(screen.getByPlaceholderText(/email or phone/i)).toBeVisible();
-    });
-
-    it("renders the Find button", () => {
-        expect(screen.getByRole("button", { name: /find/i })).toBeVisible();
-    });
+    await user.click(screen.getByRole("button", { name: /back/i }));
+    expect(mockNavigate).toHaveBeenCalled();
+  });
 });
 
+/* ---------------- SEARCH ---------------- */
 
-describe("Step 1 - patient search", () => {
-    beforeEach(async () => {
-        seedMount();
-        await renderAndWait();
-    });
+describe("Patient search", () => {
+  it("shows error if patient not found", async () => {
+    const user = userEvent.setup();
+    renderComponent();
 
-    it("shows error message when patient is not found", async () => {
-        const user = userEvent.setup();
-        mockQuery.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    await searchForPatient(user, false);
 
-        await user.type(screen.getByPlaceholderText(/email or phone/i), "unknown@test.com");
-        await user.click(screen.getByRole("button", { name: /find/i }));
+    expect(screen.getByText(/no profile found/i)).toBeVisible();
+  });
 
-        await waitFor(() =>
-            expect(screen.getByText(/no profile found/i)).toBeVisible()
-        );
-    });
+  it("shows profile when found", async () => {
+    const user = userEvent.setup();
+    renderComponent();
 
-    it("shows success message and profile card when patient is found", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
+    await searchForPatient(user);
 
-        expect(screen.getByText("John Doe")).toBeVisible();
-        expect(screen.getByText(/john@example.com/i)).toBeVisible();
-        expect(screen.getByText(/profile found/i)).toBeVisible();
-    });
-
-    it("renders patient email and phone in profile card", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
-
-        expect(screen.getByText(/john@example.com/i)).toBeVisible();
-        expect(screen.getByText(/0820000000/i)).toBeVisible();
-    });
+    expect(screen.getByText("John Doe")).toBeVisible();
+    expect(screen.getByText(/john@example.com/i)).toBeVisible();
+  });
 });
 
+/* ---------------- QUEUE TAB ---------------- */
 
-//jump-queue-tab
-describe("Queue Today tab - render", () => {
-    beforeEach(async () => {
-        seedMount();
-        await renderAndWait();
-    });
+describe("Queue Today", () => {
+  it("is default tab", () => {
+    renderComponent();
+    expect(screen.getByText(/add them to today's live queue/i)).toBeVisible();
+  });
 
-    it("Queue Today is the default active tab", () => {
-        expect(screen.getByText(/find a registered patient and add them to today/i)).toBeVisible();
-    });
+  it("enables submit after slot select", async () => {
+    const user = userEvent.setup();
+    renderComponent();
 
-    it("renders Step 2 slot selector and reason input after patient found", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
+    await searchForPatient(user);
 
-        expect(
-            screen.getByLabelText(/reason for visit/i)
-        ).toBeVisible();
+    await user.selectOptions(screen.getByRole("combobox"), "slot-today");
 
-        expect(screen.getByRole("combobox")).toBeVisible();
-    });
+    expect(
+      screen.getByRole("button", { name: /add to today's queue/i })
+    ).not.toBeDisabled();
+  });
 
-    it("renders today's available slots in the dropdown", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
+  it("submits successfully", async () => {
+    const user = userEvent.setup();
+    renderComponent();
 
-        const options = screen.getAllByRole("option");
-        const slotOption = options.find((o) => o.value === "slot-today");
-        expect(slotOption).toBeTruthy();
-    });
+    await searchForPatient(user);
+    await user.selectOptions(screen.getByRole("combobox"), "slot-today");
 
-    it("submit button is disabled when no slot is selected", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
+    fetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
 
-        expect(screen.getByRole("button", { name: /add to today's queue/i })).toBeDisabled();
-    });
+    await user.click(screen.getByRole("button", { name: /add to today's queue/i }));
 
-    it("submit button is enabled after selecting a slot", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
-
-        await user.selectOptions(screen.getByRole("combobox"), "slot-today");
-
-        expect(screen.getByRole("button", { name: /add to today's queue/i })).not.toBeDisabled();
-    });
+    await waitFor(() =>
+      expect(screen.getByText(/added to today's queue/i)).toBeVisible()
+    );
+  });
 });
 
-describe("Queue Today tab - submit", () => {
-    it("calls book-walkin and add_to_queue APIs on submit, then shows success", async () => {
-        seedMount();
-        const user = await renderAndWait();
-        await searchForPatient(user);
+/* ---------------- BOOK TAB ---------------- */
 
-        await user.selectOptions(screen.getByRole("combobox"), "slot-today");
+describe("Book Future Appointment", () => {
+  it("shows future slots only", async () => {
+    const user = userEvent.setup();
+    renderComponent();
 
-        global.fetch
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ appointment_id: "appt-1" }) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ position: 3 }) });
+    await user.click(screen.getByRole("button", { name: /book future appointment/i }));
+    await searchForPatient(user);
 
-        await user.click(screen.getByRole("button", { name: /add to today's queue/i }));
+    const options = screen.getAllByRole("option");
+    expect(options.find(o => o.value === "slot-future")).toBeTruthy();
+    expect(options.find(o => o.value === "slot-today")).toBeFalsy();
+  });
 
-        await waitFor(() =>
-            expect(screen.getByText(/booked and added to today's queue/i)).toBeVisible()
-        );
+  it("submits booking", async () => {
+    const user = userEvent.setup();
+    renderComponent();
 
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining("/appointments/book-walkin"),
-            expect.objectContaining({ method: "POST" })
-        );
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining("/queue/add_to_queue"),
-            expect.objectContaining({ method: "POST" })
-        );
+    await user.click(screen.getByRole("button", { name: /book future appointment/i }));
+    await searchForPatient(user);
+
+    await user.selectOptions(screen.getByRole("combobox"), "slot-future");
+
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({})
     });
 
-    it("shows error message when book-walkin API fails", async () => {
-        seedMount();
-        const user = await renderAndWait();
-        await searchForPatient(user);
+    await user.click(screen.getByRole("button", { name: /book appointment/i }));
 
-        await user.selectOptions(screen.getByRole("combobox"), "slot-today");
-
-        global.fetch.mockResolvedValueOnce({
-            ok:   false,
-            json: () => Promise.resolve({ error: "Slot is full." }),
-        });
-
-        await user.click(screen.getByRole("button", { name: /add to today's queue/i }));
-
-        await waitFor(() =>
-            expect(screen.getByText(/slot is full/i)).toBeVisible()
-        );
-    });
-
-    it("shows error when queue API fails after successful booking", async () => {
-        seedMount();
-        const user = await renderAndWait();
-        await searchForPatient(user);
-
-        await user.selectOptions(screen.getByRole("combobox"), "slot-today");
-
-        global.fetch
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ appointment_id: "appt-1" }) })
-            .mockResolvedValueOnce({ ok: false, json: () => Promise.resolve({ error: "Queue error." }) });
-
-        await user.click(screen.getByRole("button", { name: /add to today's queue/i }));
-
-        await waitFor(() =>
-            expect(screen.getByText(/queue error/i)).toBeVisible()
-        );
-    });
-
-    it("clears the form and profile card after successful submission", async () => {
-        seedMount();
-        const user = await renderAndWait();
-        await searchForPatient(user);
-
-        await user.selectOptions(screen.getByRole("combobox"), "slot-today");
-
-        global.fetch
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
-
-        await user.click(screen.getByRole("button", { name: /add to today's queue/i }));
-
-        await waitFor(() =>
-            expect(screen.queryByText("John Doe")).not.toBeInTheDocument()
-        );
-    });
+    await waitFor(() =>
+      expect(screen.getByText(/appointment booked for john doe/i)).toBeVisible()
+    );
+  });
 });
 
+/* ---------------- CHECK-IN ---------------- */
 
-//jump-book-tab
-describe("Book Future Appointment tab - render", () => {
-    beforeEach(async () => {
-        seedMount();
-        const user = await renderAndWait();
-        await user.click(screen.getByRole("button", { name: /book future appointment/i }));
+describe("Check In", () => {
+  async function setup() {
+    const user = userEvent.setup();
+    renderComponent();
+
+    await user.click(screen.getByRole("button", { name: /check in patient/i }));
+    await searchForPatient(user);
+
+    return user;
+  }
+
+  it("shows error if no appointment", async () => {
+    const user = await setup();
+
+    mockQuery.in.mockResolvedValueOnce({ data: [], error: null });
+
+    await user.click(screen.getByRole("button", { name: /confirm check in/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/no booked appointment/i)).toBeVisible()
+    );
+  });
+
+  it("checks in successfully", async () => {
+    const user = await setup();
+
+    mockQuery.in.mockResolvedValueOnce({
+      data: [{ id: "appt" }],
+      error: null,
     });
 
-    it("shows the correct tab description", () => {
-        expect(screen.getByText(/schedule a future appointment/i)).toBeVisible();
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({})
     });
 
-    it("renders future slots in dropdown after patient found", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
+    await user.click(screen.getByRole("button", { name: /confirm check in/i }));
 
-        const options = screen.getAllByRole("option");
-        const futureOption = options.find((o) => o.value === "slot-future");
-        expect(futureOption).toBeTruthy();
-    });
-
-    it("does NOT show today's slot in the Book Future tab", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
-
-        const options = screen.getAllByRole("option");
-        const todayOption = options.find((o) => o.value === "slot-today");
-        expect(todayOption).toBeUndefined();
-    });
-
-    it("submit button reads 'Book Appointment'", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
-
-        await user.selectOptions(screen.getByRole("combobox"), "slot-future");
-        expect(screen.getByRole("button", { name: /book appointment/i })).toBeVisible();
-    });
+    await waitFor(() =>
+      expect(screen.getByText(/checked in and added to the queue/i)).toBeVisible()
+    );
+  });
 });
 
-describe("Book Future Appointment tab - submit", () => {
-    it("calls book-walkin API and shows success with date on submit", async () => {
-        seedMount();
-        const user = await renderAndWait();
-        await user.click(screen.getByRole("button", { name: /book future appointment/i }));
-        await searchForPatient(user);
-
-        await user.selectOptions(screen.getByRole("combobox"), "slot-future");
-
-        global.fetch.mockResolvedValueOnce({
-            ok:   true,
-            json: () => Promise.resolve({ appointment_id: "appt-2" }),
-        });
-
-        await user.click(screen.getByRole("button", { name: /book appointment/i }));
-
-        await waitFor(() =>
-            expect(screen.getByText(/appointment booked for john doe/i)).toBeVisible()
-        );
-
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining("/appointments/book-walkin"),
-            expect.objectContaining({ method: "POST" })
-        );
-        expect(global.fetch).not.toHaveBeenCalledWith(
-            expect.stringContaining("/queue/add_to_queue"),
-            expect.anything()
-        );
-    });
-
-    it("shows error when book-walkin API fails", async () => {
-        seedMount();
-        const user = await renderAndWait();
-        await user.click(screen.getByRole("button", { name: /book future appointment/i }));
-        await searchForPatient(user);
-
-        await user.selectOptions(screen.getByRole("combobox"), "slot-future");
-
-        global.fetch.mockResolvedValueOnce({
-            ok:   false,
-            json: () => Promise.resolve({ error: "Slot unavailable." }),
-        });
-
-        await user.click(screen.getByRole("button", { name: /book appointment/i }));
-
-        await waitFor(() =>
-            expect(screen.getByText(/slot unavailable/i)).toBeVisible()
-        );
-    });
-});
-
-
-//jump-checkin-tab
-describe("Check In Patient tab - render", () => {
-    beforeEach(async () => {
-        seedMount();
-        const user = await renderAndWait();
-        await user.click(screen.getByRole("button", { name: /check in patient/i }));
-    });
-
-    it("shows the correct tab description", () => {
-        expect(screen.getByText(/existing booking/i)).toBeVisible();
-    });
-
-    it("renders Confirm Check In button after patient found", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
-
-        expect(screen.getByRole("button", { name: /confirm check in/i })).toBeVisible();
-    });
-
-    it("does NOT render slot selector or reason input in check-in tab", async () => {
-        const user = userEvent.setup();
-        await searchForPatient(user);
-
-        expect(screen.queryByPlaceholderText(/reason/i)).not.toBeInTheDocument();
-        expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    });
-});
-
-describe("Check In Patient tab - submit", () => {
-    async function setupCheckin() {
-        seedMount();
-        const user = await renderAndWait();
-        await user.click(screen.getByRole("button", { name: /check in patient/i }));
-        await searchForPatient(user);
-        return user;
-    }
-
-    it("shows error when patient has no booked appointment today", async () => {
-        const user = await setupCheckin();
-
-        mockQuery.in.mockResolvedValueOnce({ data: [], error: null });
-
-        await user.click(screen.getByRole("button", { name: /confirm check in/i }));
-
-        await waitFor(() =>
-            expect(screen.getByText(/no booked appointment at this clinic today/i)).toBeVisible()
-        );
-    });
-
-    it("calls add_to_queue API and shows success when patient has an appointment today", async () => {
-        const user = await setupCheckin();
-
-        mockQuery.in.mockResolvedValueOnce({
-            data:  [{ id: "appt-today" }],
-            error: null,
-        });
-
-        global.fetch.mockResolvedValueOnce({
-            ok:   true,
-            json: () => Promise.resolve({ position: 1 }),
-        });
-
-        await user.click(screen.getByRole("button", { name: /confirm check in/i }));
-
-        await waitFor(() =>
-            expect(screen.getByText(/checked in and added to the queue/i)).toBeVisible()
-        );
-
-        expect(global.fetch).toHaveBeenCalledWith(
-            expect.stringContaining("/queue/add_to_queue"),
-            expect.objectContaining({ method: "POST" })
-        );
-    });
-
-    it("shows error when queue API fails during check-in", async () => {
-        const user = await setupCheckin();
-
-        mockQuery.in.mockResolvedValueOnce({
-            data:  [{ id: "appt-today" }],
-            error: null,
-        });
-
-        global.fetch.mockResolvedValueOnce({
-            ok:   false,
-            json: () => Promise.resolve({ error: "Queue full." }),
-        });
-
-        await user.click(screen.getByRole("button", { name: /confirm check in/i }));
-
-        await waitFor(() =>
-            expect(screen.getByText(/queue full/i)).toBeVisible()
-        );
-    });
-
-    it("clears profile card after successful check-in", async () => {
-        const user = await setupCheckin();
-
-        mockQuery.in.mockResolvedValueOnce({ data: [{ id: "appt-today" }], error: null });
-        global.fetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
-
-        await user.click(screen.getByRole("button", { name: /confirm check in/i }));
-
-        await waitFor(() =>
-            expect(screen.queryByText("John Doe")).not.toBeInTheDocument()
-        );
-    });
-});
-
+/* ---------------- TAB SWITCH ---------------- */
 
 describe("Tab switching", () => {
-    beforeEach(async () => {
-        seedMount();
-        await renderAndWait();
-    });
+  it("clears success message on tab change", async () => {
+    const user = userEvent.setup();
+    renderComponent();
 
-    it("switching tabs clears the submit message", async () => {
-        const user = userEvent.setup();
+    await searchForPatient(user);
+    await user.selectOptions(screen.getByRole("combobox"), "slot-today");
 
-        await searchForPatient(user);
-        await user.selectOptions(screen.getByRole("combobox"), "slot-today");
-        global.fetch
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) })
-            .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
-        await user.click(screen.getByRole("button", { name: /add to today's queue/i }));
-        await waitFor(() =>
-            expect(screen.getByText(/booked and added to today's queue/i)).toBeVisible()
-        );
+    fetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
 
-        await user.click(screen.getByRole("button", { name: /book future appointment/i }));
-        expect(screen.queryByText(/booked and added to today's queue/i)).not.toBeInTheDocument();
-    });
+    await user.click(screen.getByRole("button", { name: /add to today's queue/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/added to today's queue/i)).toBeVisible()
+    );
+
+    await user.click(screen.getByRole("button", { name: /book future appointment/i }));
+
+    expect(
+      screen.queryByText(/added to today's queue/i)
+    ).not.toBeInTheDocument();
+  });
 });

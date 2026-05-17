@@ -1,36 +1,26 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
 import Schedule from "./Schedule";
 
 
-const mockGetSchedule = vi.fn();
+const mockGetSchedule    = vi.fn();
 const mockCreateSchedule = vi.fn();
-const mockUpdateDaySchedule = vi.fn();
 const mockDeleteSchedule = vi.fn();
 
 vi.mock("../queueApi", () => ({
-  getSchedule: (...a) => mockGetSchedule(...a),
+  getSchedule:    (...a) => mockGetSchedule(...a),
   createSchedule: (...a) => mockCreateSchedule(...a),
-  updateDaySchedule: (...a) => mockUpdateDaySchedule(...a),
   deleteSchedule: (...a) => mockDeleteSchedule(...a),
 }));
 
 
-const mockNavigate = vi.fn();
-
-vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual("react-router-dom");
-  return { ...actual, useNavigate: () => mockNavigate };
-});
-
-
-const STAFF_STATE = {
-  state: { staff: { id: "staff-123" }, facilityId: "facility-456" },
-};
-
 const EMPTY_SCHEDULE = { success: true, data: null };
+
+const DEFAULT_PROPS = {
+  staffId:    "staff-123",
+  facilityId: "facility-456",
+};
 
 
 beforeEach(() => {
@@ -50,30 +40,25 @@ afterEach(() => {
 });
 
 
-function renderSchedule(locationProps = STAFF_STATE) {
-  return render(
-    <MemoryRouter initialEntries={[{ pathname: "/schedule", ...locationProps }]}>
-      <Schedule />
-    </MemoryRouter>
-  );
+function renderSchedule(props = DEFAULT_PROPS) {
+  return render(<Schedule {...props} />);
 }
 
 
-const getDialog = (title) => screen.getByText(title).closest("dialog");
+const getDialog    = (title) => screen.getByText(title).closest("dialog");
 
-const openDialog = async (user, buttonName, title) => {
+const openDialog   = async (user, buttonName, title) => {
   await user.click(screen.getByRole("button", { name: buttonName }));
   return getDialog(title);
 };
 
-const clickWithin = async (user, scope, name) => {
-  await user.click(within(scope).getByRole("button", { name }));
-};
+const clickWithin  = async (user, scope, name) =>
+  user.click(within(scope).getByRole("button", { name }));
 
 const quickFillWeekdays = async (user, dialog) =>
   clickWithin(user, dialog, /weekdays 09:00/i);
 
-const quickFillAllDays = async (user, dialog) =>
+const quickFillAllDays  = async (user, dialog) =>
   clickWithin(user, dialog, /all days 08:00/i);
 
 
@@ -82,8 +67,6 @@ describe("Schedule > day card display", () => {
     mockGetSchedule.mockResolvedValue(EMPTY_SCHEDULE);
     renderSchedule();
 
-    // "Monday" etc. also appear in dialog <strong> tags (dialogs are in the DOM
-    // even when closed), so scope to .avail-grid to match card labels only.
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     await waitFor(() => {
       const gridEl = document.querySelector(".avail-grid");
@@ -167,8 +150,9 @@ describe("Schedule > day card display", () => {
   });
 });
 
+
 describe("Schedule > getSchedule", () => {
-  it("calls getSchedule with the correct staff_id on mount", async () => {
+  it("calls getSchedule with the correct staff_id prop on mount", async () => {
     mockGetSchedule.mockResolvedValue(EMPTY_SCHEDULE);
     renderSchedule();
 
@@ -177,11 +161,11 @@ describe("Schedule > getSchedule", () => {
     });
   });
 
-  it("calls getSchedule with staff_id from localStorage when not in nav state", async () => {
+  it("calls getSchedule with staff_id from localStorage when prop is not provided", async () => {
     localStorage.setItem("staff_id", "ls-staff-999");
     mockGetSchedule.mockResolvedValue(EMPTY_SCHEDULE);
 
-    renderSchedule({ state: { facilityId: "facility-456" } });
+    renderSchedule({ facilityId: "facility-456" });
 
     await waitFor(() => {
       expect(mockGetSchedule).toHaveBeenCalledWith("ls-staff-999");
@@ -226,6 +210,7 @@ describe("Schedule > cancel buttons", () => {
   });
 });
 
+
 describe("Schedule > add_time validation", () => {
   beforeEach(() => {
     mockGetSchedule.mockResolvedValue(EMPTY_SCHEDULE);
@@ -250,23 +235,19 @@ describe("Schedule > add_time validation", () => {
     alertSpy.mockRestore();
   });
 
-  it("validates facility ID before staff ID in add_time", async () => {
+  it("alerts 'Missing facility ID.' when facility prop is absent", async () => {
     const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
     const user = userEvent.setup();
 
-    // Only staff provided — facility missing → facility alert fires first
-    renderSchedule({ state: { staff: { id: "staff-123" } } });
+    // Only staffId provided — facilityId missing
+    renderSchedule({ staffId: "staff-123" });
 
     const dialog = await openDialog(user, /add schedule/i, "Add Schedule");
 
-    // Use old-style add form quick fill — all 3 fields must be set
-    const mondayRow = dialog.querySelector("section.weekly-row");
-    const selects = within(dialog).getAllByRole("combobox");
+    const selects    = within(dialog).getAllByRole("combobox");
     const timeInputs = dialog.querySelectorAll("input[type='time']");
 
-    // Manually set a complete day via the weekly editor inputs
     await user.selectOptions(selects[0], "open");
-    // After selecting open, type times directly
     await user.type(timeInputs[0], "09:00");
     await user.type(timeInputs[1], "17:00");
 
@@ -288,12 +269,12 @@ describe("Schedule > saveWeeklySchedule validation order", () => {
     mockGetSchedule.mockResolvedValue(EMPTY_SCHEDULE);
   });
 
-  it("validates staff ID before facility ID in saveWeeklySchedule", async () => {
+  it("alerts 'Missing staff ID.' when staff prop is absent", async () => {
     const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
     const user = userEvent.setup();
 
-    // Only facility provided — staff missing → staff alert fires first
-    renderSchedule({ state: { facilityId: "facility-456" } });
+    // Only facilityId provided — staffId missing
+    renderSchedule({ facilityId: "facility-456" });
 
     const dialog = await openDialog(user, /^edit$/i, "Edit Schedule");
     await quickFillWeekdays(user, dialog);
@@ -319,15 +300,15 @@ describe("Schedule > saveWeeklySchedule payload", () => {
     renderSchedule();
 
     const dialog = await openDialog(user, /^edit$/i, "Edit Schedule");
-    await quickFillWeekdays(user, dialog); // 09:00–17:00 open for Mon–Fri
+    await quickFillWeekdays(user, dialog);
     await clickWithin(user, dialog, /save changes/i);
 
     await waitFor(() => {
       const payload = mockCreateSchedule.mock.calls[0][0];
       const mon = payload.find((d) => d.day_of_week === "Mon");
       expect(mon).toMatchObject({
-        start_time: "09:00",
-        end_time: "17:00",
+        start_time:         "09:00",
+        end_time:           "17:00",
         appointment_status: "open",
       });
     });
@@ -339,9 +320,8 @@ describe("Schedule > saveWeeklySchedule payload", () => {
 
     const dialog = await openDialog(user, /^edit$/i, "Edit Schedule");
 
-    // Mark Monday as on_leave via the mini-button
     const onLeaveButtons = within(dialog).getAllByRole("button", { name: /on.leave/i });
-    await user.click(onLeaveButtons[0]);
+    await user.click(onLeaveButtons[0]); // Monday
 
     await clickWithin(user, dialog, /save changes/i);
 
@@ -350,10 +330,10 @@ describe("Schedule > saveWeeklySchedule payload", () => {
       expect(payload).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            day_of_week: "Mon",
+            day_of_week:        "Mon",
             appointment_status: "on_leave",
-            start_time: null,
-            end_time: null,
+            start_time:         null,
+            end_time:           null,
           }),
         ])
       );
@@ -378,7 +358,7 @@ describe("Schedule > saveWeeklySchedule payload", () => {
     });
   });
 
-  it("attaches staff_id and facility_id from nav state to every payload entry", async () => {
+  it("attaches staff_id and facility_id from props to every payload entry", async () => {
     const user = userEvent.setup();
     renderSchedule();
 
@@ -390,7 +370,7 @@ describe("Schedule > saveWeeklySchedule payload", () => {
       const payload = mockCreateSchedule.mock.calls[0][0];
       payload.forEach((entry) => {
         expect(entry).toMatchObject({
-          staff_id: "staff-123",
+          staff_id:    "staff-123",
           facility_id: "facility-456",
         });
       });
@@ -412,16 +392,16 @@ describe("Schedule > mini-buttons", () => {
     await quickFillAllDays(user, dialog);
 
     const closedButtons = within(dialog).getAllByRole("button", { name: /^closed$/i });
-    await user.click(closedButtons[0]); // Monday
+    await user.click(closedButtons[0]); // Monday (row index 0)
 
-    const mondayRow = closedButtons[0].closest("section.weekly-row");
-    const timeInputs = mondayRow.querySelectorAll("input[type='time']");
-
-    timeInputs.forEach((input) => expect(input.value).toBe(""));
-
-    // Status badge in that row should now show closed
-    const badge = mondayRow.querySelector(".status-badge");
-    expect(badge).toHaveTextContent("closed");
+    // Re-query from the live dialog — the row was remounted due to WeeklyEditor being inline
+    await waitFor(() => {
+      const mondayRow = dialog.querySelectorAll("section.weekly-row")[0];
+      expect(mondayRow.querySelector(".status-badge")).toHaveTextContent("closed");
+      mondayRow.querySelectorAll("input[type='time']").forEach((input) =>
+        expect(input.value).toBe("")
+      );
+    });
   });
 
   it("'On leave' mini-button clears times and sets status to on_leave", async () => {
@@ -432,15 +412,15 @@ describe("Schedule > mini-buttons", () => {
     await quickFillAllDays(user, dialog);
 
     const onLeaveButtons = within(dialog).getAllByRole("button", { name: /on.leave/i });
-    await user.click(onLeaveButtons[0]); // Monday
+    await user.click(onLeaveButtons[0]); // Monday (row index 0)
 
-    const mondayRow = onLeaveButtons[0].closest("section.weekly-row");
-    const timeInputs = mondayRow.querySelectorAll("input[type='time']");
-
-    timeInputs.forEach((input) => expect(input.value).toBe(""));
-
-    const badge = mondayRow.querySelector(".status-badge");
-    expect(badge).toHaveTextContent("on-leave");
+    await waitFor(() => {
+      const mondayRow = dialog.querySelectorAll("section.weekly-row")[0];
+      expect(mondayRow.querySelector(".status-badge")).toHaveTextContent("on-leave");
+      mondayRow.querySelectorAll("input[type='time']").forEach((input) =>
+        expect(input.value).toBe("")
+      );
+    });
   });
 });
 
@@ -460,9 +440,14 @@ describe("Schedule > select dropdown", () => {
     const selects = within(dialog).getAllByRole("combobox");
     await user.selectOptions(selects[0], "closed");
 
-    const mondayRow = selects[0].closest("section.weekly-row");
-    const timeInputs = mondayRow.querySelectorAll("input[type='time']");
-    timeInputs.forEach((input) => expect(input.value).toBe(""));
+    // Re-query from the live dialog by row index — stale node refs won't reflect remount
+    await waitFor(() => {
+      const mondayRow = dialog.querySelectorAll("section.weekly-row")[0];
+      expect(mondayRow.querySelector(".status-badge")).toHaveTextContent("closed");
+      mondayRow.querySelectorAll("input[type='time']").forEach((input) =>
+        expect(input.value).toBe("")
+      );
+    });
   });
 
   it("selecting 'on_leave' from dropdown clears times in add dialog", async () => {
@@ -475,12 +460,16 @@ describe("Schedule > select dropdown", () => {
     const selects = within(dialog).getAllByRole("combobox");
     await user.selectOptions(selects[0], "on_leave");
 
-    const mondayRow = selects[0].closest("section.weekly-row");
-    const timeInputs = mondayRow.querySelectorAll("input[type='time']");
-    timeInputs.forEach((input) => expect(input.value).toBe(""));
+    await waitFor(() => {
+      const mondayRow = dialog.querySelectorAll("section.weekly-row")[0];
+      expect(mondayRow.querySelector(".status-badge")).toHaveTextContent("on-leave");
+      mondayRow.querySelectorAll("input[type='time']").forEach((input) =>
+        expect(input.value).toBe("")
+      );
+    });
   });
 
-  it("selecting 'open' from dropdown preserves existing times", async () => {
+  it("selecting 'open' re-enables time inputs without clearing them", async () => {
     const user = userEvent.setup();
     renderSchedule();
 
@@ -489,19 +478,15 @@ describe("Schedule > select dropdown", () => {
 
     const selects = within(dialog).getAllByRole("combobox");
 
-    // Switch to closed first, then back to open
+    // Switch to closed then back to open
     await user.selectOptions(selects[0], "closed");
     await user.selectOptions(selects[0], "open");
 
-    // Times should NOT be cleared — inputs re-enabled for open
-    const mondayRow = selects[0].closest("section.weekly-row");
+    const mondayRow  = selects[0].closest("section.weekly-row");
     const timeInputs = mondayRow.querySelectorAll("input[type='time']");
 
-    // At least one input should not be cleared (open doesn't wipe times)
-    const anyHasValue = [...timeInputs].some((i) => i.value !== "");
-    // After closed→open the component only sets status, not times, so they stay ""
-    // This verifies the branch doesn't accidentally restore or clear times
-    expect(timeInputs[0]).not.toBeDisabled();
+    // Inputs should be re-enabled when status is open
+    timeInputs.forEach((input) => expect(input).not.toBeDisabled());
   });
 });
 
@@ -541,7 +526,7 @@ describe("Schedule > quick fill in add dialog", () => {
     await quickFillAllDays(user, dialog);
     await clickWithin(user, dialog, /copy monday to weekdays/i);
 
-    // All 7 days should still have 08:00 (Mon filled then copied; Sat/Sun untouched)
+    // All 7 days still have 08:00 — Sat/Sun untouched
     expect(within(dialog).getAllByDisplayValue("08:00")).toHaveLength(7);
     expect(within(dialog).getAllByDisplayValue("16:00")).toHaveLength(7);
   });
@@ -552,20 +537,12 @@ describe("Schedule > quick fill in add dialog", () => {
 
     const dialog = await openDialog(user, /add schedule/i, "Add Schedule");
 
-    // Set only Mon via weekday quick fill first
-    await quickFillWeekdays(user, dialog); // Mon–Fri = 09:00
-
-    // Now overwrite just Sat + Sun via all-days to give them different values
-    // (can't easily do this without another quick-fill, so we verify count after copy)
+    await quickFillWeekdays(user, dialog); // Mon–Fri = 09:00–17:00
     await clickWithin(user, dialog, /copy monday to weekdays/i);
 
-    // Sat and Sun rows should NOT have 09:00 (they were never set)
-    const rows = dialog.querySelectorAll("section.weekly-row");
-    const satRow = rows[5]; // Saturday
-    const sunRow = rows[6]; // Sunday
-
-    const satInputs = satRow.querySelectorAll("input[type='time']");
-    const sunInputs = sunRow.querySelectorAll("input[type='time']");
+    const rows      = dialog.querySelectorAll("section.weekly-row");
+    const satInputs = rows[5].querySelectorAll("input[type='time']");
+    const sunInputs = rows[6].querySelectorAll("input[type='time']");
 
     satInputs.forEach((i) => expect(i.value).toBe(""));
     sunInputs.forEach((i) => expect(i.value).toBe(""));
@@ -587,11 +564,10 @@ describe("Schedule > edit dialog loads saved schedule", () => {
 
     await waitFor(() => expect(mockGetSchedule).toHaveBeenCalled());
 
-    const dialog = await openDialog(user, /^edit$/i, "Edit Schedule");
+    const dialog    = await openDialog(user, /^edit$/i, "Edit Schedule");
+    const selects   = within(dialog).getAllByRole("combobox");
+    const wedSelect = selects[2]; // 0=Mon, 1=Tues, 2=Wed
 
-    // Wednesday's select should be pre-set to on_leave
-    const selects = within(dialog).getAllByRole("combobox");
-    const wedSelect = selects[2]; // 0=Mon,1=Tues,2=Wed
     expect(wedSelect.value).toBe("on_leave");
   });
 
@@ -608,10 +584,10 @@ describe("Schedule > edit dialog loads saved schedule", () => {
 
     await waitFor(() => expect(mockGetSchedule).toHaveBeenCalled());
 
-    const dialog = await openDialog(user, /^edit$/i, "Edit Schedule");
-
-    const selects = within(dialog).getAllByRole("combobox");
+    const dialog    = await openDialog(user, /^edit$/i, "Edit Schedule");
+    const selects   = within(dialog).getAllByRole("combobox");
     const satSelect = selects[5]; // 0=Mon..5=Sat
+
     expect(satSelect.value).toBe("closed");
   });
 });
@@ -623,12 +599,12 @@ describe("Schedule > loading states", () => {
   });
 
   it("disables 'Yes, Clear All' button while delete is in progress", async () => {
-    mockDeleteSchedule.mockImplementation(() => new Promise(() => {})); // never resolves
+    mockDeleteSchedule.mockImplementation(() => new Promise(() => {}));
 
     const user = userEvent.setup();
     renderSchedule();
 
-    const dialog = await openDialog(user, /clear all/i, "Clear Schedule");
+    const dialog   = await openDialog(user, /clear all/i, "Clear Schedule");
     const clearBtn = within(dialog).getByRole("button", { name: /yes, clear all/i });
 
     await user.click(clearBtn);
@@ -642,7 +618,7 @@ describe("Schedule > loading states", () => {
     const user = userEvent.setup();
     renderSchedule();
 
-    const dialog = await openDialog(user, /^edit$/i, "Edit Schedule");
+    const dialog  = await openDialog(user, /^edit$/i, "Edit Schedule");
     await quickFillWeekdays(user, dialog);
 
     const saveBtn = within(dialog).getByRole("button", { name: /save changes/i });
@@ -659,7 +635,7 @@ describe("Schedule > clear API failure", () => {
     mockDeleteSchedule.mockResolvedValue({ success: false });
 
     const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
-    const user = userEvent.setup();
+    const user     = userEvent.setup();
 
     renderSchedule();
 
@@ -693,15 +669,13 @@ describe("Schedule > form reset after edit save", () => {
 
     await clickWithin(user, dialog, /save changes/i);
 
-    await waitFor(() =>
-      expect(mockCreateSchedule).toHaveBeenCalledTimes(1)
-    );
+    await waitFor(() => expect(mockCreateSchedule).toHaveBeenCalledTimes(1));
 
-  
     const reopened = await openDialog(user, /^edit$/i, "Edit Schedule");
     expect(within(reopened).queryAllByDisplayValue("09:00")).toHaveLength(0);
   });
 });
+
 
 describe("Schedule > add dialog ✕ close", () => {
   it("closes the add dialog via the ✕ button", async () => {
@@ -713,5 +687,40 @@ describe("Schedule > add dialog ✕ close", () => {
     await clickWithin(user, dialog, "✕");
 
     expect(HTMLDialogElement.prototype.close).toHaveBeenCalled();
+  });
+});
+
+
+describe("Schedule > onBack prop", () => {
+  it("renders a Back button when onBack prop is provided", async () => {
+    mockGetSchedule.mockResolvedValue(EMPTY_SCHEDULE);
+    const onBack = vi.fn();
+
+    render(<Schedule {...DEFAULT_PROPS} onBack={onBack} />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /back/i })).toBeInTheDocument()
+    );
+  });
+
+  it("calls onBack when the Back button is clicked", async () => {
+    mockGetSchedule.mockResolvedValue(EMPTY_SCHEDULE);
+    const onBack = vi.fn();
+    const user   = userEvent.setup();
+
+    render(<Schedule {...DEFAULT_PROPS} onBack={onBack} />);
+
+    await user.click(await screen.findByRole("button", { name: /back/i }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render a Back button when onBack prop is omitted", async () => {
+    mockGetSchedule.mockResolvedValue(EMPTY_SCHEDULE);
+
+    renderSchedule();
+
+    await waitFor(() => expect(mockGetSchedule).toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: /back/i })).not.toBeInTheDocument();
   });
 });

@@ -102,15 +102,15 @@ describe("OverviewPanel", () => {
         expect(screen.getByText("Book Again")).toBeInTheDocument();
     });
 
-    it("clicking Book Again triggers navigation", () => {
-        const lastClinic = { facility_id: "f1", facilities: { name: "City Clinic", district: "CBD" } };
-        wrap(<OverviewPanel {...baseProps} lastClinic={lastClinic} />);
-        const bookAgainBtn = screen.getByText("Book Again");
-        fireEvent.click(bookAgainBtn);
-        // navigate is called — just verify no crash
-        expect(bookAgainBtn).toBeInTheDocument();
-    });
+    it("clicking Book Again calls onBookAgain with the clinic's facility_id", () => {
+    const mockOnBookAgain = vi.fn();
+    const lastClinic = { facility_id: "f1", facilities: { name: "City Clinic", district: "CBD" } };
+    wrap(<OverviewPanel {...baseProps} lastClinic={lastClinic} onBookAgain={mockOnBookAgain} />);
 
+    fireEvent.click(screen.getByText("Book Again"));
+
+    expect(mockOnBookAgain).toHaveBeenCalledWith("f1");
+    });
     it("shows admin overview panel for admin role", () => {
         wrap(<OverviewPanel {...baseProps} profile={{ ...mockProfile, role: "admin" }} />);
         expect(screen.getByText("Admin overview panel active")).toBeInTheDocument();

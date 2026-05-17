@@ -34,6 +34,9 @@ vi.mock("./AdminStaff.jsx", () => ({
 vi.mock("./AnalyticsDashboardAdmin", () => ({
     default: () => <div data-testid="analytics-panel">Analytics Panel</div>,
 }));
+vi.mock("./ProfilePage.jsx", () => ({
+    default: () => <div data-testid="profile-panel">Profile Panel</div>,
+}));
 
 const mockQuery = {
     select:      vi.fn().mockReturnThis(),
@@ -242,6 +245,13 @@ describe("Nav items that render sub-panels", () => {
         await user.click(btn);
         expect(screen.getByTestId("analytics-panel")).toBeVisible();
     });
+
+    it("Profile nav button renders Profile panel inline", async () => {
+        const user = userEvent.setup();
+        const btn = screen.getAllByRole("button", { name: /^profile$/i }).find((b) => b.closest(".db-nav"));
+        await user.click(btn);
+        expect(screen.getByTestId("profile-panel")).toBeVisible();
+    });
 });
 
 
@@ -335,14 +345,22 @@ describe("Notifications Panel - content", () => {
 
 //jump-profile
 describe("Clicked Profile", () => {
-    it("navigates to /profile when Profile nav button is clicked", async () => {
+    it("renders Profile panel inline when Profile nav button is clicked", async () => {
         const user = userEvent.setup();
         render(<AdminDashboard profile={mockAdminProfile} />);
         const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
         await user.click(profileNav);
         await waitFor(() =>
-            expect(mockNavigate).toHaveBeenCalledWith("/profile", expect.any(Object))
+            expect(screen.getByTestId("profile-panel")).toBeVisible()
         );
+    });
+
+    it("does not navigate away when Profile nav button is clicked", async () => {
+        const user = userEvent.setup();
+        render(<AdminDashboard profile={mockAdminProfile} />);
+        const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
+        await user.click(profileNav);
+        expect(mockNavigate).not.toHaveBeenCalled();
     });
 
     it("renders the user greeting", () => {
@@ -350,7 +368,6 @@ describe("Clicked Profile", () => {
         expect(screen.getByText(/Hi, Alice/i)).toBeVisible();
     });
 });
-
 
 
 describe("Logout", () => {
