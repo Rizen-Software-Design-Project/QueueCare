@@ -82,7 +82,7 @@ const Logo = () => (
       </svg>
     </figure>
     <div>
-      <h1 className="auth-logo-name">MediAccess</h1>
+      <h1 className="auth-logo-name">QueueAccess</h1>
       <p className="auth-logo-sub">Integrated Healthcare Management</p>
     </div>
   </header>
@@ -420,7 +420,7 @@ export default function AuthPage() {
         {page === "role-select" && (
           <section className="auth-section">
             <ErrorMessage msg={error} />
-            <h2 className="auth-title">Welcome to MediAccess</h2>
+            <h2 className="auth-title">Welcome to QueueCare</h2>
             <p className="auth-sub">Select how you'd like to continue</p>
             <menu style={{ listStyle: "none", padding: 0, margin: 0 }}>
               <li><button className="auth-btn-primary"  onClick={() => chooseRole("patient")}>Continue as Patient</button></li>
@@ -434,7 +434,7 @@ export default function AuthPage() {
         {page === "home" && (
           <section className="auth-section">
             <BackButton onClick={() => go("role-select")} />
-            <h2 className="auth-title">Sign in to MediAccess</h2>
+            <h2 className="auth-title">Sign in to QueueCare</h2>
             <p className="auth-sub">Continue as <strong>{selectedRole}</strong></p>
 
             <SocialButton icon={<GoogleIcon />}   label="Continue with Google"   onClick={() => handleSocialLogin(googleAuthProvider)} disabled={loading} />
