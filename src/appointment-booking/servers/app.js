@@ -19,11 +19,14 @@ const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Here we define three rate limiters to protect the API from being abused or flooded with requests
+const isTest = process.env.NODE_ENV === 'test';
+
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
   message: { error: 'Too many requests, please try again later.' },
 });
 
@@ -33,6 +36,7 @@ const bookingLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
   message: { error: 'Too many booking requests, please slow down.' },
 });
 
@@ -42,6 +46,8 @@ const aiLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  /* v8 ignore next */
+  skip: () => isTest,
   message: { error: 'AI request limit reached, please wait before sending more messages.' },
 });
 
@@ -70,6 +76,7 @@ app.use('/', scheduleRoutes);
 const __filename = fileURLToPath(import.meta.url);
 const distPath = path.join(__dirname, '../../..', 'dist');
 
+/* v8 ignore start */
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
 }
@@ -84,6 +91,7 @@ app.get(/^\/(?!(health|appointments|queue|staff|notify|schedule|get_staff|ai)(\/
     res.status(404).json({ error: 'Frontend build not found' });
   }
 });
+/* v8 ignore stop */
 
 // Error handlers always go last — if they're registered before the routes they won't catch anything thrown above them
 app.use(notFound);

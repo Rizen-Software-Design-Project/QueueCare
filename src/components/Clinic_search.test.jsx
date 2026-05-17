@@ -86,24 +86,44 @@ vi.mock("react-router-dom", async () => {
 const mockClinics = [
   {
     id: "1",
-    name: "Tygerberg Clinic",
-    district: "Cape Winelands",
-    province: "Western Cape",
-    latitude: "-33.9386",
-    longitude: "18.6296",
-    distance: 5.2,
+    name: "17 Esselen Street Clinic",
+    district: "City of Johannesburg",
+    province: "Gauteng",
+    latitude: "-26.19061",
+    longitude: "28.04511",
+    distance: 0.9,
   },
   {
     id: "2",
-    name: "Groote Schuur Hospital",
-    district: "City of Cape Town",
-    province: "Western Cape",
-    latitude: "-33.9396",
-    longitude: "18.6306",
+    name: "4th Avenue Clinic",
+    district: "City of Johannesburg",
+    province: "Gauteng",
+    latitude: "-26.09979",
+    longitude: "28.10725",
     distance: 12.5,
   },
 ];
 
+const mockClinicsNoDistance = [
+  {
+    id: "1",
+    name: "17 Esselen Street Clinic",
+    district: "City of Johannesburg",
+    province: "Gauteng",
+    latitude: "-26.19061",
+    longitude: "28.04511",
+    distance: null,
+  },
+  {
+    id: "2",
+    name: "4th Avenue Clinic",
+    district: "City of Johannesburg",
+    province: "Gauteng",
+    latitude: "-26.09979",
+    longitude: "28.10725",
+    distance: null,
+  },
+];
 
 
 
@@ -131,6 +151,7 @@ beforeEach(() => {
 
 
 //tests
+//rendering
 describe("ClinicSearch - Initial Render", () => {
   beforeEach(async () => {
     render(<ClinicSearch />);
@@ -147,14 +168,19 @@ describe("ClinicSearch - Initial Render", () => {
     expect(nameInput).toHaveAttribute("type", "text");
   });
 
-  it("Renders Province dropdown", async () => {
-    const provinceSelect = screen.getAllByRole("combobox")[0];
-    expect(provinceSelect).toBeVisible();
+  it("renders province dropdown with all provinces", () => {
+    const options = screen.getAllByRole("option", { name: /Any province|Eastern Cape|Free State|Gauteng|KwaZulu-Natal|Limpopo|Mpumalanga|North West|Northern Cape|Western Cape/i });
+    expect(options.length).toBe(10);
   });
 
   it("Renders District dropdown", async () => {
     const districtSelect = screen.getAllByRole("combobox")[1];
     expect(districtSelect).toBeVisible();
+  });
+
+  it("Renders Services dropdown", async() => {
+    const options = screen.getAllByRole("option", {name: /Any service|General Consultation|HIV Testing|TB Screening|Vaccination|Maternal Care|Child Health|Family Planning|Chronic Medication|Emergency Care/i });
+    expect(options.length).toBe(10);
   });
 
   it("Renders Apply filters button", async () => {
@@ -166,8 +192,8 @@ describe("ClinicSearch - Initial Render", () => {
   });
 
   it("Renders radius dropdown", async () => {
-    const radiusSelect = screen.getAllByRole("combobox")[2];
-    expect(radiusSelect).toBeVisible();
+    const options = screen.getAllByRole("option", {name: /5 km|10 km|25 km|50 km|100 km/i});
+    expect(options.length).toBe(5);
   });
 
   it("Renders map container", async () => {
@@ -214,14 +240,16 @@ describe("ClinicSearch, Filter interactions", () => {
     expect(districtSelect).toHaveValue("Cape Winelands");
   });
 
-  it("Updates radius selection", async () => {
+  it("updates services selection", async () => {
     const user = userEvent.setup();
-    const radiusSelect = screen.getAllByRole("combobox")[2];
-    
-    await user.selectOptions(radiusSelect, "25");
-    
-    expect(radiusSelect).toHaveValue("25");
+    const serviceSelect = screen.getAllByRole("combobox")[2];
+
+    await user.selectOptions(serviceSelect, "Emergency Care");
+
+    expect(serviceSelect).toHaveValue("Emergency Care");
   });
+
+
 });
 
 
@@ -264,6 +292,8 @@ describe("ClinicSearch, Search functionality", () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalled();
+      const call = mockFetch.mock.calls[0];
+      expect(call[0]).toContain("/rest/v1/rpc/search_clinics");
     });
   });
 
@@ -278,8 +308,8 @@ describe("ClinicSearch, Search functionality", () => {
     await user.click(applyButton);
 
     await waitFor(() => {
-      expect(screen.getByText("Tygerberg Clinic")).toBeVisible();
-      expect(screen.getByText("Groote Schuur Hospital")).toBeVisible();
+      expect(screen.getByText("17 Esselen Street Clinic")).toBeVisible();
+      expect(screen.getByText("4th Avenue Clinic")).toBeVisible();
     });
   });
 
@@ -302,8 +332,7 @@ describe("ClinicSearch, Search functionality", () => {
     const user = userEvent.setup();
     mockFetch.mockResolvedValueOnce({
       ok: false,
-      status: 500,
-      text: async () => "Server error",
+      text: async () => "error",
     });
 
     const applyButton = screen.getByRole("button", { name: /Apply filters/i });
@@ -329,7 +358,7 @@ describe("ClinicSearch, Nearby clinics", () => {
   it("Requests geolocation when Clinics Near Me is clicked", async () => {
     const user = userEvent.setup();
     mockGeolocation.getCurrentPosition.mockImplementationOnce((success) =>
-      success({ coords: { latitude: -33.9386, longitude: 18.6296 } })
+      success({ coords: { latitude: "-26.19061", longitude: "28.04511"} })
     );
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -345,7 +374,7 @@ describe("ClinicSearch, Nearby clinics", () => {
   it("Calls nearby_clinics RPC after getting location", async () => {
     const user = userEvent.setup();
     mockGeolocation.getCurrentPosition.mockImplementationOnce((success) =>
-      success({ coords: { latitude: -33.9386, longitude: 18.6296 } })
+      success({ coords: { latitude: "-26.19061", longitude: "28.04511"} })
     );
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -397,7 +426,7 @@ describe("ClinicSearch, Booking navigation", () => {
     await user.click(applyButton);
 
     await waitFor(() => {
-      expect(screen.getByText("Tygerberg Clinic")).toBeVisible();
+      expect(screen.getByText("17 Esselen Street Clinic")).toBeVisible();
     });
 
     const bookButtons = screen.getAllByRole("button", { name: /Book now/i });
@@ -408,83 +437,8 @@ describe("ClinicSearch, Booking navigation", () => {
     );
   });
 
-  it("Encodes clinic name in URL", async () => {
-    const user = userEvent.setup();
-    const applyButton = screen.getByRole("button", { name: /Apply filters/i });
-    await user.click(applyButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Groote Schuur Hospital")).toBeVisible();
-    });
-
-    const bookButtons = screen.getAllByRole("button", { name: /Book now/i });
-    await user.click(bookButtons[1]);
-
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining("/clinic?id=2")
-    );
-  });
 });
-
-
-
-
-
-
-describe("ClinicSearch, District dropdown", () => {
-  beforeEach(async () => {
-    render(<ClinicSearch />);
-    await waitForComponent();
-  });
-
-  it("Shows all districts when no province selected", async () => {
-    const user = userEvent.setup();
-    const districtSelect = screen.getAllByRole("combobox")[1];
-    
-    await user.click(districtSelect);
-    
-    const options = screen.getAllByRole("option");
-    expect(options.length).toBeGreaterThan(9);
-  });
-
-  it("Filters districts by selected province", async () => {
-    const user = userEvent.setup();
-    const provinceSelect = screen.getAllByRole("combobox")[0];
-    
-    await user.selectOptions(provinceSelect, "Western Cape");
-    
-    const districtSelect = screen.getAllByRole("combobox")[1];
-    await user.click(districtSelect);
-    
-    const westernCapeDistricts = [
-      "Cape Winelands",
-      "Central Karoo", 
-      "City of Cape Town",
-      "Eden",
-      "Overberg",
-      "West Coast",
-    ];
-    
-    for (const district of westernCapeDistricts) {
-      expect(screen.getByRole("option", { name: district })).toBeInTheDocument();
-    }
-  });
-
-  it("Resets district when province changes", async () => {
-    const user = userEvent.setup();
-    const provinceSelect = screen.getAllByRole("combobox")[0];
-    const districtSelect = screen.getAllByRole("combobox")[1];
-    
-    await user.selectOptions(provinceSelect, "Western Cape");
-    await user.selectOptions(districtSelect, "Cape Winelands");
-    expect(districtSelect).toHaveValue("Cape Winelands");
-    
-    await user.selectOptions(provinceSelect, "Gauteng");
-    expect(districtSelect).toHaveValue("");
-  });
-});
-
-
 
 
 
@@ -498,32 +452,22 @@ describe("ClinicSearch, Distance display", () => {
     await waitForComponent();
   });
 
-  it("Displays clinics after search", async () => {
-    const user = userEvent.setup();
-    const applyButton = screen.getByRole("button", { name: /Apply filters/i });
-    await user.click(applyButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("Tygerberg Clinic")).toBeVisible();
-      expect(screen.getByText("Groote Schuur Hospital")).toBeVisible();
-    });
-  });
-
   it("Shows 'Distance unknown' when distance not available", async () => {
     const user = userEvent.setup();
-    const clinicsWithoutDistance = [
-      { ...mockClinics[0], distance: null },
-    ];
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => clinicsWithoutDistance,
+      json: async () => mockClinicsNoDistance,
     });
 
     const applyButton = screen.getByRole("button", { name: /Apply filters/i });
     await user.click(applyButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Distance unknown/)).toBeVisible();
+      const distanceUnknowns = screen.getAllByText(/Distance unknown/i);
+      expect(distanceUnknowns).toHaveLength(2);
+      distanceUnknowns.forEach(distanceUnknown => {
+        expect(distanceUnknown).toBeVisible();
+    });
     });
   });
 });

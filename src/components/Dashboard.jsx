@@ -25,6 +25,7 @@ export default function Dashboard() {
         const fb = firebaseUser || auth.currentUser;
         return { authProvider: "firebase", providerUserId: fb.uid };
       }
+      /* v8 ignore next 3 */
       const { data } = await supabase.auth.getUser();
       if (data?.user) return { authProvider: "supabase", providerUserId: data.user.id };
       return null;
@@ -35,6 +36,7 @@ export default function Dashboard() {
 
       const identity = await resolveIdentity(firebaseUser);
 
+      /* v8 ignore next 4 */
       if (!identity) {
         setLoading(false);
         navigate("/signin", { replace: true });

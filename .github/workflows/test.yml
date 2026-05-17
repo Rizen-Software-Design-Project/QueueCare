@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  frontend-tests:
+  tests-sprint3:
     name: Frontend Tests (Vitest)
     runs-on: ubuntu-latest
 
@@ -20,18 +20,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          
 
       - name: Install root dependencies
         run: npm install
 
       - name: Run frontend tests with coverage
-        run: npx vitest run --coverage 2>&1 | tee vitest-output.txt
+        run: npx vitest run --coverage --coverage.reportsDirectory=coverage/frontend 2>&1 | tee vitest-output.txt
 
       - name: Generate coverage badge
         if: github.event_name == 'push'
         run: |
-          COVERAGE=$(node -e "const c = JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf8')); console.log(c.total.statements.pct)")
+          COVERAGE=$(node -e "const c = JSON.parse(require('fs').readFileSync('coverage/frontend/coverage-summary.json', 'utf8')); console.log(c.total.statements.pct)")
           if (( $(echo "$COVERAGE >= 80" | bc -l) )); then COLOR=brightgreen
           elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then COLOR=yellow
           else COLOR=red; fi
@@ -57,7 +57,7 @@ jobs:
           grep "Tests " vitest-output.txt >> $GITHUB_STEP_SUMMARY || true
 
   backend-tests:
-    name: Backend Tests (Jest)
+    name: Backend Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -66,21 +66,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: "src/appointment booking/package-lock.json"
+          
 
       - name: Install backend dependencies
         run: npm install
-        working-directory: "src/appointment booking"
 
       - name: Run backend tests with coverage
+        run: npx vitest run --project backend --coverage --coverage.reportsDirectory=coverage/backend 2>&1 | tee backend-output.txt
+      
+      - name: Coverage summary
+        if: always()
         run: |
-          npm test 2>&1 | tee jest-output.txt
-          echo "## Backend Coverage (Jest)" >> $GITHUB_STEP_SUMMARY
+          echo "## Backend Coverage (Vitest)" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          grep -A 20 "^-.*-$" jest-output.txt | head -25 >> $GITHUB_STEP_SUMMARY
+          grep -E "%|File|All files|---|Test Files|Tests" backend-output.txt >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          grep "Test Suites" jest-output.txt >> $GITHUB_STEP_SUMMARY
-          grep "Tests:" jest-output.txt >> $GITHUB_STEP_SUMMARY
-        working-directory: "src/appointment booking"
+      

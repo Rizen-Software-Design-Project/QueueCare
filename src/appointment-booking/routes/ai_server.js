@@ -6,7 +6,13 @@ import env from 'dotenv';
 env.config();
 
 const router = express.Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+if (!process.env.OPENAI_API_KEY && process.env.NODE_ENV !== "test") {
+  throw new Error("Missing API key");
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || "test-key",
+});
 
 const API_BASE =
   process.env.VITE_API_BASE ||

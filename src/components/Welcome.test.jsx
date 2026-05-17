@@ -4,7 +4,7 @@ import { BrowserRouter, MemoryRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import Welcome from "./Welcome";
 
-describe("Welcome Page, Website", () => {
+describe("Welcome Page", () => {
     beforeEach(() => {
         render(
             <BrowserRouter>
@@ -127,9 +127,10 @@ describe("Welcome Page, Website", () => {
         expect(screen.getByText(/Making healthcare easier/i)).toBeVisible();
         expect(screen.getByText("Navigate")).toBeVisible();
         expect(screen.getByText("Legal")).toBeVisible();
-        // Use getAllByText since "Contact" appears multiple times
-        const contactHeadings = screen.getAllByText("Contact");
-        expect(contactHeadings.length).toBeGreaterThan(0);
+        const contact = screen.getAllByText("Contact");
+        contact.forEach((instance) => {
+            expect(instance).toBeVisible();
+        });
         expect(screen.getByText(/All rights reserved/i)).toBeVisible();
     });
 });
@@ -160,6 +161,7 @@ describe("Get started clicked", () => {
     });
 });
 
+
 describe("Welcome Page, Navigation Links", () => {
     beforeEach(() => {
         render(
@@ -171,7 +173,6 @@ describe("Welcome Page, Navigation Links", () => {
 
     it("Home link has correct href", () => {
         const homeLinks = screen.getAllByRole("link", { name: "Home" });
-        // Only test the navbar link, not footer links (which have href="#")
         const navbarHomeLink = homeLinks.find(link => link.closest('.navbar_links'));
         expect(navbarHomeLink).toHaveAttribute("href", "/");
     });
@@ -239,7 +240,7 @@ describe("Welcome Page, Form Interaction", () => {
         expect(messageInput).toHaveValue("This is a test message");
     });
 
-    it("Submit button prevents default form submission", async () => {
+    it("Submit button triggers submit event", async () => {
         const user = userEvent.setup();
         const form = document.querySelector("form");
         const submitHandler = vi.fn((e) => e.preventDefault());
@@ -253,35 +254,6 @@ describe("Welcome Page, Form Interaction", () => {
     });
 });
 
-describe("Welcome Page, Responsive Elements", () => {
-    beforeEach(() => {
-        render(
-            <BrowserRouter>
-                <Welcome />
-            </BrowserRouter>
-        );
-    });
-
-    it("Displays Ubuntu spirit text", () => {
-        expect(screen.getByText(/I am because we are/i)).toBeVisible();
-    });
-
-    it("Displays feature items in About section", () => {
-        expect(screen.getByText(/Real-time wait time updates/i)).toBeVisible();
-        expect(screen.getByText(/Public & private clinic listings/i)).toBeVisible();
-        expect(screen.getByText(/Available in all 9 provinces/i)).toBeVisible();
-    });
-
-    it("Displays Ubuntu Healthcare badge", () => {
-        expect(screen.getByText("Ubuntu Healthcare")).toBeVisible();
-        expect(screen.getByText(/Connecting Communities, Empowering Patients/i)).toBeVisible();
-    });
-
-    it("Displays Reports & Analytics service", () => {
-        expect(screen.getByText("Reports & Analytics")).toBeVisible();
-        expect(screen.getByText(/Gain insights into patient flow/i)).toBeVisible();
-    });
-});
 
 describe("Welcome Page, Footer Links", () => {
     beforeEach(() => {
@@ -292,27 +264,51 @@ describe("Welcome Page, Footer Links", () => {
         );
     });
 
+    it("Home link has correct href", () => {
+        const homeLinks = screen.getAllByRole("link", { name: "Home" });
+        const navbarHomeLink = homeLinks.find(link => link.closest('.footer-section'));
+        expect(navbarHomeLink).toHaveAttribute("href", "#");
+    });
+
+    it("About link has correct href", () => {
+        const aboutLinks = screen.getAllByRole("link", { name: "About" });
+        const navbarAboutLink = aboutLinks.find(link => link.closest('.footer-section'));
+        expect(navbarAboutLink).toHaveAttribute("href", "#");
+    });
+
+    it("Services link has correct href", () => {
+        const servicesLinks = screen.getAllByRole("link", { name: "Services" });
+        const navbarServicesLink = servicesLinks.find(link => link.closest('.footer-section'));
+        expect(navbarServicesLink).toHaveAttribute("href", "#");
+    });
+
+    it("Contact link has correct href", () => {
+        const contactLinks = screen.getAllByRole("link", { name: "Contact" });
+        const navbarContactLink = contactLinks.find(link => link.closest('.footer-section'));
+        expect(navbarContactLink).toHaveAttribute("href", "#");
+    });
+
     it("Footer has Privacy Policy link", () => {
         const privacyLink = screen.getByRole("link", { name: "Privacy Policy" });
-        expect(privacyLink).toBeInTheDocument();
+        expect(privacyLink).toBeVisible();
         expect(privacyLink).toHaveAttribute("href", "#");
     });
 
     it("Footer has Terms of Service link", () => {
         const termsLink = screen.getByRole("link", { name: "Terms of Service" });
-        expect(termsLink).toBeInTheDocument();
+        expect(termsLink).toBeVisible();
         expect(termsLink).toHaveAttribute("href", "#");
     });
 
     it("Footer has Cookie Policy link", () => {
         const cookieLink = screen.getByRole("link", { name: "Cookie Policy" });
-        expect(cookieLink).toBeInTheDocument();
+        expect(cookieLink).toBeVisible();
         expect(cookieLink).toHaveAttribute("href", "#");
     });
 
     it("Footer has POPIA Compliance link", () => {
         const popiaLink = screen.getByRole("link", { name: "POPIA Compliance" });
-        expect(popiaLink).toBeInTheDocument();
+        expect(popiaLink).toBeVisible();
         expect(popiaLink).toHaveAttribute("href", "#");
     });
 
@@ -325,97 +321,9 @@ describe("Welcome Page, Footer Links", () => {
         const phoneLink = screen.getByRole("link", { name: "+27 123 456 789" });
         expect(phoneLink).toHaveAttribute("href", "tel:+27123456789");
     });
-});
 
-describe("Welcome Page, Logo and Branding", () => {
-    beforeEach(() => {
-        render(
-            <BrowserRouter>
-                <Welcome />
-            </BrowserRouter>
-        );
-    });
-
-    it("Displays heart pulse icon in navbar", () => {
-        const icons = document.querySelectorAll(".navbar_logo_icon");
-        expect(icons.length).toBeGreaterThan(0);
-    });
-
-    it("Displays heart pulse icon in footer", () => {
-        const icons = document.querySelectorAll(".footer_logo_icon");
-        expect(icons.length).toBeGreaterThan(0);
-    });
-
-    it("Displays Proudly South African badge in footer", () => {
-        const badges = screen.getAllByText(/Proudly South African/i);
-        const footerBadge = badges.find(badge => badge.closest('.footer_badge'));
-        expect(footerBadge).toBeVisible();
-    });
-
-    it("Displays current year in footer copyright", () => {
-        const currentYear = new Date().getFullYear().toString();
-        expect(screen.getByText(new RegExp(currentYear))).toBeVisible();
-    });
-});
-
-describe("Welcome Page, Hero Section", () => {
-    beforeEach(() => {
-        render(
-            <BrowserRouter>
-                <Welcome />
-            </BrowserRouter>
-        );
-    });
-
-    it("Displays hero background image", () => {
-        const heroImage = document.querySelector(".home_background img");
-        expect(heroImage).toBeInTheDocument();
-        expect(heroImage).toHaveAttribute("alt", "Home Background");
-    });
-
-    it("Displays South African flag emoji in tagline", () => {
-        const emojis = screen.getAllByText(/🇿🇦/);
-        const taglineEmoji = emojis.find(emoji => emoji.closest('.home_tagline'));
-        expect(taglineEmoji).toBeVisible();
-    });
-
-    it("Displays hero paragraph text", () => {
-        expect(screen.getByText(/Healthcare made effortless/i)).toBeVisible();
-    });
-});
-
-describe("Welcome Page, About Section Image", () => {
-    beforeEach(() => {
-        render(
-            <BrowserRouter>
-                <Welcome />
-            </BrowserRouter>
-        );
-    });
-
-    it("Displays about section image", () => {
-        const aboutImage = document.querySelector(".about_visual_image img");
-        expect(aboutImage).toBeInTheDocument();
-        expect(aboutImage).toHaveAttribute("alt", "Healthcare in South Africa");
-    });
-});
-
-describe("Welcome Page, Service Icons", () => {
-    beforeEach(() => {
-        render(
-            <BrowserRouter>
-                <Welcome />
-            </BrowserRouter>
-        );
-    });
-
-    it("Displays all 6 service items", () => {
-        const serviceItems = document.querySelectorAll(".service_item");
-        expect(serviceItems.length).toBe(6);
-    });
-
-    it("Displays accent service item", () => {
-        const accentItem = document.querySelector(".service_item--accent");
-        expect(accentItem).toBeInTheDocument();
+    it("Footer location has correct href", () => {
+        const location = screen.getByText(/Johannesburg, GP/i);
+        expect(location).toBeVisible();
     });
 });

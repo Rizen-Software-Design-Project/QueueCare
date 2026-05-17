@@ -1,440 +1,306 @@
-import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
-import { BrowserRouter } from "react-router-dom";
-import Dashboard from "./Dashboard";
 
-const mockPatientProfile = {
-    id: "profile-123",
-    name: "John",
-    surname: "Doe",
-    email: "john@example.com",
-    phone_number: "0821234567",
-    role: "patient",
-    dob: "1990-01-01",
-}
+// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+const mockOnAuthStateChanged = vi.hoisted(() => vi.fn());
+const mockSupabaseFrom       = vi.hoisted(() => vi.fn());
+const mockSupabaseGetUser    = vi.hoisted(() => vi.fn());
+const mockNavigate           = vi.hoisted(() => vi.fn());
+
+vi.mock("firebase/auth", () => ({
+    onAuthStateChanged: mockOnAuthStateChanged,
+    getAuth:  vi.fn(() => ({})),
+    signOut:  vi.fn(() => Promise.resolve()),
+}));
 
 vi.mock("../firebase", () => ({
     auth: { currentUser: null },
-    onAuthStateChanged: vi.fn((auth, callback) => {
-        callback({ uid: "1233" });
-        return () => {};
-    }),
-    signOut: vi.fn(() => Promise.resolve()),
 }));
 
-const mockSupabaseQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn().mockResolvedValue({ data: mockPatientProfile, error: null }),
-    order: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-};
-
-vi.mock("@supabase/supabase-js", () => ({
-    createClient: vi.fn(() => ({
-        auth: {
-            getUser: vi.fn(() => Promise.resolve({ data: { user: { id: "supabase-user-123" } } })),
-            signOut: vi.fn(() => Promise.resolve()),
-        },
-        from: vi.fn(() => mockSupabaseQuery),
-    })),
+vi.mock("#lib/supabase", () => ({
+    supabase: {
+        auth: { getUser: mockSupabaseGetUser },
+        from:  mockSupabaseFrom,
+    },
 }));
 
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual("react-router-dom");
-    return { ...actual, useNavigate: () => vi.fn() };
+    return { ...actual, useNavigate: () => mockNavigate };
 });
 
+vi.mock("./PatientDashboard", () => ({
+    default: ({ profile }) => <div data-testid="patient-dashboard">{profile.role}</div>,
+}));
+vi.mock("./StaffDashboard", () => ({
+    default: ({ profile }) => <div data-testid="staff-dashboard">{profile.role}</div>,
+}));
+vi.mock("./AdminDashboard", () => ({
+    default: ({ profile }) => <div data-testid="admin-dashboard">{profile.role}</div>,
+}));
 
+import Dashboard from "./Dashboard";
 
-
-
-
-describe("Overview", () => {
-    beforeEach(async() => {
-        render(<Dashboard />);
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fireAuthChange(firebaseUser) {
+    mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
+        cb(firebaseUser);
+        return vi.fn();
     });
+}
 
-    it("Renders Overview", async() => {
-        const texts = screen.getAllByText("Overview");
-        texts.forEach((text) => {
-            expect(text).toBeVisible();
-        });
-    });
+function makeQueryMock(data) {
+    return {
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        order:       vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data }),
+    };
+}
 
-    it("Renders Upcoming appointments", async() => {
-        const texts = screen.getAllByText("Upcoming Appointments");
-        texts.forEach((text) => {
-            expect(text).toBeVisible();
-        });
-    });
+async function renderDashboard() {
+    render(
+        <MemoryRouter>
+            <Dashboard />
+        </MemoryRouter>
+    );
+    await waitFor(() =>
+        expect(screen.queryByText(/loading your dashboard/i)).not.toBeInTheDocument()
+    );
+}
 
-    it("Renders Active queue entries", async() => {
-        expect(screen.getByText("In Queue")).toBeVisible();
-    })
-
-    it("Renders Total appointments", async() => {
-        expect(screen.getByText("Total Appointments")).toBeVisible();
-    })
-
-    it("Renders Unread notifications", async() => {
-        const texts = screen.getAllByText("Notifications");
-        expect(texts.length).toBeGreaterThanOrEqual(1);
-        texts.forEach((text) => {
-            expect(text).toBeVisible();
-        });
-    })
-});
-
-describe("Appointments", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
-
-        const appointmentsButton = screen.getByRole("button", { name: /appointments/i });
-        await user.click(appointmentsButton);
-    });
-
-    it("Renders My appointments", async() => {
-        const appointments = screen.getAllByText(/appointment/i);
-        appointments.forEach((appointment) => {
-            expect(appointment).toBeVisible();
-        });
+// ── Global reset ──────────────────────────────────────────────────────────────
+beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockSupabaseGetUser.mockResolvedValue({ data: { user: null } });
+    // default: profiles query returns null so Dashboard navigates to /signin
+    mockSupabaseFrom.mockReturnValue({
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        order:       vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null }),
     });
 });
 
-describe("My Queue", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
+// ─────────────────────────────────────────────────────────────────────────────
+// Loading state
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Dashboard loading state", () => {
+    it("shows the loading spinner before auth resolves", () => {
+        // Never call the callback so loading stays true
+        mockOnAuthStateChanged.mockReturnValue(vi.fn());
 
-        const myQueueButton = screen.getByRole("button", { name: /my queue/i });
-        await user.click(myQueueButton);
-    });
+        render(
+            <MemoryRouter>
+                <Dashboard />
+            </MemoryRouter>
+        );
 
-    it("Renders My queue", async() => {
-        const myQueues = screen.getAllByText(/my queue/i);
-        myQueues.forEach((myQueue) => {
-            expect(myQueue).toBeVisible();
-        });
-    });
-});
-
-describe("Notifications", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
-
-        const notificationButton = screen.getByRole("button", { name: /notifications/i });
-        await user.click(notificationButton);
-    });
-
-    it("Renders Notifications", async() => {
-        const notifications = screen.getAllByText(/notifications/i);
-        notifications.forEach((notification) => {
-            expect(notification).toBeVisible();
-        });
-    });
-
-    it("Renders Mark all as read button only when notifications exist", async() => {
-        const markButton = screen.queryByRole("button", {name:"Mark all as read"});
-        expect(markButton).toBeNull();
+        expect(screen.getByText(/loading your dashboard/i)).toBeInTheDocument();
+        expect(document.querySelector(".db-spinner")).toBeInTheDocument();
     });
 });
 
-describe("Profile", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
+// ─────────────────────────────────────────────────────────────────────────────
+// Unauthenticated
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Dashboard unauthenticated user", () => {
+    it("redirects to /signin when no Firebase or Supabase session exists", async () => {
+        fireAuthChange(null);
+        mockSupabaseGetUser.mockResolvedValue({ data: { user: null } });
 
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
-    });
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
-    it("Renders Name", async() => {
-        expect(screen.getByText("Name:")).toBeVisible();
-    });
-    it("Renders Email", async() => {
-        expect(screen.getByText("Email:")).toBeVisible();
-    });
-    it("Renders Phone", async() => {
-        expect(screen.getByText("Phone:")).toBeVisible();
-    });
-    it("Renders Date of Birth", async() => {
-        expect(screen.getByText("Date of Birth:")).toBeVisible();
-    });
-    it("Renders Role", async() => {
-        expect(screen.getByText("Role:")).toBeVisible();
-    });
-
-    it("Renders Edit profile", async() => {
-        const editProfileButton = screen.getByRole("button", { name: /Edit profile/i });
-        expect(editProfileButton).toBeVisible();
-    });
-});
-
-describe("Service policy", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
-
-        const policyButton = screen.getByRole("button", { name: /service policy/i });
-        await user.click(policyButton);
-    });
-
-    it("Renders Service policy", async() => {
-        const policies = screen.getAllByText("Service Policy");
-        policies.forEach((policy) => {
-            expect(policy).toBeVisible();
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith("/signin", { replace: true });
         });
     });
 });
 
-describe("Settings", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
+// ─────────────────────────────────────────────────────────────────────────────
+// Firebase authenticated user
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Dashboard – Firebase authenticated user", () => {
+    const firebaseUser = { uid: "fb-uid-123" };
 
-        const settingsButton = screen.getByRole("button", { name: /settings/i });
-        await user.click(settingsButton);
-    });
+    it("stores Firebase identity in localStorage after auth", async () => {
+        fireAuthChange(firebaseUser);
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "patient", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+        );
 
-    it("Renders Settings", async() => {
-        const settings = screen.getAllByText("Settings");
-        settings.forEach((setting) => {
-            expect(setting).toBeVisible();
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
+
+        await waitFor(() => {
+            const stored = JSON.parse(localStorage.getItem("userIdentity"));
+            expect(stored).toEqual({ auth_provider: "firebase", provider_user_id: "fb-uid-123" });
         });
     });
-});
 
-describe("Click Edit profile", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
+    it("renders PatientDashboard for role: patient", async () => {
+        fireAuthChange(firebaseUser);
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "patient", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+        );
 
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
+        await renderDashboard();
 
-        const editProfileButton = screen.getByRole("button", { name: /Edit profile/i });
-        await user.click(editProfileButton);
+        expect(screen.getByTestId("patient-dashboard")).toBeInTheDocument();
     });
 
-    it("Renders Textboxes", async() => {
-        const textboxes = screen.getAllByRole("textbox");
-        expect(textboxes).toHaveLength(3);
+    it("renders StaffDashboard for role: staff", async () => {
+        fireAuthChange(firebaseUser);
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "staff", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+        );
+
+        await renderDashboard();
+
+        expect(screen.getByTestId("staff-dashboard")).toBeInTheDocument();
     });
 
-    it("Renders Calendar(DOB)", async() => {
-        const calender = screen.getByPlaceholderText("Date of Birth");
-        expect(calender).toHaveAttribute("type", "date");
+    it("renders AdminDashboard for role: admin", async () => {
+        fireAuthChange(firebaseUser);
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "admin", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+        );
+
+        await renderDashboard();
+
+        expect(screen.getByTestId("admin-dashboard")).toBeInTheDocument();
     });
 
-    it("Renders Cancel", async() => {
-        const cancel = screen.getByRole("button", {name:"Cancel"});
-        expect(cancel).toBeVisible();
-    });
+    it("shows unknown role message for an unrecognised role", async () => {
+        fireAuthChange(firebaseUser);
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "lost", auth_provider: "firebase", provider_user_id: "fb-uid-123" })
+        );
 
-    it("Renders Save", async() => {
-        const save = screen.getByRole("button", {name:"Save"});
-        expect(save).toBeVisible();
-    });
-});
+        await renderDashboard();
 
-describe("Cancel clicked", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
-
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
-
-        const editProfileButton = screen.getByRole("button", { name: /Edit profile/i });
-        await user.click(editProfileButton);
-
-        const cancelButton = screen.getByRole("button", { name: /cancel/i });
-        await user.click(cancelButton);
-    });
-
-    it("Renders Name", async() => {
-        expect(screen.getByText("Name:")).toBeVisible();
-    });
-    it("Renders Email", async() => {
-        expect(screen.getByText("Email:")).toBeVisible();
-    });
-    it("Renders Phone", async() => {
-        expect(screen.getByText("Phone:")).toBeVisible();
-    });
-    it("Renders Date of Birth", async() => {
-        expect(screen.getByText("Date of Birth:")).toBeVisible();
-    });
-    it("Renders Role", async() => {
-        expect(screen.getByText("Role:")).toBeVisible();
-    });
-
-    it("Renders Edit profile", async() => {
-        const editProfileButton = screen.getByRole("button", { name: "Edit Profile"});
-        expect(editProfileButton).toBeVisible();
+        expect(screen.getByText(/unknown role: lost/i)).toBeInTheDocument();
     });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Supabase authenticated user (no Firebase session)
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Dashboard – Supabase authenticated user", () => {
+    const supabaseUser = { id: "sb-uid-456" };
 
-describe("Dashboard, Sidebar Navigation Buttons", () => {
-    beforeEach(async() => {
-        render(<Dashboard />);
+    beforeEach(() => {
+        fireAuthChange(null);
+        mockSupabaseGetUser.mockResolvedValue({ data: { user: supabaseUser } });
     });
 
-    it("Renders all patient navigation buttons", async() => {
-        const expectedButtons = [
-            "Overview",
-            "Appointments",
-            "My Queue",
-            "Notifications",
-            "Profile",
-            "Find a Clinic",
-            "Service Policy",
-            "Settings"
-        ];
+    it("stores Supabase identity in localStorage after auth", async () => {
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "patient", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+        );
 
-        for (const buttonName of expectedButtons) {
-            const button = screen.getByRole("button", { name: new RegExp(buttonName, "i") });
-            expect(button).toBeVisible();
-        }
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
+
+        await waitFor(() => {
+            const stored = JSON.parse(localStorage.getItem("userIdentity"));
+            expect(stored).toEqual({ auth_provider: "supabase", provider_user_id: "sb-uid-456" });
+        });
     });
 
-    it("Renders Logout button", async() => {
-        const logoutButton = screen.getByRole("button", { name: /logout/i });
-        expect(logoutButton).toBeVisible();
+    it("renders PatientDashboard for role: patient", async () => {
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "patient", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+        );
+
+        await renderDashboard();
+
+        expect(screen.getByTestId("patient-dashboard")).toBeInTheDocument();
     });
 
-    it("Renders QueueCare brand in sidebar", async() => {
-        const brand = screen.getByText("QueueCare");
-        expect(brand).toBeVisible();
-    });
-});
+    it("renders StaffDashboard for role: staff", async () => {
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "staff", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+        );
 
+        await renderDashboard();
 
-describe("Dashboard Tab Switching", () => {
-    beforeEach(async() => {
-        render(<Dashboard />);
+        expect(screen.getByTestId("staff-dashboard")).toBeInTheDocument();
     });
 
-    it("Switches to Appointments tab when clicked", async() => {
-        const user = userEvent.setup();
-        const appointmentsButton = screen.getByRole("button", { name: /appointments/i });
-        await user.click(appointmentsButton);
-        
-        const topBarTexts = screen.getAllByText("Appointments");
-        expect(topBarTexts[0]).toBeVisible();
+    it("renders AdminDashboard for role: admin", async () => {
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "admin", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+        );
+
+        await renderDashboard();
+
+        expect(screen.getByTestId("admin-dashboard")).toBeInTheDocument();
     });
 
-    it("Switches to My Queue tab when clicked", async() => {
-        const user = userEvent.setup();
-        const queueButton = screen.getByRole("button", { name: /my queue/i });
-        await user.click(queueButton);
-        
-        const topBarTexts = screen.getAllByText("My Queue");
-        expect(topBarTexts[0]).toBeVisible();
-    });
+    it("shows unknown role message for an unrecognised role", async () => {
+        mockSupabaseFrom.mockReturnValue(
+            makeQueryMock({ role: "lost", auth_provider: "supabase", provider_user_id: "sb-uid-456" })
+        );
 
-    it("Switches to Notifications tab when clicked", async() => {
-        const user = userEvent.setup();
-        const notificationsButton = screen.getByRole("button", { name: /notifications/i });
-        await user.click(notificationsButton);
-        
-        const topBarTexts = screen.getAllByText("Notifications");
-        expect(topBarTexts[0]).toBeVisible();
-    });
+        await renderDashboard();
 
-    it("Switches to Profile tab when clicked", async() => {
-        const user = userEvent.setup();
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
-        
-        const topBarTexts = screen.getAllByText("Profile");
-        expect(topBarTexts[0]).toBeVisible();
-    });
-
-    it("Switches to Service Policy tab when clicked", async() => {
-        const user = userEvent.setup();
-        const policyButton = screen.getByRole("button", { name: /service policy/i });
-        await user.click(policyButton);
-        
-        const topBarTexts = screen.getAllByText("Service Policy");
-        expect(topBarTexts[0]).toBeVisible();
-    });
-
-    it("Switches to Settings tab when clicked", async() => {
-        const user = userEvent.setup();
-        const settingsButton = screen.getByRole("button", { name: /settings/i });
-        await user.click(settingsButton);
-        
-        const topBarTexts = screen.getAllByText("Settings");
-        expect(topBarTexts[0]).toBeVisible();
+        expect(screen.getByText(/unknown role: lost/i)).toBeInTheDocument();
     });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile not found — role_applications fallback
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Dashboard – profile not found (role_applications fallback)", () => {
+    const firebaseUser = { uid: "fb-uid-789" };
 
-describe("Dashboard Edit Profile Form Validation", () => {
-    beforeEach(async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
+    it("redirects with pending message when application is pending", async () => {
+        fireAuthChange(firebaseUser);
+        mockSupabaseFrom
+            .mockReturnValueOnce(makeQueryMock(null))
+            .mockReturnValueOnce(makeQueryMock({ requested_role: "staff", status: "pending" }));
 
-        const profileButton = screen.getByRole("button", { name: /profile/i });
-        await user.click(profileButton);
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
-        const editProfileButton = screen.getByRole("button", { name: /Edit profile/i });
-        await user.click(editProfileButton);
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith("/signin", {
+                replace: true,
+                state: { pendingMessage: "Your staff application is still pending approval." },
+            });
+        });
     });
 
-    it("Allows typing in First name field", async() => {
-        const user = userEvent.setup();
-        const firstNameInput = screen.getByPlaceholderText("First name");
-        await user.type(firstNameInput, "Test");
-        expect(firstNameInput).toHaveValue("Test");
+    it("redirects with rejection message when application was rejected", async () => {
+        fireAuthChange(firebaseUser);
+        mockSupabaseFrom
+            .mockReturnValueOnce(makeQueryMock(null))
+            .mockReturnValueOnce(makeQueryMock({ requested_role: "admin", status: "rejected" }));
+
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith("/signin", {
+                replace: true,
+                state: { pendingMessage: "Your admin application was rejected." },
+            });
+        });
     });
 
-    it("Allows typing in Surname field", async() => {
-        const user = userEvent.setup();
-        const surnameInput = screen.getByPlaceholderText("Surname");
-        await user.type(surnameInput, "User");
-        expect(surnameInput).toHaveValue("User");
-    });
+    it("redirects without state message when no application exists", async () => {
+        fireAuthChange(firebaseUser);
+        mockSupabaseFrom
+            .mockReturnValueOnce(makeQueryMock(null))
+            .mockReturnValueOnce(makeQueryMock(null));
 
-    it("Allows typing in Phone number field", async() => {
-        const user = userEvent.setup();
-        const phoneInput = screen.getByPlaceholderText("Phone number");
-        await user.type(phoneInput, "0821234567");
-        expect(phoneInput).toHaveValue("0821234567");
-    });
+        render(<MemoryRouter><Dashboard /></MemoryRouter>);
 
-    it("Allows selecting date in Date of Birth field", async() => {
-        const user = userEvent.setup();
-        const dobInput = screen.getByPlaceholderText("Date of Birth");
-        await user.type(dobInput, "1990-01-01");
-        expect(dobInput).toHaveValue("1990-01-01");
-    });
-});
-
-describe("Dashboard - Find a Clinic Navigation", () => {
-    it("Find a Clinic button exists and is clickable", async() => {
-        const user = userEvent.setup();
-        render(<Dashboard />);
-        
-        const findClinicButton = screen.getByRole("button", { name: /find a clinic/i });
-        expect(findClinicButton).toBeVisible();
-        await user.click(findClinicButton);
-    });
-});
-
-describe("Dashboard Sidebar Visibility", () => {
-    beforeEach(async() => {
-        render(<Dashboard />);
-    });
-
-    it("Sidebar is visible", async() => {
-        const sidebar = document.querySelector(".db-sidebar");
-        expect(sidebar).toBeVisible();
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith("/signin", {
+                replace: true,
+                state: undefined,
+            });
+        });
     });
 });
