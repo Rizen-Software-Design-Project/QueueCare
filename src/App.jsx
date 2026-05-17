@@ -15,6 +15,7 @@ import PatientDashboard from "./components/PatientDashboard.jsx"
 import AdminDashboard from "./components/AdminDashboard.jsx"
 import Schedule from "./components/Schedule.jsx"
 import ProfilePage from "./components/ProfilePage.jsx";
+import QueueCarePolicy from "./components/ServicePolicy.jsx
 import "./App.css";
 
 
@@ -35,6 +36,7 @@ function App() {
         <Route path="/analytics-staff"        element={<AnalyticsDashboardStaff />} />
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/ServicePolicy" element={<QueueCarePolicy />} />
 
         <Route path="*"              element={<Navigate to="/" replace />} />
 
