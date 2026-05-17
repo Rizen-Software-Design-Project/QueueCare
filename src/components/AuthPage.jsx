@@ -230,40 +230,52 @@ export default function AuthPage() {
 
   // ── Central routing decision ───────────────────────────────────────────────
   async function routeAfterLogin(identity) {
-    localStorage.setItem("userIdentity", JSON.stringify(identity));
-    const [profile, application] = await Promise.all([
-      fetchProfile(identity),
-      fetchLatestApplication(identity),
-    ]);
+  localStorage.setItem("userIdentity", JSON.stringify(identity));
 
-    if (profile && isProfileComplete(profile)) {
-      navigate("/dashboard");
-      return;
-    }
+  const [profile, application] = await Promise.all([
+    fetchProfile(identity),
+    fetchLatestApplication(identity),
+  ]);
 
-    if (application?.status === "pending") {
-      go(application.requested_role === "admin" ? "admin-pending" : "application-pending");
-      return;
-    }
-
-    if (application?.status === "rejected") {
-      setError(`Your ${application.requested_role} application was rejected.`);
-      go("home");
-      return;
-    }
-
-    navigate("/profile-setup", {
-      state: {
-        identity: {
-          ...identity,
-          name:    profile?.name    || identity.name    || "",
-          surname: profile?.surname || identity.surname || "",
-          sex:     profile?.sex     || "",
-        },
-        selectedRole,
-      },
-    });
+  // Enforce role if profile exists
+  if (profile && selectedRole && profile.role !== selectedRole) {
+    setError(`You selected continue as "${selectedRole}" but this account is a "${profile.role}" account.`);
+    await supabase.auth.signOut();
+    setPage("role-select");
+    return;
   }
+
+  // Existing user with complete profile
+  if (profile && isProfileComplete(profile)) {
+    navigate("/dashboard");
+    return;
+  }
+
+  // Application states
+  if (application?.status === "pending") {
+    go(application.requested_role === "admin" ? "admin-pending" : "application-pending");
+    return;
+  }
+
+  if (application?.status === "rejected") {
+    setError(`Your ${application.requested_role} application was rejected.`);
+    go("home");
+    return;
+  }
+
+  //New or incomplete profile
+  navigate("/profile-setup", {
+    state: {
+      identity: {
+        ...identity,
+        name: profile?.name || identity.name || "",
+        surname: profile?.surname || identity.surname || "",
+        sex: profile?.sex || "",
+      },
+      selectedRole,
+    },
+  });
+}
 
   // ── Email / password ──────────────────────────────────────────────────────
   async function handleEmailSubmit(e) {
@@ -407,6 +419,7 @@ export default function AuthPage() {
         {/* Role select */}
         {page === "role-select" && (
           <div className="auth-section">
+            <ErrorMessage msg={error} />
             <h2 className="auth-title">Welcome to MediAccess</h2>
             <p className="auth-sub">Select how you'd like to continue</p>
             <button className="auth-btn-primary" onClick={() => chooseRole("patient")}>

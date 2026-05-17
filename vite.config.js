@@ -20,7 +20,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.js'],
     env: {
-      VITE_API_BASE: 'http://localhost:5000',
       OPENAI_API_KEY: 'test-placeholder',
     },
     coverage: {

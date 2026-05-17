@@ -4,7 +4,7 @@ import { supabase } from "#lib/supabase";
 import AIAssistant from "./AIAssistant";
 
 import { viewFullQueue, updateQueueStatus } from "../queueApi";
-import "./StaffDashboard.css";
+import "./StaffClinicManagement.css";
 
 
 // FIX: use API_BASE consistently for all fetch calls

@@ -4,6 +4,9 @@ import { FiUser, FiMapPin, FiTrash2, FiUsers, FiChevronLeft } from "react-icons/
 import { FaHospital } from "react-icons/fa";
 import "./AdminClinics.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE 
+  || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
+
 const STAFF_ROLES = ["doctor", "nurse", "receptionist", "admin"];
 
 const districtsByProvince = {
@@ -195,6 +198,17 @@ export default function AdminStaff() {
     ));
     setActionStatus({ type: "success", message: `${assigningTo.name}'s role updated to ${form.role}.` });
   }
+  if (assigningTo.email) {
+  fetch(`${API_BASE}/notify/application/send-email`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: assigningTo.email?.trim().toLowerCase(),
+    name: assigningTo.name,
+    role: form.role,
+    status: 'reassigned',
+  }),
+}).catch(err => console.warn('Email failed:', err.message));}
 
   setAssigningTo(null);
 }
@@ -214,7 +228,18 @@ export default function AdminStaff() {
     }
     setClinicStaff(prev => prev.filter(s => s.profile_id !== member.profile_id));
     setActionStatus({ type: "success", message: `${member.name} removed.` });
-  }
+  if (member.email) {
+  fetch(`${API_BASE}/notify/application/send-email`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: member.email?.trim().toLowerCase(),
+    name: member.name,
+    role: member.staff_role,
+    status: 'removed',
+  }),
+}).catch(err => console.warn('Email failed:', err.message));
+  }}
   const visibleStaff = clinicStaff.filter(s =>
   staffSearch.trim() === "" ||
   `${s.name} ${s.surname}`.toLowerCase().includes(staffSearch.toLowerCase())
