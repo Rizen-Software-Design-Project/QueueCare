@@ -346,12 +346,6 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
 
   return (
     <div className="staff-dash">
-      <header className="staff-dash-header">
-        <div>
-          <h1>Staff Dashboard</h1>
-          {facilityName && <p style={{ margin: 0, fontSize: 14, color: "#ccc" }}>📍 {facilityName}</p>}
-        </div>
-      </header>
 
       <div className="staff-dash-grid">
         {/* Appointments Table */}
@@ -361,7 +355,7 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button type="button" onClick={() => setAppointmentView("today")} style={{ padding: "10px 16px", background: appointmentView === "today" ? "#1d4ed8" : "#2563eb", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>Today</button>
               <button type="button" onClick={() => setAppointmentView("upcoming")} style={{ padding: "10px 16px", background: appointmentView === "upcoming" ? "#15803d" : "#16a34a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>View Upcoming</button>
-              {facilityId && <button type="button" onClick={() => fetchAppointments(facilityId)} style={{ padding: "10px 16px", background: "#111827", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>{apptLoading ? "Refreshing..." : "Refresh"}</button>}
+              {facilityId && <button type="button" onClick={() => fetchAppointments(facilityId)} style={{ padding: "10px 16px", background: "#b45309", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>{apptLoading ? "Refreshing..." : "Refresh"}</button>}
             </div>
           </div>
           {apptLoading && <p style={{ color: "#888" }}>Loading appointments...</p>}

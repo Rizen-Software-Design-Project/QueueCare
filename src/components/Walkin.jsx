@@ -148,103 +148,343 @@ export default function WalkIn({ facilityId, facilityName, onBack }) {
   const availableSlots = activeTab === "queue" ? todaySlots : futureSlots;
 
   return (
-    <div className="staff-dash">
-      <header className="staff-dash-header">
-        <div>
-          <h1>🚶 Walk-In Patients</h1>
-          {facilityName && <p className="wi-facility-name">📍 {facilityName}</p>}
-        </div>
-        {onBack && (
-          <button className="staff-back-btn" onClick={onBack}>← Back</button>
-        )}
-      </header>
+  <main className="staff-dash">
 
-      <div className="staff-dash-grid">
-        <section className="staff-card wi-card-full">
-          <div className="wi-tabs">
-            <button type="button" className={`wi-tab${activeTab === "queue" ? " wi-tab--queue" : ""}`} onClick={() => { setActiveTab("queue"); setSlotId(""); setSubmitMsg({ type: "", text: "" }); }}>
-              <FiClock /> Queue Today
+
+    <section className="staff-dash-grid">
+
+      <article className="staff-card wi-card-full">
+
+        {/* ── TABS ───────────────────────────── */}
+
+        <nav
+          className="wi-tabs"
+          aria-label="Walk-in actions"
+        >
+
+          <button
+            type="button"
+            className={`wi-tab${activeTab === "queue" ? " wi-tab--queue" : ""}`}
+            onClick={() => {
+              setActiveTab("queue");
+              setSlotId("");
+              setSubmitMsg({ type: "", text: "" });
+            }}
+            aria-pressed={activeTab === "queue"}
+          >
+            <FiClock />
+            <span>Queue Today</span>
+          </button>
+
+          <button
+            type="button"
+            className={`wi-tab${activeTab === "book" ? " wi-tab--book" : ""}`}
+            onClick={() => {
+              setActiveTab("book");
+              setSlotId("");
+              setSubmitMsg({ type: "", text: "" });
+            }}
+            aria-pressed={activeTab === "book"}
+          >
+            <FiCalendar />
+            <span>Book Future Appointment</span>
+          </button>
+
+          <button
+            type="button"
+            className={`wi-tab${activeTab === "checkin" ? " wi-tab--checkin" : ""}`}
+            onClick={() => {
+              setActiveTab("checkin");
+              setSlotId("");
+              setSubmitMsg({ type: "", text: "" });
+            }}
+            aria-pressed={activeTab === "checkin"}
+          >
+            <FiUserCheck />
+            <span>Check In Patient</span>
+          </button>
+
+        </nav>
+
+        {/* ── DESCRIPTION ───────────────────── */}
+
+        <p className="wi-tab-desc">
+          {activeTab === "queue"
+            ? "Find a registered patient and add them to today's live queue."
+            : activeTab === "book"
+            ? "Find a registered patient and schedule a future appointment for them."
+            : "Find a patient with an existing booking and check them into today's queue."}
+        </p>
+
+        {/* ── SEARCH ────────────────────────── */}
+
+        <section className="wi-search-section">
+
+          <header>
+            <h2 className="wi-step-heading">
+              Step 1 — Find Patient
+            </h2>
+          </header>
+
+          <form
+            onSubmit={handleSearch}
+            className="wi-search-row"
+          >
+
+            <label
+              htmlFor="patient-contact"
+              className="sr-only"
+            >
+              Email or phone number
+            </label>
+
+            <input
+              id="patient-contact"
+              type="text"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              placeholder="Email or phone number"
+              required
+              className="wi-search-input"
+            />
+
+            <button
+              type="submit"
+              disabled={searching}
+              className="wi-search-btn"
+            >
+              <FiSearch />
+              <span>
+                {searching ? "Searching…" : "Find"}
+              </span>
             </button>
-            <button type="button" className={`wi-tab${activeTab === "book" ? " wi-tab--book" : ""}`} onClick={() => { setActiveTab("book"); setSlotId(""); setSubmitMsg({ type: "", text: "" }); }}>
-              <FiCalendar /> Book Future Appointment
-            </button>
-            <button type="button" className={`wi-tab${activeTab === "checkin" ? " wi-tab--checkin" : ""}`} onClick={() => { setActiveTab("checkin"); setSlotId(""); setSubmitMsg({ type: "", text: "" }); }}>
-              <FiUserCheck /> Check In Patient
-            </button>
-          </div>
 
-          <p className="wi-tab-desc">
-            {activeTab === "queue" ? "Find a registered patient and add them to today's live queue."
-              : activeTab === "book" ? "Find a registered patient and schedule a future appointment for them."
-              : "Find a patient with an existing booking and check them into today's queue."}
-          </p>
+          </form>
 
-          <div className="wi-search-section">
-            <h3 className="wi-step-heading">Step 1 — Find Patient</h3>
-            <form onSubmit={handleSearch} className="wi-search-row">
-              <input type="text" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Email or phone number" required className="wi-search-input" />
-              <button type="submit" disabled={searching} className="wi-search-btn">
-                <FiSearch /> {searching ? "Searching…" : "Find"}
-              </button>
-            </form>
-            {searchMsg.text && <p className={`wi-search-msg ${searchMsg.type === "error" ? "staff-error" : "staff-success"}`}>{searchMsg.text}</p>}
-          </div>
-
-          {profile && (
-            <>
-              <div className="wi-profile-card">
-                <div className="wi-profile-card-top">
-                  <FiUserCheck className="wi-profile-check-icon" />
-                  <span className="wi-profile-name">{profile.name} {profile.surname}</span>
-                </div>
-                <div className="wi-profile-details">
-                  <span className="wi-profile-detail">📧 {profile.email || "—"}</span>
-                  <span className="wi-profile-detail">📱 {profile.phone_number || "—"}</span>
-                  {profile.sex && <span className="wi-profile-detail">⚧ {profile.sex}</span>}
-                </div>
-              </div>
-
-              {activeTab === "checkin" ? (
-                <div>
-                  <h3 className="wi-step-heading">Step 2 — Check In</h3>
-                  <form onSubmit={handleCheckIn}>
-                    <button type="submit" disabled={submitting} className="wi-checkin-btn">
-                      {submitting ? "Processing…" : "Confirm Check In"}
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                <div>
-                  <h3 className="wi-step-heading">Step 2 — {activeTab === "queue" ? "Select Today's Slot" : "Select Future Slot"}</h3>
-                  <form onSubmit={handleSubmit} className="staff-form">
-                    <label>Reason for visit<input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Fever, check-up, follow-up" /></label>
-                    <label>
-                      {activeTab === "queue" ? "Available slot today" : "Available future slot"}
-                      <select value={slotId} onChange={(e) => setSlotId(e.target.value)} required>
-                        <option value="">Choose a slot…</option>
-                        {availableSlots.length === 0 && <option disabled>{activeTab === "queue" ? "No slots available today" : "No future slots available"}</option>}
-                        {availableSlots.map((slot) => (
-                          <option key={slot.id} value={slot.id}>
-                            {formatDate(slot.slot_date)} — {formatTime(slot.slot_time)} ({(slot.total_capacity ?? 0) - (slot.booked_count ?? 0)} available)
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    {availableSlots.length === 0 && (
-                      <p className="wi-no-slots-msg">⚠️ {activeTab === "queue" ? "No slots available for today. Create a new slot in the Staff Dashboard, or switch to Book Future Appointment." : "No future slots available. Create new slots in the Staff Dashboard."}</p>
-                    )}
-                    <button type="submit" disabled={submitting || !slotId || availableSlots.length === 0} className={`wi-submit-btn${activeTab === "queue" ? " wi-submit-btn--queue" : " wi-submit-btn--book"}`}>
-                      {submitting ? "Processing…" : activeTab === "queue" ? "Add to Today's Queue" : "Book Appointment"}
-                    </button>
-                  </form>
-                </div>
-              )}
-            </>
+          {searchMsg.text && (
+            <p
+              className={`wi-search-msg ${
+                searchMsg.type === "error"
+                  ? "staff-error"
+                  : "staff-success"
+              }`}
+              role="status"
+            >
+              {searchMsg.text}
+            </p>
           )}
 
-          {submitMsg.text && <p className={`wi-submit-msg ${submitMsg.type === "error" ? "staff-error" : "staff-success"}`}>{submitMsg.text}</p>}
         </section>
-      </div>
-    </div>
-  );
+
+        {/* ── PROFILE ───────────────────────── */}
+
+        {profile && (
+          <>
+            <article className="wi-profile-card">
+
+              <header className="wi-profile-card-top">
+
+                <FiUserCheck className="wi-profile-check-icon" />
+
+                <h2 className="wi-profile-name">
+                  {profile.name} {profile.surname}
+                </h2>
+
+              </header>
+
+              <section className="wi-profile-details">
+
+                <p className="wi-profile-detail">
+                  📧 {profile.email || "—"}
+                </p>
+
+                <p className="wi-profile-detail">
+                  📱 {profile.phone_number || "—"}
+                </p>
+
+                {profile.sex && (
+                  <p className="wi-profile-detail">
+                    ⚧ {profile.sex}
+                  </p>
+                )}
+
+              </section>
+
+            </article>
+
+            {/* ── CHECK IN ───────────────────── */}
+
+            {activeTab === "checkin" ? (
+              <section>
+
+                <header>
+                  <h2 className="wi-step-heading">
+                    Step 2 — Check In
+                  </h2>
+                </header>
+
+                <form onSubmit={handleCheckIn}>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="wi-checkin-btn"
+                  >
+                    {submitting
+                      ? "Processing…"
+                      : "Confirm Check In"}
+                  </button>
+
+                </form>
+
+              </section>
+            ) : (
+
+              /* ── BOOK / QUEUE ───────────────── */
+
+              <section>
+
+                <header>
+                  <h2 className="wi-step-heading">
+                    Step 2 —{" "}
+                    {activeTab === "queue"
+                      ? "Select Today's Slot"
+                      : "Select Future Slot"}
+                  </h2>
+                </header>
+
+                <form
+                  onSubmit={handleSubmit}
+                  className="staff-form"
+                >
+
+                  <fieldset>
+
+                    <legend className="sr-only">
+                      Appointment Details
+                    </legend>
+
+                    <label>
+
+                      <span>Reason for visit</span>
+
+                      <input
+                        type="text"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="e.g. Fever, check-up, follow-up"
+                      />
+
+                    </label>
+
+                    <label>
+
+                      <span>
+                        {activeTab === "queue"
+                          ? "Available slot today"
+                          : "Available future slot"}
+                      </span>
+
+                      <select
+                        value={slotId}
+                        onChange={(e) => setSlotId(e.target.value)}
+                        required
+                      >
+
+                        <option value="">
+                          Choose a slot…
+                        </option>
+
+                        {availableSlots.length === 0 && (
+                          <option disabled>
+                            {activeTab === "queue"
+                              ? "No slots available today"
+                              : "No future slots available"}
+                          </option>
+                        )}
+
+                        {availableSlots.map((slot) => (
+                          <option
+                            key={slot.id}
+                            value={slot.id}
+                          >
+                            {formatDate(slot.slot_date)} —{" "}
+                            {formatTime(slot.slot_time)} (
+                            {(slot.total_capacity ?? 0) -
+                              (slot.booked_count ?? 0)}{" "}
+                            available)
+                          </option>
+                        ))}
+
+                      </select>
+
+                    </label>
+
+                  </fieldset>
+
+                  {availableSlots.length === 0 && (
+                    <aside className="wi-no-slots-msg">
+
+                      <p>
+                        ⚠️{" "}
+                        {activeTab === "queue"
+                          ? "No slots available for today. Create a new slot in the Staff Dashboard, or switch to Book Future Appointment."
+                          : "No future slots available. Create new slots in the Staff Dashboard."}
+                      </p>
+
+                    </aside>
+                  )}
+
+                  <footer>
+
+                    <button
+                      type="submit"
+                      disabled={
+                        submitting ||
+                        !slotId ||
+                        availableSlots.length === 0
+                      }
+                      className={`wi-submit-btn${
+                        activeTab === "queue"
+                          ? " wi-submit-btn--queue"
+                          : " wi-submit-btn--book"
+                      }`}
+                    >
+                      {submitting
+                        ? "Processing…"
+                        : activeTab === "queue"
+                        ? "Add to Today's Queue"
+                        : "Book Appointment"}
+                    </button>
+
+                  </footer>
+
+                </form>
+
+              </section>
+            )}
+          </>
+        )}
+
+        {/* ── SUBMIT MESSAGE ────────────────── */}
+
+        {submitMsg.text && (
+          <p
+            className={`wi-submit-msg ${
+              submitMsg.type === "error"
+                ? "staff-error"
+                : "staff-success"
+            }`}
+            role="status"
+          >
+            {submitMsg.text}
+          </p>
+        )}
+
+      </article>
+
+    </section>
+
+  </main>
+);
 }
