@@ -15,6 +15,7 @@ import {
 import {
   OverviewPanel, NotificationsPanel, ProfilePanel,
 } from "./DashboardPanels";
+import { StaffHistoryView } from "./AppointmentHistory";
 import "./Dashboard.css";
 
 
@@ -132,6 +133,9 @@ function goTo(id) {
     case "schedule":
       navigate("/schedule", {state: navState});
       return;
+    case "appointment-history":
+      setActiveTab("appointment-history");
+      return;
     case "profile":
       navigate("/profile", { state: { profile } });
       return;
@@ -191,6 +195,12 @@ function goTo(id) {
                 </div>
             </div>
             </>);  
+    case "appointment-history":
+      return (
+        <StaffHistoryView
+          facilityId={staffAssignments[0]?.facility_id ?? null}
+        />
+      );
     case "notifications":
         return (
           <NotificationsPanel

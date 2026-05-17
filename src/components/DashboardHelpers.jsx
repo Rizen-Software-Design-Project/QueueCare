@@ -16,15 +16,16 @@ export const PATIENT_NAV = [
 ];
 
 export const STAFF_NAV = [
-  { id: "overview",           icon: <FiGrid />,     label: "Overview" },
-  { id: "staff-appointments", icon: <FiCalendar />, label: "Clinic Appointments" },
-  { id: "staff-queue",        icon: <FiHash />,     label: "Patient Queue" },
-  { id: "walk-in",            icon: <FiUserPlus />, label: "Walk-In Patients" }, 
-  { id: "patients",           icon: <FiUser />,     label: "Patients" },
-  { id: "analytics",          icon: <FiBarChart2 />, label: "Analytics"},
-  { id: "notifications",      icon: <FiBell />,     label: "Notifications" },
-  { id: "profile",            icon: <FiUser />,     label: "Profile" },
-  { id: "policy",        icon: <FiFileText />,  label: "Service Policy" },
+  { id: "overview",            icon: <FiGrid />,      label: "Overview" },
+  { id: "staff-appointments",  icon: <FiCalendar />,  label: "Clinic Appointments" },
+  { id: "appointment-history", icon: <FiCalendar />,  label: "Appointment History" },
+  { id: "staff-queue",         icon: <FiHash />,      label: "Patient Queue" },
+  { id: "walk-in",             icon: <FiUserPlus />,  label: "Walk-In Patients" },
+  { id: "patients",            icon: <FiUser />,      label: "Patients" },
+  { id: "analytics",           icon: <FiBarChart2 />, label: "Analytics" },
+  { id: "notifications",       icon: <FiBell />,      label: "Notifications" },
+  { id: "profile",             icon: <FiUser />,      label: "Profile" },
+  { id: "policy",              icon: <FiFileText />,  label: "Service Policy" },
 ];
 
 export const ADMIN_NAV = [
