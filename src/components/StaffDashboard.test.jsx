@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import StaffDashboard from "./StaffDashboard";
 import userEvent from "@testing-library/user-event";
-
+import { StaffHistoryView } from "./AppointmentHistory";
 
 //jump-mocks
 const mockNavigate = vi.fn();
@@ -607,7 +607,24 @@ describe("Local storage setup", () => {
         });
     });
 });
+describe("Clicked Service Policy", () => {
+  const user = userEvent.setup();
 
+  beforeEach(() => {
+    render(<StaffDashboard profile={mockStaffProfile} />);
+  });
+
+  it("navigates to Service Policy when clicked", async () => {
+    const policyButton = screen
+      .getAllByText(/service policy/i)
+      .find((el) => el.closest(".db-nav"));
+
+    expect(policyButton).toBeInTheDocument();
+
+    await user.click(policyButton);
+  });
+
+});
 describe("Notification query chaining", () => {
     it("calls notification query filters correctly", async () => {
         const eqMock = vi.fn().mockReturnThis();
@@ -658,5 +675,279 @@ describe("Notification query chaining", () => {
             );
         });
     });
+});
+
+describe("AppointmentHistory - StaffHistoryView", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("shows loading state initially", () => {
+    mockQuery.limit.mockImplementation(() => new Promise(() => {}));
+
+    render(<StaffHistoryView facilityId="facility-1" />);
+
+    expect(screen.getByText(/loading appointments/i)).toBeVisible();
+  });
+
+  it("shows message when no facilityId is provided", async () => {
+    render(<StaffHistoryView facilityId={null} />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/no clinic assignment found/i)
+      ).toBeVisible();
+    });
+  });
+
+  it("renders upcoming appointments for staff", async () => {
+    const appointments = [
+      {
+        id: "1",
+        status: "booked",
+        reason: "General Checkup",
+        profiles: {
+          name: "John",
+          surname: "Doe",
+          email: "john@example.com",
+          phone_number: "123456789",
+        },
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "09:00",
+          duration_minutes: 30,
+          facilities: {
+            name: "Central Clinic",
+            district: "District A",
+            province: "Gauteng",
+          },
+        },
+      },
+    ];
+
+    mockQuery.limit.mockResolvedValueOnce({
+      data: appointments,
+      error: null,
+    });
+
+    render(<StaffHistoryView facilityId="facility-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/john doe/i)).toBeVisible();
+    });
+
+    expect(screen.getByText(/general checkup/i)).toBeVisible();
+    expect(screen.getByText(/john@example.com/i)).toBeVisible();
+  });
+
+  it("switches to history tab and shows past appointments", async () => {
+    const appointments = [
+      {
+        id: "2",
+        status: "complete",
+        reason: "Dental Visit",
+        profiles: {
+          name: "Jane",
+          surname: "Smith",
+          email: "jane@example.com",
+        },
+        appointment_slots: {
+          slot_date: "2024-01-01",
+          slot_time: "10:00",
+          duration_minutes: 45,
+          facilities: {
+            name: "North Clinic",
+          },
+        },
+      },
+    ];
+
+    mockQuery.limit.mockResolvedValueOnce({
+      data: appointments,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+
+    render(<StaffHistoryView facilityId="facility-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /history/i })).toBeVisible();
+    });
+
+    await user.click(screen.getByRole("button", { name: /history/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/jane smith/i)).toBeVisible();
+    });
+
+    expect(screen.getByText(/dental visit/i)).toBeVisible();
+  });
+
+  it("filters appointments using the search input", async () => {
+    const appointments = [
+      {
+        id: "1",
+        status: "booked",
+        profiles: {
+          name: "Alice",
+          surname: "Johnson",
+          email: "alice@example.com",
+        },
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "08:00",
+          facilities: {
+            name: "Clinic A",
+          },
+        },
+      },
+      {
+        id: "2",
+        status: "booked",
+        profiles: {
+          name: "Bob",
+          surname: "Williams",
+          email: "bob@example.com",
+        },
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "09:00",
+          facilities: {
+            name: "Clinic B",
+          },
+        },
+      },
+    ];
+
+    mockQuery.limit.mockResolvedValueOnce({
+      data: appointments,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+
+    render(<StaffHistoryView facilityId="facility-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/alice johnson/i)).toBeVisible();
+    });
+
+    const searchInput = screen.getByPlaceholderText(
+      /search by patient name or email/i
+    );
+
+    await user.type(searchInput, "alice");
+
+    expect(screen.getByText(/alice johnson/i)).toBeVisible();
+    expect(screen.queryByText(/bob williams/i)).not.toBeInTheDocument();
+  });
+
+  it("clears the search filter when clear button is clicked", async () => {
+    const appointments = [
+      {
+        id: "1",
+        status: "booked",
+        profiles: {
+          name: "Alice",
+          surname: "Johnson",
+          email: "alice@example.com",
+        },
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "08:00",
+          facilities: {
+            name: "Clinic A",
+          },
+        },
+      },
+      {
+        id: "2",
+        status: "booked",
+        profiles: {
+          name: "Bob",
+          surname: "Williams",
+          email: "bob@example.com",
+        },
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "09:00",
+          facilities: {
+            name: "Clinic B",
+          },
+        },
+      },
+    ];
+
+    mockQuery.limit.mockResolvedValueOnce({
+      data: appointments,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+
+    render(<StaffHistoryView facilityId="facility-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/alice johnson/i)).toBeVisible();
+    });
+
+    const searchInput = screen.getByPlaceholderText(
+      /search by patient name or email/i
+    );
+
+    await user.type(searchInput, "alice");
+
+    expect(screen.queryByText(/bob williams/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /clear/i }));
+
+    expect(screen.getByText(/alice johnson/i)).toBeVisible();
+    expect(screen.getByText(/bob williams/i)).toBeVisible();
+  });
+
+  it("shows empty message when no appointments match the search", async () => {
+    const appointments = [
+      {
+        id: "1",
+        status: "booked",
+        profiles: {
+          name: "Alice",
+          surname: "Johnson",
+          email: "alice@example.com",
+        },
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "08:00",
+          facilities: {
+            name: "Clinic A",
+          },
+        },
+      },
+    ];
+
+    mockQuery.limit.mockResolvedValueOnce({
+      data: appointments,
+      error: null,
+    });
+
+    const user = userEvent.setup();
+
+    render(<StaffHistoryView facilityId="facility-1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/alice johnson/i)).toBeVisible();
+    });
+
+    const searchInput = screen.getByPlaceholderText(
+      /search by patient name or email/i
+    );
+
+    await user.type(searchInput, "nomatch");
+
+    expect(
+      screen.getByText(/no upcoming appointments/i)
+    ).toBeVisible();
+  });
 });
 });

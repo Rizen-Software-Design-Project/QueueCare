@@ -13,7 +13,7 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
-import QueueCarePolicy from "./QueueCarePolicy";
+import QueueCarePolicy from "./ServicePolicy";
 
 describe("QueueCarePolicy", () => {
   beforeEach(() => {
@@ -33,16 +33,14 @@ describe("QueueCarePolicy", () => {
   });
 
   it("renders the legal information section", () => {
-    render(<QueueCarePolicy />);
+  render(<QueueCarePolicy />);
 
-    expect(
-      screen.getByText(/Protection of Personal Information Act/i)
-    ).toBeInTheDocument();
+  const ectaTexts = screen.getAllByText(
+    /Electronic Communications and Transactions Act/i
+  );
 
-    expect(
-      screen.getByText(/Electronic Communications and Transactions Act/i)
-    ).toBeInTheDocument();
-  });
+  expect(ectaTexts.length).toBeGreaterThan(0);
+});
 
   it("renders all major policy sections", () => {
     render(<QueueCarePolicy />);

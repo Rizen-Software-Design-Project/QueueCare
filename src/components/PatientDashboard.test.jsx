@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import PatientDashboard from "./PatientDashboard";
+import { PatientHistoryView } from "./AppointmentHistory";
+import QueueCarePolicy from "./ServicePolicy";
 import userEvent from "@testing-library/user-event";
 
 
@@ -135,7 +137,6 @@ describe("Sidebar", () => {
         { label: /profile/i },
         { label: /find a clinic/i },
         { label: /service policy/i },
-        { label: /settings/i },
     ];
 
     navItems.forEach(({ label }) => {
@@ -431,12 +432,6 @@ describe("Overview Panel", () => {
     });
 });
 
-
-
-
-
-
-
 //jump-appointments
 describe("Clicked Appointments", () => {
     beforeEach(async () => {
@@ -466,116 +461,172 @@ describe("Clicked Appointments", () => {
 // APPOINTMENTS PANEL CONTENT TESTS
 // ────────────────────────────────────────────────────────────────────────────
 
-describe("Appointments Panel - content", () => {
-  // No helper function – each test sets its own mock, renders, clicks Appointments
-  // and asserts. Uses same pattern as "Clicked Overview - stat counts".
+describe("AppointmentHistory - PatientHistoryView", () => {
+  it("shows 'No upcoming appointments' when there are no appointments", () => {
+    render(
+      <PatientHistoryView
+        appointments={[]}
+        onReschedule={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
 
-  it("shows 'No appointments found' when list is empty", async () => {
-    mockQuery.limit
-      .mockResolvedValueOnce({ data: [], error: null }) // appointments
-      .mockResolvedValueOnce({ data: [], error: null }) // queue
-      .mockResolvedValueOnce({ data: [], error: null }); // notifications
-
-    const user = userEvent.setup();
-    render(<PatientDashboard profile={mockProfile} />);
-
-    const appointmentsNav = screen.getAllByText(/appointments/i).find((btn) => btn.closest(".db-nav"));
-    await user.click(appointmentsNav);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-    });
-
-    expect(screen.getByText("No appointments found.")).toBeVisible();
+    expect(
+      screen.getByText("No upcoming appointments.")
+    ).toBeVisible();
   });
 
-  it("shows Reschedule and Cancel buttons only for non‑terminal appointments", async () => {
-    const mockApps = [
-      makeAppointment({ id: "a1", status: "booked" }),    // non‑terminal
-      makeAppointment({ id: "a2", status: "complete" }),  // terminal
-      makeAppointment({ id: "a3", status: "cancelled" }), // terminal
+  it("shows Reschedule and Cancel buttons only for upcoming appointments", () => {
+    const appointments = [
+      makeAppointment({
+        id: "a1",
+        status: "booked",
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "10:00:00",
+          facilities: { name: "Clinic A" },
+        },
+      }),
+
+      makeAppointment({
+        id: "a2",
+        status: "complete",
+        appointment_slots: {
+          slot_date: "2024-01-01",
+          slot_time: "09:00:00",
+          facilities: { name: "Clinic B" },
+        },
+      }),
+
+      makeAppointment({
+        id: "a3",
+        status: "cancelled",
+        appointment_slots: {
+          slot_date: "2024-01-01",
+          slot_time: "11:00:00",
+          facilities: { name: "Clinic C" },
+        },
+      }),
     ];
 
-    mockQuery.limit
-      .mockResolvedValueOnce({ data: mockApps, error: null })
-      .mockResolvedValueOnce({ data: [], error: null })
-      .mockResolvedValueOnce({ data: [], error: null });
+    render(
+      <PatientHistoryView
+        appointments={appointments}
+        onReschedule={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
 
-    const user = userEvent.setup();
-    render(<PatientDashboard profile={mockProfile} />);
-
-    const appointmentsNav = screen.getAllByText(/appointments/i).find((btn) => btn.closest(".db-nav"));
-    await user.click(appointmentsNav);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+    const rescheduleBtns = screen.getAllByRole("button", {
+      name: "Reschedule",
     });
 
-    const rescheduleBtns = screen.getAllByRole("button", { name: "Reschedule" });
-    const cancelBtns = screen.getAllByRole("button", { name: "Cancel" });
+    const cancelBtns = screen.getAllByRole("button", {
+      name: "Cancel",
+    });
+
     expect(rescheduleBtns).toHaveLength(1);
     expect(cancelBtns).toHaveLength(1);
   });
 
-  it("opens the reschedule modal when Reschedule button is clicked", async () => {
-    const mockApps = [makeAppointment({ id: "a1", status: "booked" })];
-    mockQuery.limit
-      .mockResolvedValueOnce({ data: mockApps, error: null })
-      .mockResolvedValueOnce({ data: [], error: null })
-      .mockResolvedValueOnce({ data: [], error: null });
-
+  it("calls onReschedule when Reschedule button is clicked", async () => {
     const user = userEvent.setup();
-    render(<PatientDashboard profile={mockProfile} />);
 
-    const appointmentsNav = screen.getAllByText(/appointments/i).find((btn) => btn.closest(".db-nav"));
-    await user.click(appointmentsNav);
+    const appointments = [
+      makeAppointment({
+        id: "a1",
+        status: "booked",
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "10:00:00",
+          facilities: { name: "Clinic A" },
+        },
+      }),
+    ];
 
-    await waitFor(() => {
-      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-    });
+    const onReschedule = vi.fn();
 
-    const rescheduleBtn = screen.getByRole("button", { name: "Reschedule" });
-    await user.click(rescheduleBtn);
+    render(
+      <PatientHistoryView
+        appointments={appointments}
+        onReschedule={onReschedule}
+        onCancel={vi.fn()}
+      />
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText("Reschedule Appointment")).toBeVisible();
-    });
+    await user.click(
+      screen.getByRole("button", { name: "Reschedule" })
+    );
+
+    expect(onReschedule).toHaveBeenCalledTimes(1);
+    expect(onReschedule).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "a1" })
+    );
   });
 
-  it("cancels an appointment and updates the UI", async () => {
-    const mockApps = [makeAppointment({ id: "a1", status: "booked" })];
-    mockQuery.limit
-      .mockResolvedValueOnce({ data: mockApps, error: null })
-      .mockResolvedValueOnce({ data: [], error: null })
-      .mockResolvedValueOnce({ data: [], error: null });
-
+  it("calls onCancel when Cancel button is clicked", async () => {
     const user = userEvent.setup();
-    render(<PatientDashboard profile={mockProfile} />);
 
-    const appointmentsNav = screen.getAllByText(/appointments/i).find((btn) => btn.closest(".db-nav"));
-    await user.click(appointmentsNav);
+    const appointments = [
+      makeAppointment({
+        id: "a1",
+        status: "booked",
+        appointment_slots: {
+          slot_date: "2099-12-01",
+          slot_time: "10:00:00",
+          facilities: { name: "Clinic A" },
+        },
+      }),
+    ];
 
-    await waitFor(() => {
-      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-    });
+    const onCancel = vi.fn();
 
-    // Spy on window.confirm to return true (allow cancellation)
-    const confirmSpy = vi.spyOn(window, "confirm").mockImplementation(() => true);
+    render(
+      <PatientHistoryView
+        appointments={appointments}
+        onReschedule={vi.fn()}
+        onCancel={onCancel}
+      />
+    );
 
-    const cancelBtn = screen.getByRole("button", { name: "Cancel" });
-    await user.click(cancelBtn);
+    await user.click(
+      screen.getByRole("button", { name: "Cancel" })
+    );
 
-    await waitFor(() => {
-      expect(screen.getByText("cancelled")).toBeVisible();
-      expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Reschedule" })).not.toBeInTheDocument();
-    });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "a1" })
+    );
+  });
 
-    confirmSpy.mockRestore();
+  it("switches to history tab and shows history appointments", async () => {
+    const user = userEvent.setup();
+
+    const appointments = [
+      makeAppointment({
+        id: "a1",
+        status: "complete",
+        appointment_slots: {
+          slot_date: "2024-01-01",
+          slot_time: "09:00:00",
+          facilities: { name: "Clinic History" },
+        },
+      }),
+    ];
+
+    render(
+      <PatientHistoryView
+        appointments={appointments}
+        onReschedule={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: /history/i }));
+
+    expect(screen.getByText("Clinic History")).toBeVisible();
   });
 });
-
-
 
 
 describe("Clicked My Queue", () => {
@@ -733,50 +784,27 @@ describe("Clicked Profile", () => {
 });
 
 
-
-
-
 describe("Clicked Service Policy", () => {
-    beforeEach(async () => {
-        const user = userEvent.setup();
-        render(<PatientDashboard profile={mockProfile} />);
-        const allPolicy = screen.getAllByText(/service policy/i);
-        const policy = allPolicy.find((link) => link.closest(".db-nav"));
-        await user.click(policy);
-    });
+  const user = userEvent.setup();
 
-    it("Renders Service Policy on topbar", () => {
-        const allPolicy = screen.getAllByText(/service policy/i);
-        const policy = allPolicy.find((link) => link.closest(".db-topbar"));
-        expect(policy).toBeVisible();
-    });
+  beforeEach(() => {
+    render(<PatientDashboard profile={mockProfile} />);
+  });
 
-    it("Renders user name", () => {
-        expect(screen.getByText(new RegExp(`Hi, ${mockProfile.name}`, "i"))).toBeVisible();
-    });
+  it("navigates to dashboard when back button is clicked", async () => {
+  const user = userEvent.setup();
+
+  render(<QueueCarePolicy />);
+
+  const button = document.querySelector(".qc-back-btn");
+  expect(button).toBeInTheDocument();
+
+  await user.click(button);
+
+  expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
 });
 
-describe("Clicked Settings", () => {
-    beforeEach(async () => {
-        const user = userEvent.setup();
-        render(<PatientDashboard profile={mockProfile} />);
-        const allSettings = screen.getAllByText(/settings/i);
-        const setting = allSettings.find((link) => link.closest(".db-nav"));
-        await user.click(setting);
-    });
-
-    it("Renders Settings on topbar", () => {
-        const allSettings = screen.getAllByText(/settings/i);
-        const setting = allSettings.find((link) => link.closest(".db-topbar"));
-        expect(setting).toBeVisible();
-    });
-
-    it("Renders user name", () => {
-        expect(screen.getByText(new RegExp(`Hi, ${mockProfile.name}`, "i"))).toBeVisible();
-    });
 });
-
-
 
 
 describe("Logout", () => {
