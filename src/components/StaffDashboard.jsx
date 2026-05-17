@@ -7,17 +7,17 @@ import { FiLogOut } from "react-icons/fi";
 import { FaStethoscope } from "react-icons/fa";
 import AIAssistant from "./AIAssistant";
 
-
-     
-import {
-  STAFF_NAV, normalizeAvailability,
-} from "./DashboardHelpers";
-import {
-  OverviewPanel, NotificationsPanel, ProfilePanel,
-} from "./DashboardPanels";
+import { STAFF_NAV, normalizeAvailability } from "./DashboardHelpers";
+import { OverviewPanel, NotificationsPanel, ProfilePanel } from "./DashboardPanels";
 import { StaffHistoryView } from "./AppointmentHistory";
 import "./Dashboard.css";
 
+import StaffClinicManagement from "./StaffClinicManagement";
+import WalkIn               from "./Walkin";
+import Schedule             from "./Schedule";
+import ProfilePage          from "./ProfilePage";
+import AnalyticsDashboardStaff from "./AnalyticsDashboardStaff";
+import ServicePolicy        from "./ServicePolicy";
 
 export default function StaffDashboard({ profile: initialProfile }) {
   const navigate = useNavigate();
@@ -32,9 +32,6 @@ export default function StaffDashboard({ profile: initialProfile }) {
   const [availability,       setAvailability]       = useState(normalizeAvailability(null));
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState({ type: "", message: "" });
-
-  
-
 
   // ── Load data ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -59,7 +56,6 @@ export default function StaffDashboard({ profile: initialProfile }) {
       setNotifications(notif || []);
       setUnreadCount((notif || []).filter((n) => !n.is_read).length);
     }
-
     load();
   }, [profile.id]);
 
@@ -76,13 +72,14 @@ export default function StaffDashboard({ profile: initialProfile }) {
     setUnreadCount(0);
   }
 
-
-
   async function saveAvailability() {
     const assignment = staffAssignments[0];
     if (!assignment) return;
     setSavingAvailability(true);
-    const { error } = await supabase.from("staff_assignments").update({ availability }).eq("id", assignment.id);
+    const { error } = await supabase
+      .from("staff_assignments")
+      .update({ availability })
+      .eq("id", assignment.id);
     setSavingAvailability(false);
     setAvailabilityStatus(
       error
@@ -101,107 +98,90 @@ export default function StaffDashboard({ profile: initialProfile }) {
       },
     }));
   }
+
   const latestAssignment = staffAssignments[0] || null;
+  const facilityId   = latestAssignment?.facility_id ?? null;
+  const facilityName = latestAssignment?.facilities?.name ?? "";
 
-function goTo(id) {
-  setSidebarOpen(false);
-
-  const navState = {
-    staff: profile,
-    facilityId:    staffAssignments[0]?.facility_id ?? null,
-    facilityName:  latestAssignment?.facilities?.name ?? "",
-    authProvider:  profile.auth_provider,
-    providerUserId: profile.provider_user_id,
-  };
-
-  switch (id) {
-    case "staff-appointments":
-    case "patients":
-    case "staff-queue":
-      navigate("/staff-manage", { state: navState });
-      return;
-
-    case "walk-in":
-      navigate("/walk-in", { state: navState });
-      return;
-
-    case "analytics":
-      navigate("/analytics-staff", { state: navState });
-      return;
-    
-    
-    case "schedule":
-      navigate("/schedule", {state: navState});
-      return;
-    case "appointment-history":
-      setActiveTab("appointment-history");
-      return;
-    case "profile":
-      navigate("/profile", { state: { profile } });
-      return;
-
-    case "policy":
-      navigate("/service-policy");
-      return;
-
-    default:
-      setActiveTab(id);
+  function goTo(id) {
+    setSidebarOpen(false);
+    setActiveTab(id);
   }
-}
+
   // ── Content ───────────────────────────────────────────────────────────────
-
-
   function renderContent() {
     switch (activeTab) {
-   case "overview":
+      case "overview":
         return (
-            <>
+          <>
             <OverviewPanel
-                profile={profile}
-                appointments={[]}
-                upcomingAppts={[]}
-                activeQueue={null}
-                unreadCount={unreadCount}
-                staffAssignments={staffAssignments}
-                latestAssignment={latestAssignment}
-                queueData={null}
-                availability={availability}
-                availabilityStatus={availabilityStatus}
-                savingAvailability={savingAvailability}
-                onSaveAvailability={saveAvailability}
-                onUpdateAvailabilityDay={updateAvailabilityDay}
-                isAppointmentToday={false}
-                slotDate={null}
-                slotTime={null}
+              profile={profile}
+              appointments={[]}
+              upcomingAppts={[]}
+              activeQueue={null}
+              unreadCount={unreadCount}
+              staffAssignments={staffAssignments}
+              latestAssignment={latestAssignment}
+              queueData={null}
+              availability={availability}
+              availabilityStatus={availabilityStatus}
+              savingAvailability={savingAvailability}
+              onSaveAvailability={saveAvailability}
+              onUpdateAvailabilityDay={updateAvailabilityDay}
+              isAppointmentToday={false}
+              slotDate={null}
+              slotTime={null}
             />
             <div className="db-card" style={{ marginTop: 20 }}>
-                <p style={{ color: "#6b7280", marginBottom: 16 }}>Quick Actions</p>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("staff-appointments")}>
-                    Clinic Appointments
-                </button>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("staff-queue")}>
-                    Patient Queue
-                </button>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("walk-in")}>
-                    Walk-In Patients
-                </button>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("analytics")}>
-                    View Analytics
-                </button>
-                 <button className="db-btn db-btn-reschedule" onClick={() => goTo("schedule")}>
-                    Availability
-                </button>
-                </div>
+              <p style={{ color: "#6b7280", marginBottom: 16 }}>Quick Actions</p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button className="db-btn db-btn-reschedule" onClick={() => goTo("staff-appointments")}>Clinic Appointments</button>
+                <button className="db-btn db-btn-reschedule" onClick={() => goTo("staff-queue")}>Patient Queue</button>
+                <button className="db-btn db-btn-reschedule" onClick={() => goTo("walk-in")}>Walk-In Patients</button>
+                <button className="db-btn db-btn-reschedule" onClick={() => goTo("analytics")}>View Analytics</button>
+                <button className="db-btn db-btn-reschedule" onClick={() => goTo("schedule")}>Availability</button>
+              </div>
             </div>
-            </>);  
-    case "appointment-history":
-      return (
-        <StaffHistoryView
-          facilityId={staffAssignments[0]?.facility_id ?? null}
-        />
-      );
-    case "notifications":
+          </>
+        );
+
+      case "staff-appointments":
+      case "patients":
+      case "staff-queue":
+        return (
+          <StaffClinicManagement
+            facilityId={facilityId}
+            facilityName={facilityName}
+            authProvider={profile.auth_provider}
+            providerUserId={profile.provider_user_id}
+          />
+        );
+
+      case "walk-in":
+        return (
+          <WalkIn
+            facilityId={facilityId}
+            facilityName={facilityName}
+            onBack={() => goTo("overview")}
+          />
+        );
+
+      case "analytics":
+        return <AnalyticsDashboardStaff />;
+
+      case "schedule":
+        return (
+          <Schedule
+            staffId={profile.id}
+            facilityId={facilityId}
+            onBack={() => goTo("overview")}
+          />
+        );
+
+      case "appointment-history":
+        return <StaffHistoryView facilityId={facilityId} />;
+
+      case "notifications":
         return (
           <NotificationsPanel
             notifications={notifications}
@@ -210,8 +190,14 @@ function goTo(id) {
           />
         );
 
-       default:
-        return <div className="db-section"><h2>{activeTab}</h2></div>;
+      case "profile":
+        return <ProfilePage profile={profile} onBack={() => goTo("overview")} />;
+
+      case "policy":
+        return <ServicePolicy />;
+
+      default:
+        return <section className="db-section"><h2>{activeTab}</h2></section>;
     }
   }
 
@@ -248,10 +234,10 @@ function goTo(id) {
 
       <AIAssistant
         context={{
-          role: 'staff',
+          role: "staff",
           profile,
-          facilityId: staffAssignments[0]?.facility_id ?? null,
-          facilityName: staffAssignments[0]?.facilities?.name ?? '',
+          facilityId,
+          facilityName,
           pageContext: activeTab,
         }}
       />

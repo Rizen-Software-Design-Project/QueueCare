@@ -91,10 +91,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="db-splash">
-        <div className="db-spinner" />
+      <main className="db-splash">
+        <section className="db-spinner" />
         <p>Loading your dashboard…</p>
-      </div>
+      </main>
     );
   }
 

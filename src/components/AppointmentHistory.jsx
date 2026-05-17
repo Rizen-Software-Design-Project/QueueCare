@@ -3,11 +3,8 @@ import { supabase } from "#lib/supabase";
 import { Badge, formatDate, formatTime } from "./DashboardHelpers";
 import "./AppointmentHistory.css";
 
-// Appointments dated today or later that are still active
 const UPCOMING_STATUSES = ["booked", "confirmed"];
-// Appointments that are finished or past
 const HISTORY_STATUSES  = ["complete", "cancelled", "no_show", "no-show"];
-// Today's date string used to split upcoming vs past
 const TODAY = new Date().toISOString().split("T")[0];
 
 function isUpcoming(appt) {
@@ -22,7 +19,6 @@ function isHistory(appt) {
   return HISTORY_STATUSES.includes(status) || date < TODAY;
 }
 
-// Maps appointment status to a left-border accent colour on each card
 function statusColor(status) {
   const map = {
     booked:    "#16a34a",
@@ -36,8 +32,6 @@ function statusColor(status) {
 }
 
 // ── Patient History View ──────────────────────────────────────────────────────
-// Receives the already-loaded appointments array from PatientDashboard — no
-// extra network request needed here.
 export function PatientHistoryView({ appointments, onReschedule, onCancel }) {
   const [tab, setTab] = useState("upcoming");
 
@@ -46,40 +40,76 @@ export function PatientHistoryView({ appointments, onReschedule, onCancel }) {
   const list     = tab === "upcoming" ? upcoming : history;
 
   return (
-    <div className="db-section">
+    <section className="db-section">
       <h2 className="db-section-title">My Appointments</h2>
 
-      <div className="ah-tabs">
-        <button
-          className={`ah-tab ${tab === "upcoming" ? "ah-tab-active" : ""}`}
-          onClick={() => setTab("upcoming")}
-        >
-          Upcoming <span className="ah-tab-count">{upcoming.length}</span>
-        </button>
-        <button
-          className={`ah-tab ${tab === "history" ? "ah-tab-active" : ""}`}
-          onClick={() => setTab("history")}
-        >
-          History <span className="ah-tab-count">{history.length}</span>
-        </button>
-      </div>
+      <nav className="ah-tabs" aria-label="Appointment tabs">
+        <ul role="tablist">
+          <li role="presentation">
+            <button
+              role="tab"
+              aria-selected={tab === "upcoming"}
+              aria-controls="tabpanel-upcoming"
+              id="tab-upcoming"
+              className={`ah-tab ${tab === "upcoming" ? "ah-tab-active" : ""}`}
+              onClick={() => setTab("upcoming")}
+            >
+              Upcoming <span className="ah-tab-count">{upcoming.length}</span>
+            </button>
+          </li>
+          <li role="presentation">
+            <button
+              role="tab"
+              aria-selected={tab === "history"}
+              aria-controls="tabpanel-history"
+              id="tab-history"
+              className={`ah-tab ${tab === "history" ? "ah-tab-active" : ""}`}
+              onClick={() => setTab("history")}
+            >
+              History <span className="ah-tab-count">{history.length}</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
 
-      {list.length === 0 ? (
-        <div className="ah-empty">
-          <p>{tab === "upcoming" ? "No upcoming appointments." : "No appointment history yet."}</p>
-        </div>
-      ) : (
-        list.map((appt) => (
-          <PatientCard
-            key={appt.id}
-            appt={appt}
-            isUpcoming={tab === "upcoming"}
-            onReschedule={onReschedule}
-            onCancel={onCancel}
-          />
-        ))
-      )}
-    </div>
+      <section
+        id="tabpanel-upcoming"
+        role="tabpanel"
+        aria-labelledby="tab-upcoming"
+        hidden={tab !== "upcoming"}
+      >
+        {upcoming.length === 0 ? (
+          <p className="ah-empty">No upcoming appointments.</p>
+        ) : (
+          <ul className="ah-list">
+            {upcoming.map((appt) => (
+              <li key={appt.id}>
+                <PatientCard appt={appt} isUpcoming onReschedule={onReschedule} onCancel={onCancel} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section
+        id="tabpanel-history"
+        role="tabpanel"
+        aria-labelledby="tab-history"
+        hidden={tab !== "history"}
+      >
+        {history.length === 0 ? (
+          <p className="ah-empty">No appointment history yet.</p>
+        ) : (
+          <ul className="ah-list">
+            {history.map((appt) => (
+              <li key={appt.id}>
+                <PatientCard appt={appt} isUpcoming={false} onReschedule={onReschedule} onCancel={onCancel} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </section>
   );
 }
 
@@ -87,50 +117,51 @@ export function PatientHistoryView({ appointments, onReschedule, onCancel }) {
 function PatientCard({ appt, isUpcoming, onReschedule, onCancel }) {
   const slot   = appt.appointment_slots;
   const clinic = slot?.facilities;
-  // Only show action buttons for upcoming appointments that aren't already cancelled
   const canAct = isUpcoming && appt.status !== "cancelled";
 
   return (
-    <div className="ah-card" style={{ borderLeftColor: statusColor(appt.status) }}>
-      <div className="ah-card-top">
-        <div>
-          <div className="ah-card-clinic">{clinic?.name || "Unknown clinic"}</div>
-          <div className="ah-card-meta">
+    <article className="ah-card" style={{ borderLeftColor: statusColor(appt.status) }}>
+      <header className="ah-card-top">
+        <section className="ah-card-clinic-info">
+          <h3 className="ah-card-clinic">{clinic?.name || "Unknown clinic"}</h3>
+          <p className="ah-card-meta">
             {clinic?.district && <span>{clinic.district}</span>}
             {clinic?.province && <span> · {clinic.province}</span>}
-          </div>
-        </div>
+          </p>
+        </section>
         <Badge status={appt.status} />
-      </div>
+      </header>
 
-      <div className="ah-card-datetime">
+      <p className="ah-card-datetime">
         📅 {formatDate(slot?.slot_date)} &nbsp; 🕐 {formatTime(slot?.slot_time)}
         {slot?.duration_minutes && (
           <span className="ah-card-duration"> · {slot.duration_minutes} min</span>
         )}
-      </div>
+      </p>
 
       {appt.reason && (
-        <div className="ah-card-reason">Reason: {appt.reason}</div>
+        <p className="ah-card-reason">Reason: {appt.reason}</p>
       )}
 
       {canAct && (
-        <div className="ah-card-actions">
-          <button className="db-btn db-btn-reschedule" onClick={() => onReschedule(appt)}>
-            Reschedule
-          </button>
-          <button className="db-btn db-btn-cancel" onClick={() => onCancel(appt)}>
-            Cancel
-          </button>
-        </div>
+        <menu className="ah-card-actions">
+          <li>
+            <button className="db-btn db-btn-reschedule" onClick={() => onReschedule(appt)}>
+              Reschedule
+            </button>
+          </li>
+          <li>
+            <button className="db-btn db-btn-cancel" onClick={() => onCancel(appt)}>
+              Cancel
+            </button>
+          </li>
+        </menu>
       )}
-    </div>
+    </article>
   );
 }
 
 // ── Staff History View ────────────────────────────────────────────────────────
-// Fetches all appointments for the staff member's clinic from Supabase and
-// splits them into upcoming / history tabs with a patient name search filter.
 export function StaffHistoryView({ facilityId }) {
   const [appointments, setAppointments] = useState([]);
   const [loading,      setLoading]      = useState(true);
@@ -164,7 +195,6 @@ export function StaffHistoryView({ facilityId }) {
   const history  = appointments.filter(isHistory);
   const base     = tab === "upcoming" ? upcoming : history;
 
-  // Filter the visible list by the patient name / email search term
   const list = search.trim()
     ? base.filter((a) => {
         const q = search.toLowerCase();
@@ -177,37 +207,53 @@ export function StaffHistoryView({ facilityId }) {
       })
     : base;
 
-  if (loading) return <div className="db-section"><p>Loading appointments…</p></div>;
+  if (loading) return <section className="db-section"><p>Loading appointments…</p></section>;
 
   if (!facilityId) {
     return (
-      <div className="db-section">
+      <section className="db-section">
         <p className="ah-empty">No clinic assignment found.</p>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="db-section">
+    <section className="db-section">
       <h2 className="db-section-title">Appointment History</h2>
 
-      <div className="ah-tabs">
-        <button
-          className={`ah-tab ${tab === "upcoming" ? "ah-tab-active" : ""}`}
-          onClick={() => setTab("upcoming")}
-        >
-          Upcoming <span className="ah-tab-count">{upcoming.length}</span>
-        </button>
-        <button
-          className={`ah-tab ${tab === "history" ? "ah-tab-active" : ""}`}
-          onClick={() => setTab("history")}
-        >
-          History <span className="ah-tab-count">{history.length}</span>
-        </button>
-      </div>
+      <nav className="ah-tabs" aria-label="Appointment tabs">
+        <ul role="tablist">
+          <li role="presentation">
+            <button
+              role="tab"
+              aria-selected={tab === "upcoming"}
+              aria-controls="staff-tabpanel-upcoming"
+              id="staff-tab-upcoming"
+              className={`ah-tab ${tab === "upcoming" ? "ah-tab-active" : ""}`}
+              onClick={() => setTab("upcoming")}
+            >
+              Upcoming <span className="ah-tab-count">{upcoming.length}</span>
+            </button>
+          </li>
+          <li role="presentation">
+            <button
+              role="tab"
+              aria-selected={tab === "history"}
+              aria-controls="staff-tabpanel-history"
+              id="staff-tab-history"
+              className={`ah-tab ${tab === "history" ? "ah-tab-active" : ""}`}
+              onClick={() => setTab("history")}
+            >
+              History <span className="ah-tab-count">{history.length}</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
 
-      <div className="ah-filters">
+      <search className="ah-filters">
+        <label htmlFor="patient-search" className="sr-only">Search by patient name or email</label>
         <input
+          id="patient-search"
           className="ah-search"
           placeholder="Search by patient name or email…"
           value={search}
@@ -216,49 +262,75 @@ export function StaffHistoryView({ facilityId }) {
         {search && (
           <button className="ah-clear" onClick={() => setSearch("")}>✕ Clear</button>
         )}
-      </div>
+      </search>
 
-      {list.length === 0 ? (
-        <div className="ah-empty">
-          <p>{tab === "upcoming" ? "No upcoming appointments." : "No appointment history."}</p>
-        </div>
-      ) : (
-        list.map((appt) => <StaffCard key={appt.id} appt={appt} />)
-      )}
-    </div>
+      <section
+        id="staff-tabpanel-upcoming"
+        role="tabpanel"
+        aria-labelledby="staff-tab-upcoming"
+        hidden={tab !== "upcoming"}
+      >
+        {list.length === 0 ? (
+          <p className="ah-empty">No upcoming appointments.</p>
+        ) : (
+          <ul className="ah-list">
+            {list.map((appt) => (
+              <li key={appt.id}><StaffCard appt={appt} /></li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section
+        id="staff-tabpanel-history"
+        role="tabpanel"
+        aria-labelledby="staff-tab-history"
+        hidden={tab !== "history"}
+      >
+        {list.length === 0 ? (
+          <p className="ah-empty">No appointment history.</p>
+        ) : (
+          <ul className="ah-list">
+            {list.map((appt) => (
+              <li key={appt.id}><StaffCard appt={appt} /></li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </section>
   );
 }
 
-// Single appointment card for staff view — shows patient details, no action buttons
+// Single appointment card for staff view
 function StaffCard({ appt }) {
   const slot    = appt.appointment_slots;
   const patient = appt.profiles;
 
   return (
-    <div className="ah-card" style={{ borderLeftColor: statusColor(appt.status) }}>
-      <div className="ah-card-top">
-        <div>
-          <div className="ah-card-patient">
+    <article className="ah-card" style={{ borderLeftColor: statusColor(appt.status) }}>
+      <header className="ah-card-top">
+        <section className="ah-card-patient-info">
+          <h3 className="ah-card-patient">
             {patient?.name} {patient?.surname}
-          </div>
-          <div className="ah-card-patient-sub">
+          </h3>
+          <p className="ah-card-patient-sub">
             {patient?.email}
             {patient?.phone_number ? ` · ${patient.phone_number}` : ""}
-          </div>
-        </div>
+          </p>
+        </section>
         <Badge status={appt.status} />
-      </div>
+      </header>
 
-      <div className="ah-card-datetime">
+      <p className="ah-card-datetime">
         📅 {formatDate(slot?.slot_date)} &nbsp; 🕐 {formatTime(slot?.slot_time)}
         {slot?.duration_minutes && (
           <span className="ah-card-duration"> · {slot.duration_minutes} min</span>
         )}
-      </div>
+      </p>
 
       {appt.reason && (
-        <div className="ah-card-reason">Reason: {appt.reason}</div>
+        <p className="ah-card-reason">Reason: {appt.reason}</p>
       )}
-    </div>
+    </article>
   );
 }

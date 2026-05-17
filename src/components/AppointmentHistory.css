@@ -25,7 +25,17 @@
 .ah-tab:hover {
   color: var(--primary, #1B5E20);
 }
-
+.ah-tabs ul,
+.ah-list,
+.ah-card-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ah-tabs ul {
+  display: flex;
+  gap: 0.5rem;
+}
 .ah-tab-active {
   color: var(--primary, #1B5E20);
   border-bottom-color: var(--primary, #1B5E20);

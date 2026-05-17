@@ -29,51 +29,55 @@ const STATUS_STYLES = {
 }
 
 function Skeleton({ className = '' }) {
-  return <div className={`animate-pulse bg-slate-100 rounded-lg ${className}`} />
+  return <div aria-hidden="true" className={`animate-pulse bg-slate-100 rounded-lg ${className}`} />
 }
 
 function StatCard({ label, value, sub, accent = false }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
+    <article className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+      <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
         {label}
-      </p>
+      </h3>
       <p className={`text-2xl font-bold font-mono tabular-nums ${accent ? 'text-rose-500' : 'text-teal-600'}`}>
         {value}
       </p>
       {sub && <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>}
-    </div>
+    </article>
   )
 }
 
 function ExportBar({ onCSV, onPDF, disabled }) {
   return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={onCSV}
-        disabled={disabled}
-        className="flex items-center gap-4 px-3 py-1.5 rounded-lg border border-slate-200
-                   text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors
-                   disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <DownloadIcon /> CSV
-      </button>
-      <button
-        onClick={onPDF}
-        disabled={disabled}
-        className="flex items-center gap-4 px-3 py-1.5 rounded-lg
-                   bg-teal-500 text-white text-xs font-medium hover:bg-teal-600
-                   transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <DownloadIcon /> PDF
-      </button>
-    </div>
+    <menu className="flex items-center gap-2 list-none p-0 m-0">
+      <li>
+        <button
+          onClick={onCSV}
+          disabled={disabled}
+          className="flex items-center gap-4 px-3 py-1.5 rounded-lg border border-slate-200
+                     text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors
+                     disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <DownloadIcon /> CSV
+        </button>
+      </li>
+      <li>
+        <button
+          onClick={onPDF}
+          disabled={disabled}
+          className="flex items-center gap-4 px-3 py-1.5 rounded-lg
+                     bg-teal-500 text-white text-xs font-medium hover:bg-teal-600
+                     transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <DownloadIcon /> PDF
+        </button>
+      </li>
+    </menu>
   )
 }
 
 function DownloadIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false">
       <path d="M6 1v7M3.5 6 6 8.5 8.5 6M2 10h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
@@ -81,43 +85,59 @@ function DownloadIcon() {
 
 function FacilityFilter({ facilities, value, onChange }) {
   return (
-    <select
-      value={value ?? ''}
-      onChange={e => onChange(e.target.value ? Number(e.target.value) : null)}
-      className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
-                 bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer"
-    >
-      <option value="">All Facilities</option>
-      {facilities.map(f => (
-        <option key={f.id} value={f.id}>{f.name}</option>
-      ))}
-    </select>
+    <label className="flex items-center gap-2 text-xs text-slate-600">
+      <span className="sr-only">Filter by facility</span>
+      <select
+        value={value ?? ''}
+        onChange={e => onChange(e.target.value ? Number(e.target.value) : null)}
+        className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
+                   bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer"
+      >
+        <option value="">All Facilities</option>
+        {facilities.map(f => (
+          <option key={f.id} value={f.id}>{f.name}</option>
+        ))}
+      </select>
+    </label>
   )
 }
 
 function DateRange({ start, end, onStart, onEnd }) {
   return (
-    <div className="flex items-center gap-2">
-      <input type="date" value={start} onChange={e => onStart(e.target.value || null)}
+    <fieldset className="flex items-center gap-2 border-0 p-0 m-0">
+      <legend className="sr-only">Date range</legend>
+      <label className="sr-only" htmlFor="date-start">Start date</label>
+      <input
+        id="date-start"
+        type="date"
+        value={start}
+        onChange={e => onStart(e.target.value || null)}
         className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
-                   bg-white focus:outline-none focus:ring-2 focus:ring-teal-400" />
-      <span className="text-slate-300 text-xs"> to </span>
-      <input type="date" value={end} onChange={e => onEnd(e.target.value || null)}
+                   bg-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+      />
+      <span className="text-slate-300 text-xs" aria-hidden="true"> to </span>
+      <label className="sr-only" htmlFor="date-end">End date</label>
+      <input
+        id="date-end"
+        type="date"
+        value={end}
+        onChange={e => onEnd(e.target.value || null)}
         className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
-                   bg-white focus:outline-none focus:ring-2 focus:ring-teal-400" />
-    </div>
+                   bg-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+      />
+    </fieldset>
   )
 }
 
 function ChartCard({ title, loading, children }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+    <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
       <h3 className="text-sm font-semibold text-slate-700 mb-5">{title}</h3>
       {loading
         ? <Skeleton className="h-64 w-full" />
         : children
       }
-    </div>
+    </section>
   )
 }
 
@@ -152,8 +172,8 @@ function WaitTimesReport({ facilities }) {
   ]
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="space-y-5">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <FacilityFilter facilities={facilities} value={facilityId} onChange={setFacilityId} />
         <ExportBar
           disabled={loading || !data.length}
@@ -164,24 +184,20 @@ function WaitTimesReport({ facilities }) {
             filename: 'wait-times',
           })}
         />
-      </div>
+      </header>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <StatCard
-          label="Overall Avg Wait"
-          value={loading ? '…' : `${weightedAvg} min`}
-        />
-        <StatCard
-          label="Peak Hour"
-          value={loading ? '…' : (peakRow ? HOUR_LABEL(peakRow.hour_of_day) : '—')}
-          sub={peakRow ? `${peakRow.avg_wait_minutes} min avg` : undefined}
-          accent
-        />
-        <StatCard
-          label="Total Served"
-          value={loading ? '…' : totalServed.toLocaleString()}
-        />
-      </div>
+      <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3 list-none p-0 m-0">
+        <li><StatCard label="Overall Avg Wait" value={loading ? '…' : `${weightedAvg} min`} /></li>
+        <li>
+          <StatCard
+            label="Peak Hour"
+            value={loading ? '…' : (peakRow ? HOUR_LABEL(peakRow.hour_of_day) : '—')}
+            sub={peakRow ? `${peakRow.avg_wait_minutes} min avg` : undefined}
+            accent
+          />
+        </li>
+        <li><StatCard label="Total Served" value={loading ? '…' : totalServed.toLocaleString()} /></li>
+      </ul>
 
       <ChartCard title="Average Wait Time by Hour of Day (minutes)" loading={loading}>
         <ResponsiveContainer width="100%" height={280}>
@@ -197,7 +213,7 @@ function WaitTimesReport({ facilities }) {
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
-    </div>
+    </section>
   )
 }
 
@@ -211,7 +227,6 @@ function NoShowReport({ facilities }) {
     endDate:   end   || null,
   })
 
-  // Reverse for chronological chart (data arrives newest-first)
   const chartData = [...data].reverse().map(d => ({
     date:             d.date,
     'No-Show Rate %': +d.no_show_rate_pct,
@@ -234,8 +249,8 @@ function NoShowReport({ facilities }) {
   ]
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="space-y-5">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <FacilityFilter facilities={facilities} value={facilityId} onChange={setFacilityId} />
           <DateRange start={start} end={end} onStart={setStart} onEnd={setEnd} />
@@ -249,27 +264,26 @@ function NoShowReport({ facilities }) {
             filename: 'noshows',
           })}
         />
-      </div>
+      </header>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard
-          label="Overall No-Show Rate"
-          value={loading ? '…' : `${overallRate}%`}
-          accent={isHigh}
-        />
-        <StatCard label="Total No-Shows"       value={loading ? '…' : totalNoShows.toLocaleString()} accent />
-        <StatCard label="Total Appointments"   value={loading ? '…' : totalAppts.toLocaleString()} />
-        <StatCard label="Days Analysed"        value={loading ? '…' : data.length} />
-      </div>
+      <ul className="grid grid-cols-2 sm:grid-cols-4 gap-3 list-none p-0 m-0">
+        <li><StatCard label="Overall No-Show Rate" value={loading ? '…' : `${overallRate}%`} accent={isHigh} /></li>
+        <li><StatCard label="Total No-Shows"       value={loading ? '…' : totalNoShows.toLocaleString()} accent /></li>
+        <li><StatCard label="Total Appointments"   value={loading ? '…' : totalAppts.toLocaleString()} /></li>
+        <li><StatCard label="Days Analysed"        value={loading ? '…' : data.length} /></li>
+      </ul>
 
       {isHigh && !loading && (
-        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-rose-50 border border-rose-100 text-sm text-rose-700">
-          <span className="mt-0.5 shrink-0">⚠️</span>
+        <aside
+          role="alert"
+          className="flex items-start gap-3 px-4 py-3 rounded-xl bg-rose-50 border border-rose-100 text-sm text-rose-700"
+        >
+          <span aria-hidden="true" className="mt-0.5 shrink-0">⚠️</span>
           <p>
             Your no-show rate is above 20%. Consider enabling appointment reminder
             notifications for patients 24 hours before their slot.
           </p>
-        </div>
+        </aside>
       )}
 
       <ChartCard title="No-Show Rate Over Time (%)" loading={loading}>
@@ -304,7 +318,7 @@ function NoShowReport({ facilities }) {
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
-    </div>
+    </section>
   )
 }
 
@@ -335,9 +349,9 @@ const COLUMNS = [
     key: 'status',
     label: 'Status',
     render: v => (
-      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${STATUS_STYLES[v] ?? 'bg-slate-100 text-slate-500'}`}>
+      <mark className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize bg-transparent ${STATUS_STYLES[v] ?? 'bg-slate-100 text-slate-500'}`}>
         {v?.replace('_', ' ')}
-      </span>
+      </mark>
     ),
   },
   { key: 'queue_status',   label: 'Queue', render: v => v ?? '—' },
@@ -368,15 +382,21 @@ function CustomViewReport({ facilities }) {
   const PDF_COLS = COLUMNS.map(c => ({ header: c.label, dataKey: c.label }))
 
   return (
-    <div className="space-y-5">
+    <section className="space-y-5">
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <fieldset className="flex flex-wrap items-center gap-3 border-0 p-0 m-0">
+          <legend className="sr-only">Filter appointments</legend>
           <FacilityFilter facilities={facilities} value={facilityId} onChange={setFacilityId} />
 
-          <select value={status} onChange={e => setStatus(e.target.value)}
+          <label className="sr-only" htmlFor="filter-status">Status</label>
+          <select
+            id="filter-status"
+            value={status}
+            onChange={e => setStatus(e.target.value)}
             className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
-                       bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer">
+                       bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer"
+          >
             <option value="">All Statuses</option>
             <option value="booked">Booked</option>
             <option value="confirmed">Confirmed</option>
@@ -385,16 +405,21 @@ function CustomViewReport({ facilities }) {
             <option value="cancelled">Cancelled</option>
           </select>
 
-          <select value={type} onChange={e => setType(e.target.value)}
+          <label className="sr-only" htmlFor="filter-type">Appointment type</label>
+          <select
+            id="filter-type"
+            value={type}
+            onChange={e => setType(e.target.value)}
             className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
-                       bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer">
+                       bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer"
+          >
             <option value="">All Types</option>
             <option value="scheduled">Scheduled</option>
             <option value="walk_in">Walk-in</option>
           </select>
 
           <DateRange start={start} end={end} onStart={setStart} onEnd={setEnd} />
-        </div>
+        </fieldset>
 
         <ExportBar
           disabled={loading || !data.length}
@@ -405,34 +430,37 @@ function CustomViewReport({ facilities }) {
             filename: 'appointments',
           })}
         />
-      </div>
+      </header>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
+      <section className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <header className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
           <h3 className="text-sm font-semibold text-slate-700">Appointments</h3>
-          <span className="text-[11px] text-slate-400 font-mono">
+          <output className="text-[11px] text-slate-400 font-mono">
             {loading ? 'Loading…' : `${data.length.toLocaleString()} records`}
-          </span>
-        </div>
+          </output>
+        </header>
 
-        <div className="overflow-x-auto">
+        <section className="overflow-x-auto">
           {loading ? (
-            <div className="p-5 space-y-2">
-              {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
-            </div>
+            <ul className="p-5 space-y-2 list-none m-0">
+              {[...Array(8)].map((_, i) => <li key={i}><Skeleton className="h-8 w-full" /></li>)}
+            </ul>
           ) : data.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-sm text-slate-400">No appointments match your filters.</p>
-            </div>
+            <p className="py-16 text-center text-sm text-slate-400">
+              No appointments match your filters.
+            </p>
           ) : (
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
                   {COLUMNS.map(col => (
-                    <th key={col.key}
+                    <th
+                      key={col.key}
+                      scope="col"
                       className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase
-                                 tracking-widest text-slate-400 whitespace-nowrap">
+                                 tracking-widest text-slate-400 whitespace-nowrap"
+                    >
                       {col.label}
                     </th>
                   ))}
@@ -451,9 +479,9 @@ function CustomViewReport({ facilities }) {
               </tbody>
             </table>
           )}
-        </div>
-      </div>
-    </div>
+        </section>
+      </section>
+    </section>
   )
 }
 
@@ -463,38 +491,69 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="analytics-dashboard">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
         {/* Page header */}
-        <div className="mb-8">
+        <header className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Analytics</h1>
           <p className="text-sm text-slate-500 mt-1">
             Patient flow and appointment performance across your facilities
           </p>
-        </div>
+        </header>
 
         {/* Tab bar */}
-        <div className="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 w-fit mb-7 shadow-sm">
-          {TABS.map((tab, i) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(i)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
-                activeTab === i
-                  ? 'bg-teal-500 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        <nav aria-label="Analytics sections" className="mb-7">
+          <ul
+            role="tablist"
+            className="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 w-fit shadow-sm list-none m-0"
+          >
+            {TABS.map((tab, i) => (
+              <li key={tab} role="presentation">
+                <button
+                  role="tab"
+                  aria-selected={activeTab === i}
+                  aria-controls={`tabpanel-${i}`}
+                  id={`tab-${i}`}
+                  onClick={() => setActiveTab(i)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                    activeTab === i
+                      ? 'bg-teal-500 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {tab}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        {/* Tab content */}
-        {activeTab === 0 && <WaitTimesReport  facilities={facilities} />}
-        {activeTab === 1 && <NoShowReport     facilities={facilities} />}
-        {activeTab === 2 && <CustomViewReport facilities={facilities} />}
-      </div>
+        {/* Tab panels */}
+        <div
+          id="tabpanel-0"
+          role="tabpanel"
+          aria-labelledby="tab-0"
+          hidden={activeTab !== 0}
+        >
+          <WaitTimesReport facilities={facilities} />
+        </div>
+        <div
+          id="tabpanel-1"
+          role="tabpanel"
+          aria-labelledby="tab-1"
+          hidden={activeTab !== 1}
+        >
+          <NoShowReport facilities={facilities} />
+        </div>
+        <div
+          id="tabpanel-2"
+          role="tabpanel"
+          aria-labelledby="tab-2"
+          hidden={activeTab !== 2}
+        >
+          <CustomViewReport facilities={facilities} />
+        </div>
+      </main>
 
       <AIAssistant
         context={{

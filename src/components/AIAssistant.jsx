@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './AIAssistant.css';
 
+// Fall back to the hardcoded Azure URL when the env variable isn't set
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   'https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net';
@@ -48,7 +49,7 @@ export default function AIAssistant({ context }) {
   const bottomRef               = useRef(null);
   const inputRef                = useRef(null);
 
-  const role = context?.role || 'patient';
+  const role  = context?.role || 'patient';
   const chips = SUGGESTIONS[role] || SUGGESTIONS.patient;
 
   const roleLabel = {
@@ -65,15 +66,16 @@ export default function AIAssistant({ context }) {
     analytics: 'Charts, insights & exports',
   }[role] || 'Your healthcare assistant';
 
+  // Only greet once — on the first time the user opens the chat window
   useEffect(() => {
     if (open) {
       setHasNew(false);
       setTimeout(() => inputRef.current?.focus(), 100);
       if (messages.length === 0) {
         const greetings = {
-          patient: `Hi ${context?.profile?.name || 'there'}! I can help you book appointments, check your queue position, find clinics, or answer any questions about your care. What do you need?`,
-          staff:   `Hi ${context?.profile?.name || 'there'}! I can help you manage the queue, appointments, create slots, or check clinic analytics. What do you need?`,
-          admin:   `Hi ${context?.profile?.name || 'there'}! I can help you with applications, staff management, facility operations, and system analytics. What would you like to do?`,
+          patient:   `Hi ${context?.profile?.name || 'there'}! I can help you book appointments, check your queue position, find clinics, or answer any questions about your care. What do you need?`,
+          staff:     `Hi ${context?.profile?.name || 'there'}! I can help you manage the queue, appointments, create slots, or check clinic analytics. What do you need?`,
+          admin:     `Hi ${context?.profile?.name || 'there'}! I can help you with applications, staff management, facility operations, and system analytics. What would you like to do?`,
           analytics: `Hi! I can answer questions about the data on this page — wait times, no-show rates, trends, and more. What would you like to know?`,
         };
         setMessages([{
@@ -85,6 +87,7 @@ export default function AIAssistant({ context }) {
     }
   }, [open]);
 
+  // Scroll to the latest message whenever the list or loading state changes
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
@@ -109,7 +112,7 @@ export default function AIAssistant({ context }) {
         body: JSON.stringify({ messages: history, context }),
       });
 
-      const data = await res.json();
+      const data  = await res.json();
       const reply = data.reply || data.error || 'Something went wrong. Please try again.';
 
       setMessages(prev => [...prev, { role: 'assistant', content: reply, time: new Date() }]);
@@ -126,6 +129,7 @@ export default function AIAssistant({ context }) {
     }
   }
 
+  // Shift+Enter adds a newline; plain Enter submits
   function handleKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -134,54 +138,69 @@ export default function AIAssistant({ context }) {
   }
 
   return (
-    <div className="ai-bubble">
-      {open && (
-        <div className="ai-window">
-          <div className="ai-header">
-            <div className="ai-header-left">
-              <div className="ai-avatar">🤖</div>
-              <div>
-                <div className="ai-header-title">{roleLabel}</div>
-                <div className="ai-header-sub">{roleSubLabel}</div>
-              </div>
-            </div>
-            <button className="ai-close-btn" onClick={() => setOpen(false)}>✕</button>
-          </div>
+    // aside is the right landmark for a floating assistant — supplementary to the main page content
+    <aside className="ai-bubble">
 
+      {open && (
+        <section className="ai-window">
+
+          <header className="ai-header">
+            {/* figure + figcaption is the semantic pattern for an avatar paired with a name/role caption */}
+            <figure className="ai-header-left">
+              {/* <i> follows the icon-element convention; aria-hidden keeps the emoji out of the a11y tree */}
+              <i className="ai-avatar" aria-hidden="true">🤖</i>
+              <figcaption>
+                <strong className="ai-header-title">{roleLabel}</strong>
+                <small className="ai-header-sub">{roleSubLabel}</small>
+              </figcaption>
+            </figure>
+            <button className="ai-close-btn" onClick={() => setOpen(false)}>✕</button>
+          </header>
+
+          {/* Suggestion chips only show on the opening message so they don't clutter an active conversation */}
           {messages.length === 1 && (
-            <div className="ai-suggestions">
+            // menu is the right element for a list of user-invokable commands/prompts
+            <menu className="ai-suggestions">
               {chips.map(chip => (
-                <button
-                  key={chip}
-                  className="ai-suggestion-chip"
-                  onClick={() => send(chip)}
-                >
-                  {chip}
-                </button>
+                <li key={chip}>
+                  <button
+                    className="ai-suggestion-chip"
+                    onClick={() => send(chip)}
+                  >
+                    {chip}
+                  </button>
+                </li>
               ))}
-            </div>
+            </menu>
           )}
 
-          <div className="ai-messages">
+          {/* ol because message order is chronological — position in the list carries meaning */}
+          <ol className="ai-messages">
             {messages.map((m, i) => (
-              <div key={i} className={`ai-msg ai-msg--${m.role}`}>
-                <div className="ai-msg-bubble">{m.content}</div>
-                <span className="ai-msg-time">{formatTime(m.time)}</span>
-              </div>
+              <li key={i} className={`ai-msg ai-msg--${m.role}`}>
+                <p className="ai-msg-bubble">{m.content}</p>
+                {/* <time> is the dedicated HTML element for timestamps */}
+                <time className="ai-msg-time">{formatTime(m.time)}</time>
+              </li>
             ))}
-            {loading && (
-              <div className="ai-msg ai-msg--assistant">
-                <div className="ai-typing">
-                  <div className="ai-typing-dot" />
-                  <div className="ai-typing-dot" />
-                  <div className="ai-typing-dot" />
-                </div>
-              </div>
-            )}
-            <div ref={bottomRef} />
-          </div>
 
-          <div className="ai-input-area">
+            {loading && (
+              <li className="ai-msg ai-msg--assistant">
+                <p className="ai-typing">
+                  {/* <i> used as a pure styling hook for each animated dot — no meaningful content */}
+                  <i className="ai-typing-dot" />
+                  <i className="ai-typing-dot" />
+                  <i className="ai-typing-dot" />
+                </p>
+              </li>
+            )}
+
+            {/* Scroll sentinel — must be an li since it's inside an ol; scrollIntoView keeps the latest message in view */}
+            <li ref={bottomRef} aria-hidden="true" />
+          </ol>
+
+          {/* footer because the input is structurally separate from the message list and anchored at the bottom */}
+          <footer className="ai-input-area">
             <textarea
               ref={inputRef}
               className="ai-input"
@@ -202,8 +221,9 @@ export default function AIAssistant({ context }) {
                 <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
-          </div>
-        </div>
+          </footer>
+
+        </section>
       )}
 
       <button
@@ -222,8 +242,10 @@ export default function AIAssistant({ context }) {
             <path d="M8 10h.01M12 10h.01M16 10h.01" strokeWidth="2.5"/>
           </svg>
         )}
-        {hasNew && <span className="ai-unread-dot" />}
+        {/* mark signals something new and relevant is waiting */}
+        {hasNew && <mark className="ai-unread-dot" />}
       </button>
-    </div>
+
+    </aside>
   );
 }

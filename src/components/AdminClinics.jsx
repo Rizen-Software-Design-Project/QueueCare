@@ -5,7 +5,7 @@ import { FaHospital } from "react-icons/fa";
 import "./AdminClinics.css"
 
 
-// ================= DATA =================
+/*==============DATA===============*/ 
 const districtsByProvince = {
   "Eastern Cape": ["Alfred Nzo", "Amathole", "Buffalo City", "Chris Hani", "Joe Gqabi", "Nelson Mandela Bay", "OR Tambo", "Sarah Baartman"],
   "Free State": ["Fezile Dabi", "Lejweleputswa", "Mangaung", "Thabo Mofutsanyana", "Xhariep"],
@@ -53,7 +53,7 @@ function normalizeOperatingHours(hours) {
 }
 
 
-// ================= COMPONENT =================
+/*==============Component===============*/ 
 export default function AdminClinics() {
   const [nameSearch, setNameSearch] = useState("");
   const [province, setProvince] = useState("");
@@ -78,7 +78,9 @@ export default function AdminClinics() {
   const [pillOpen,    setPillOpen]    = useState("08:00");
   const [pillClose,   setPillClose]   = useState("17:00");
   const [pillClosed,  setPillClosed]  = useState(false);
-  // ================= SEARCH =================
+
+
+  /*==============Clinic search functionality===============*/ 
   async function applyFilters() {
     setStatus({ type: "loading", message: "🔍 Searching..." });
     try {
@@ -115,7 +117,7 @@ export default function AdminClinics() {
     setStatus({ type: "info", message: "Filters cleared" });
   }
 
-  // ================= EDIT =================
+  /*==============EDIT===============*/ 
   function openEditModal(facility) {
     setEditingFacility({
       ...facility,
@@ -196,237 +198,360 @@ function applyPillDays() {
     setEditingFacility(null);
   }
 
-  // ================= UI =================
+  /*==============UI===============*/ 
   return (
-    <>
-      <div className="admin-module">
-        <div className="container">
-          <h2 className="title"><FaHospital /> Clinic Management</h2>
+  <>
+    <main className="admin-module">
+      <section className="container">
+        <h2 className="title">
+          <FaHospital /> Clinic Management
+        </h2>
 
-          <div className="filters">
-            <input
-              className="input"
-              placeholder="🔍 Search clinic..."
-              value={nameSearch}
-              onChange={(e) => setNameSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-            />
-            <select className="input" value={province} onChange={handleProvinceChange}>
-              <option value="">All provinces</option>
-              {Object.keys(districtsByProvince).map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-            <select className="input" value={district} onChange={(e) => setDistrict(e.target.value)}>
-              <option value="">All districts</option>
-              {availableDistricts.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-            <button className="btn primary" onClick={applyFilters}>Search</button>
-            <button className="btn secondary" onClick={clearFilters}>Clear</button>
-          </div>
+        <section className="filters">
+          <input
+            className="input"
+            placeholder="🔍 Search clinic..."
+            value={nameSearch}
+            onChange={(e) => setNameSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+          />
 
-          <div className={`status ${status.type}`}>{status.message}</div>
-
-          <div className="grid">
-            {filteredFacilities.map((facility) => (
-              <div key={facility.id} className="card">
-                <div>
-                  <h3>{facility.name}</h3>
-                  <p>{facility.district}, {facility.province}</p>
-                  <span className={facility.is_active ? "active" : "inactive"}>
-                    {facility.is_active ? "● Active" : "○ Inactive"}
-                  </span>
-                  <p style={{ marginTop: "0.75rem" }}>
-                    <strong>Services:</strong>{" "}
-                    {Array.isArray(facility.services_offered) && facility.services_offered.length
-                      ? facility.services_offered.join(", ")
-                      : "None listed"}
-                  </p>
-                </div>
-                <button className="btn edit" onClick={() => openEditModal(facility)}>
-                  ✏️ Edit facility
-                </button>
-              </div>
+          <select
+            className="input"
+            value={province}
+            onChange={handleProvinceChange}
+          >
+            <option value="">All provinces</option>
+            {Object.keys(districtsByProvince).map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
             ))}
-          </div>
+          </select>
 
-          {editingFacility && (
-            <div className="modal-overlay" onClick={() => setEditingFacility(null)}>
-              <div className="modal large" onClick={(e) => e.stopPropagation()}>
-                <h3>✏️ {editingFacility.name}</h3>
+          <select
+            className="input"
+            value={district}
+            onChange={(e) => setDistrict(e.target.value)}
+          >
+            <option value="">All districts</option>
+            {availableDistricts.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
 
-                <label className="checkbox-row">
-                  <input
-                    type="checkbox"
-                    checked={!!editingFacility.is_active}
-                    onChange={(e) => setEditingFacility(prev => ({ ...prev, is_active: e.target.checked }))}
-                  />
-                  <span>✅ Facility is active (visible to users)</span>
-                </label>
+          <button className="btn primary" onClick={applyFilters}>
+            Search
+          </button>
 
-                <div className="form-group">
-                  <label>🩺 Services Offered</label>
-                  <div className="services-tags">
-                    {SERVICE_OPTIONS.map((service) => {
-                      const selected = editingFacility.services_offered?.includes(service) ?? false;
-                      return (
-                        <button
-                          key={service}
-                          type="button"
-                          className={`service-tag ${selected ? "selected" : ""}`}
-                          onClick={() => {
-                            setEditingFacility(prev => {
-                              const current = prev.services_offered ?? [];
-                              const updated = current.includes(service)
-                                ? current.filter(s => s !== service)
-                                : [...current, service];
-                              return { ...prev, services_offered: updated };
-                            });
-                          }}
-                        >
-                          {selected && "✓ "}{service}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-               <div className="form-group">
-  <label>🕒 Operating Hours</label>
-
-  <section className="quick-fill-card">
-    <h3>Quick fill</h3>
-    <p>Apply common clinic hours, then adjust individual days below.</p>
-
-    <div className="quick-fill-actions">
-      {PRESETS.map((preset) => (
-        <button
-          key={preset.label}
-          type="button"
-          className="btn secondary"
-          onClick={() => applyPreset(preset)}
-        >
-          {preset.label}
-        </button>
-      ))}
-    </div>
-  </section>
-
-  <div className="weekly-editor">
-    {DAYS.map((day) => {
-      const entry = editingFacility.operating_hours_form?.[day] ?? {
-        open: "",
-        close: "",
-        closed: false,
-      };
-
-      return (
-        <section className={`weekly-row ${entry.closed ? "is-closed" : ""}`} key={day}>
-          <div className="weekly-day">
-            <strong>{day.charAt(0).toUpperCase() + day.slice(1)}</strong>
-            <span className={`hours-badge ${entry.closed ? "closed" : "open"}`}>
-              {entry.closed ? "Closed" : "Open"}
-            </span>
-          </div>
-
-          <div className="weekly-inputs">
-            <input
-              type="time"
-              value={entry.open}
-              disabled={entry.closed}
-              onChange={(e) => updateHours(day, "open", e.target.value)}
-            />
-
-            <input
-              type="time"
-              value={entry.close}
-              disabled={entry.closed}
-              onChange={(e) => updateHours(day, "close", e.target.value)}
-            />
-
-            <select
-              value={entry.closed ? "closed" : "open"}
-              onChange={(e) => {
-                const isClosed = e.target.value === "closed";
-
-                setEditingFacility((prev) => ({
-                  ...prev,
-                  operating_hours_form: {
-                    ...prev.operating_hours_form,
-                    [day]: {
-                      open: isClosed ? "" : prev.operating_hours_form?.[day]?.open || "08:00",
-                      close: isClosed ? "" : prev.operating_hours_form?.[day]?.close || "17:00",
-                      closed: isClosed,
-                    },
-                  },
-                }));
-              }}
-            >
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
-            </select>
-          </div>
-
-          <div className="weekly-actions">
-            <button
-              type="button"
-              className="mini-btn"
-              onClick={() =>
-                setEditingFacility((prev) => ({
-                  ...prev,
-                  operating_hours_form: {
-                    ...prev.operating_hours_form,
-                    [day]: {
-                      open: "08:00",
-                      close: "17:00",
-                      closed: false,
-                    },
-                  },
-                }))
-              }
-            >
-              Open 08–17
-            </button>
-
-            <button
-              type="button"
-              className="mini-btn"
-              onClick={() =>
-                setEditingFacility((prev) => ({
-                  ...prev,
-                  operating_hours_form: {
-                    ...prev.operating_hours_form,
-                    [day]: {
-                      open: "",
-                      close: "",
-                      closed: true,
-                    },
-                  },
-                }))
-              }
-            >
-              Closed
-            </button>
-          </div>
+          <button className="btn secondary" onClick={clearFilters}>
+            Clear
+          </button>
         </section>
-      );
-    })}
-  </div>
-</div>
 
-                <div className="modal-actions">
-                  <button className="btn secondary" onClick={() => setEditingFacility(null)}>Cancel</button>
-                  <button className="btn primary" onClick={saveFacilityChanges} disabled={saving}>
-                    {saving ? "Saving..." : "Save changes"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
+        <section className={`status ${status.type}`}>
+          {status.message}
+        </section>
+
+        <section className="grid">
+          {filteredFacilities.map((facility) => (
+            <article key={facility.id} className="card">
+              <section>
+                <h3>{facility.name}</h3>
+
+                <p>
+                  {facility.district}, {facility.province}
+                </p>
+
+                <span
+                  className={facility.is_active ? "active" : "inactive"}
+                >
+                  {facility.is_active ? "● Active" : "○ Inactive"}
+                </span>
+
+                <p style={{ marginTop: "0.75rem" }}>
+                  <strong>Services:</strong>{" "}
+                  {Array.isArray(facility.services_offered) &&
+                  facility.services_offered.length
+                    ? facility.services_offered.join(", ")
+                    : "None listed"}
+                </p>
+              </section>
+
+              <button
+                className="btn edit"
+                onClick={() => openEditModal(facility)}
+              >
+                ✏️ Edit facility
+              </button>
+            </article>
+          ))}
+        </section>
+
+        {editingFacility && (
+          <section
+            className="modal-overlay"
+            onClick={() => setEditingFacility(null)}
+          >
+            <article
+              className="modal large"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <header>
+                <h3>✏️ {editingFacility.name}</h3>
+              </header>
+
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={!!editingFacility.is_active}
+                  onChange={(e) =>
+                    setEditingFacility((prev) => ({
+                      ...prev,
+                      is_active: e.target.checked,
+                    }))
+                  }
+                />
+                <section>✅ Facility is active (visible to users)</section>
+              </label>
+
+              <section className="form-group">
+                <label>🩺 Services Offered</label>
+
+                <section className="services-tags">
+                  {SERVICE_OPTIONS.map((service) => {
+                    const selected =
+                      editingFacility.services_offered?.includes(service) ??
+                      false;
+
+                    return (
+                      <button
+                        key={service}
+                        type="button"
+                        className={`service-tag ${
+                          selected ? "selected" : ""
+                        }`}
+                        onClick={() => {
+                          setEditingFacility((prev) => {
+                            const current =
+                              prev.services_offered ?? [];
+
+                            const updated = current.includes(service)
+                              ? current.filter((s) => s !== service)
+                              : [...current, service];
+
+                            return {
+                              ...prev,
+                              services_offered: updated,
+                            };
+                          });
+                        }}
+                      >
+                        {selected && "✓ "}
+                        {service}
+                      </button>
+                    );
+                  })}
+                </section>
+              </section>
+
+              <section className="form-group">
+                <label>🕒 Operating Hours</label>
+
+                <section className="quick-fill-card">
+                  <h3>Quick fill</h3>
+
+                  <p>
+                    Apply common clinic hours, then adjust
+                    individual days below.
+                  </p>
+
+                  <section className="quick-fill-actions">
+                    {PRESETS.map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => applyPreset(preset)}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </section>
+                </section>
+
+                <section className="weekly-editor">
+                  {DAYS.map((day) => {
+                    const entry =
+                      editingFacility.operating_hours_form?.[
+                        day
+                      ] ?? {
+                        open: "",
+                        close: "",
+                        closed: false,
+                      };
+
+                    return (
+                      <article
+                        className={`weekly-row ${
+                          entry.closed ? "is-closed" : ""
+                        }`}
+                        key={day}
+                      >
+                        <section className="weekly-day">
+                          <strong>
+                            {day.charAt(0).toUpperCase() +
+                              day.slice(1)}
+                          </strong>
+
+                          <section
+                            className={`hours-badge ${
+                              entry.closed
+                                ? "closed"
+                                : "open"
+                            }`}
+                          >
+                            {entry.closed ? "Closed" : "Open"}
+                          </section>
+                        </section>
+
+                        <section className="weekly-inputs">
+                          <input
+                            type="time"
+                            value={entry.open}
+                            disabled={entry.closed}
+                            onChange={(e) =>
+                              updateHours(
+                                day,
+                                "open",
+                                e.target.value
+                              )
+                            }
+                          />
+
+                          <input
+                            type="time"
+                            value={entry.close}
+                            disabled={entry.closed}
+                            onChange={(e) =>
+                              updateHours(
+                                day,
+                                "close",
+                                e.target.value
+                              )
+                            }
+                          />
+
+                          <select
+                            value={
+                              entry.closed
+                                ? "closed"
+                                : "open"
+                            }
+                            onChange={(e) => {
+                              const isClosed =
+                                e.target.value === "closed";
+
+                              setEditingFacility((prev) => ({
+                                ...prev,
+                                operating_hours_form: {
+                                  ...prev.operating_hours_form,
+                                  [day]: {
+                                    open: isClosed
+                                      ? ""
+                                      : prev
+                                          .operating_hours_form?.[
+                                          day
+                                        ]?.open || "08:00",
+                                    close: isClosed
+                                      ? ""
+                                      : prev
+                                          .operating_hours_form?.[
+                                          day
+                                        ]?.close || "17:00",
+                                    closed: isClosed,
+                                  },
+                                },
+                              }));
+                            }}
+                          >
+                            <option value="open">Open</option>
+                            <option value="closed">
+                              Closed
+                            </option>
+                          </select>
+                        </section>
+
+                        <section className="weekly-actions">
+                          <button
+                            type="button"
+                            className="mini-btn"
+                            onClick={() =>
+                              setEditingFacility((prev) => ({
+                                ...prev,
+                                operating_hours_form: {
+                                  ...prev.operating_hours_form,
+                                  [day]: {
+                                    open: "08:00",
+                                    close: "17:00",
+                                    closed: false,
+                                  },
+                                },
+                              }))
+                            }
+                          >
+                            Open 08–17
+                          </button>
+
+                          <button
+                            type="button"
+                            className="mini-btn"
+                            onClick={() =>
+                              setEditingFacility((prev) => ({
+                                ...prev,
+                                operating_hours_form: {
+                                  ...prev.operating_hours_form,
+                                  [day]: {
+                                    open: "",
+                                    close: "",
+                                    closed: true,
+                                  },
+                                },
+                              }))
+                            }
+                          >
+                            Closed
+                          </button>
+                        </section>
+                      </article>
+                    );
+                  })}
+                </section>
+              </section>
+
+              <footer className="modal-actions">
+                <button
+                  className="btn secondary"
+                  onClick={() => setEditingFacility(null)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="btn primary"
+                  onClick={saveFacilityChanges}
+                  disabled={saving}
+                >
+                  {saving ? "Saving..." : "Save changes"}
+                </button>
+              </footer>
+            </article>
+          </section>
+        )}
+      </section>
+    </main>
+  </>
+);
 }

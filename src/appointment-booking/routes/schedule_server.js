@@ -5,7 +5,7 @@ const router = express.Router();
 
 const DAYS = ["Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun"];
 
-// ── DB functions ──────────────────────────────────────────────────────────────
+// database functions
 
 async function read(staff_id) {
   if (!staff_id) return { success: false, error: "staff_id is required." };
@@ -82,7 +82,7 @@ async function eliminate(staff_id) {
   }
 }
 
-// ── Routes ────────────────────────────────────────────────────────────────────
+// API endpoints
 
 // GET /schedule?staff_id=xxx
 router.get("/schedule", async (req, res) => {

@@ -8,7 +8,7 @@ const router = express.Router();
 
 
 
-// ── Email transporter ────────────────────────────────────────────────────────
+// Email transporter configuration using environment variables
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,

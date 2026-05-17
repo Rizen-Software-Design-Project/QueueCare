@@ -37,8 +37,6 @@ function isValidSAPhone(phone) {
   return /^0[6-8][0-9]{8}$/.test(phone);
 }
 
-
-
 function dobFromSAId(id) {
   if (!/^\d{13}$/.test(id)) return null;
   const yy = parseInt(id.slice(0, 2), 10);
@@ -57,21 +55,21 @@ function StatusBadge({ status }) {
     : "status-badge--unknown";
 
   return (
-    <span className={`status-badge ${statusClass}`}>
+    <mark className={`status-badge ${statusClass}`}>
       {status || "unknown"}
-    </span>
+    </mark>
   );
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function Applications({
-  profile      = null,      // review mode
-  onRoleUpdated,            // review mode callback
+  profile      = null,
+  onRoleUpdated,
   mode         = "review",
-  identity     = null,      // apply mode
-  selectedRole = "staff",   // apply mode
-  onSubmitted,              // apply mode callback
-  onBack,                   // apply mode callback
+  identity     = null,
+  selectedRole = "staff",
+  onSubmitted,
+  onBack,
 }) {
   const isApplyMode = mode === "apply";
   const isAdmin     = !isApplyMode && profile?.role === "admin";
@@ -81,8 +79,7 @@ export default function Applications({
   const [reviewingId,      setReviewingId]      = useState(null);
   const [error,            setError]            = useState("");
   const [allApplications,  setAllApplications]  = useState([]);
-  const [cvFile, setCvFile] = useState(null);
-  // Clinic search state (apply mode)
+  const [cvFile,           setCvFile]           = useState(null);
   const [clinicQuery,      setClinicQuery]      = useState("");
   const [clinicResults,    setClinicResults]    = useState([]);
   const [selectedClinic,   setSelectedClinic]   = useState(null);
@@ -94,7 +91,6 @@ export default function Applications({
     license_number: "", motivation: "",
   });
 
-  // Pre-fill form from identity (apply mode)
   useEffect(() => {
     if (isApplyMode && identity) {
       setForm((prev) => ({
@@ -107,7 +103,6 @@ export default function Applications({
     }
   }, [isApplyMode, identity]);
 
-  // Load applications (review mode)
   useEffect(() => {
     if (!isApplyMode) loadData();
   }, [isApplyMode, profile?.id]);
@@ -150,135 +145,56 @@ export default function Applications({
     e.preventDefault();
     setError("");
 
-const email = form.email.trim().toLowerCase();
-const phone = form.phone_number.trim();
-const idNumber = form.id_number.trim();
+    const email    = form.email.trim().toLowerCase();
+    const phone    = form.phone_number.trim();
+    const idNumber = form.id_number.trim();
 
-if (!identity?.auth_provider || !identity?.provider_user_id) {
-  setError("Missing authenticated identity.");
-  return;
-}
-if (!form.name.trim() || form.name.trim().length < 2) {
-  setError("First name must be at least 2 characters.");
-  return;
-}
+    if (!identity?.auth_provider || !identity?.provider_user_id) { setError("Missing authenticated identity."); return; }
+    if (!form.name.trim() || form.name.trim().length < 2)         { setError("First name must be at least 2 characters."); return; }
+    if (!/^[a-zA-Z\s'-]+$/.test(form.name.trim()))                { setError("First name contains invalid characters."); return; }
+    if (!form.surname.trim() || form.surname.trim().length < 2)   { setError("Surname must be at least 2 characters."); return; }
+    if (!/^[a-zA-Z\s'-]+$/.test(form.surname.trim()))             { setError("Surname contains invalid characters."); return; }
+    if (!isValidEmail(email))                                      { setError("Enter a valid email address."); return; }
+    if (!isValidSAPhone(phone))                                    { setError("Enter a valid South African phone number, e.g. 0821234567."); return; }
+    if (!form.sex)                                                 { setError("Please select a gender."); return; }
+    if (!/^\d{13}$/.test(idNumber))                               { setError("SA ID number must be exactly 13 digits."); return; }
 
-if (!/^[a-zA-Z\s'-]+$/.test(form.name.trim())) {
-  setError("First name contains invalid characters.");
-  return;
-}
+    const dob = dobFromSAId(idNumber);
+    if (!dob) { setError("The SA ID number does not contain a valid date of birth."); return; }
 
-if (!form.surname.trim() || form.surname.trim().length < 2) {
-  setError("Surname must be at least 2 characters.");
-  return;
-}
+    const today     = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const hasBirthdayPassed =
+      today.getMonth() > birthDate.getMonth() ||
+      (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+    if (!hasBirthdayPassed) age--;
+    if (age < 18) { setError("Applicants must be at least 18 years old."); return; }
 
-if (!/^[a-zA-Z\s'-]+$/.test(form.surname.trim())) {
-  setError("Surname contains invalid characters.");
-  return;
-}
+    if (!form.professional_id.trim() || form.professional_id.trim().length < 5) { setError("Employee number must be at least 5 characters."); return; }
+    if (!/^[A-Za-z0-9-]+$/.test(form.professional_id.trim()))                   { setError("Employee number contains invalid characters."); return; }
 
-if (!isValidEmail(email)) {
-  setError("Enter a valid email address.");
-  return;
-}
-if (!isValidSAPhone(phone)) {
-  setError("Enter a valid South African phone number, e.g. 0821234567.");
-  return;
-}
-if (!form.sex) {
-  setError("Please select a gender.");
-  return;
-}
-if (!/^\d{13}$/.test(idNumber)) {
-  setError("SA ID number must be exactly 13 digits.");
-  return;
-}
+    if (form.license_number.trim()) {
+      if (form.license_number.trim().length < 5)                       { setError("License number must be at least 5 characters if provided."); return; }
+      if (!/^[A-Za-z0-9-]+$/.test(form.license_number.trim()))         { setError("License number contains invalid characters."); return; }
+    }
 
-const dob = dobFromSAId(idNumber);
-if (!dob) {
-  setError("The SA ID number does not contain a valid date of birth.");
-  return;
-}
-const today = new Date();
-const birthDate = new Date(dob);
-
-let age = today.getFullYear() - birthDate.getFullYear();
-const hasBirthdayPassed =
-  today.getMonth() > birthDate.getMonth() ||
-  (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
-
-if (!hasBirthdayPassed) age--;
-
-if (age < 18) {
-  setError("Applicants must be at least 18 years old.");
-  return;
-}
-if (!form.professional_id.trim() || form.professional_id.trim().length < 5) {
-  setError("Employee number must be at least 5 characters.");
-  return;
-}
-
-if (!/^[A-Za-z0-9-]+$/.test(form.professional_id.trim())) {
-  setError("Employee number contains invalid characters.");
-  return;
-}
-if (form.license_number.trim()) {
-  if (form.license_number.trim().length < 5) {
-    setError("License number must be at least 5 characters if provided.");
-    return;
-  }
-
-  if (!/^[A-Za-z0-9-]+$/.test(form.license_number.trim())) {
-    setError("License number contains invalid characters.");
-    return;
-  }
-}
-if (!cvFile) {
-  setError("Please upload your CV document.");
-  return;
-}
-
-const allowedTypes = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
-
-if (!allowedTypes.includes(cvFile.type)) {
-  setError("CV must be a PDF, DOC, or DOCX file.");
-  return;
-}
-
-if (cvFile.size > 2 * 1024 * 1024) {
-  setError("CV file must be smaller than 2MB.");
-  return;
-}
-if (!selectedClinic) {
-  setError("Please choose the clinic you work at.");
-  return;
-}
+    if (!cvFile)                                                         { setError("Please upload your CV document."); return; }
+    const allowedTypes = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowedTypes.includes(cvFile.type))                             { setError("CV must be a PDF, DOC, or DOCX file."); return; }
+    if (cvFile.size > 2 * 1024 * 1024)                                  { setError("CV file must be smaller than 2MB."); return; }
+    if (!selectedClinic)                                                 { setError("Please choose the clinic you work at."); return; }
 
     setSubmitting(true);
-    const fileExt = cvFile.name.split(".").pop();
-const safeExt = fileExt.toLowerCase().replace(/[^a-z0-9]/g, "");
-const filePath = `staff-applications/${identity.provider_user_id}-${Date.now()}.${safeExt}`;
+    const fileExt  = cvFile.name.split(".").pop();
+    const safeExt  = fileExt.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const filePath = `staff-applications/${identity.provider_user_id}-${Date.now()}.${safeExt}`;
 
-const { error: uploadError } = await supabase.storage
-  .from("application-documents")
-  .upload(filePath, cvFile);
+    const { error: uploadError } = await supabase.storage.from("application-documents").upload(filePath, cvFile);
+    if (uploadError) { setError(uploadError.message || "Could not upload CV."); setSubmitting(false); return; }
 
-if (uploadError) {
-  setError(uploadError.message || "Could not upload CV.");
-  setSubmitting(false);
-  return;
-}
-
-const { data: publicUrlData } = supabase.storage
-  .from("application-documents")
-  .getPublicUrl(filePath);
-
-const uploadedCvUrl = publicUrlData.publicUrl;
+    const { data: publicUrlData } = supabase.storage.from("application-documents").getPublicUrl(filePath);
+    const uploadedCvUrl = publicUrlData.publicUrl;
 
     const { error: err } = await supabase.from("role_applications").upsert(
       {
@@ -288,7 +204,7 @@ const uploadedCvUrl = publicUrlData.publicUrl;
         status:           "pending",
         name:             form.name.trim(),
         surname:          form.surname.trim(),
-        email:            email,
+        email,
         phone_number:     phone,
         sex:              form.sex,
         id_number:        idNumber,
@@ -297,7 +213,7 @@ const uploadedCvUrl = publicUrlData.publicUrl;
         license_number:   form.license_number.trim() || null,
         clinic_id:        selectedClinic.id,
         clinic_name:      selectedClinic.name,
-        cv_url: uploadedCvUrl,
+        cv_url:           uploadedCvUrl,
         motivation:       form.motivation.trim() || null,
         submitted_at:     new Date().toISOString(),
       },
@@ -306,21 +222,15 @@ const uploadedCvUrl = publicUrlData.publicUrl;
 
     setSubmitting(false);
     if (err) { setError(err.message || "Could not submit application."); return; }
-    fetch(`${API_BASE}/notify/application/send-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email: form.email.trim().toLowerCase(),
-            name: form.name.trim(),
-            role: 'staff',
-            status: 'submitted',
-        }),
-    }).catch(err => console.warn('Application email failed:', err.message));
 
-    
+    fetch(`${API_BASE}/notify/application/send-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: form.email.trim().toLowerCase(), name: form.name.trim(), role: "staff", status: "submitted" }),
+    }).catch(err => console.warn("Application email failed:", err.message));
+
     if (onSubmitted) onSubmitted();
   }
-  
 
   // ── Approve (review mode) ─────────────────────────────────────────────────
   async function approveApplication(application) {
@@ -335,7 +245,6 @@ const uploadedCvUrl = publicUrlData.publicUrl;
 
       const profileRole = application.requested_role === "admin" ? "admin" : "staff";
 
-      // Upsert applicant profile
       const { data: existing } = await supabase.from("profiles")
         .select("id").eq("auth_provider", application.auth_provider)
         .eq("provider_user_id", application.provider_user_id).maybeSingle();
@@ -367,7 +276,6 @@ const uploadedCvUrl = publicUrlData.publicUrl;
         profileId = inserted.id;
       }
 
-      // Assign staff to clinic
       if (profileRole === "staff") {
         if (!application.clinic_id) throw new Error("Staff application is missing clinic.");
 
@@ -385,49 +293,29 @@ const uploadedCvUrl = publicUrlData.publicUrl;
           if (err) throw new Error(err.message);
         }
       }
-      // After a successful approve/reject Supabase call
 
+      const { error: err } = await supabase
+        .from("role_applications")
+        .update({ status: "approved", reviewed_by: profile.id, reviewed_at: now })
+        .eq("id", application.id);
+      if (err) throw new Error(err.message);
 
-    
-      // Mark application approved
-    const { error: err } = await supabase
-  .from("role_applications")
-  .update({
-    status: "approved",
-    reviewed_by: profile.id,
-    reviewed_at: now,
-  })
-  .eq("id", application.id);
-
-if (err) throw new Error(err.message);
-
-setAllApplications((prev) =>
-  prev.map((app) =>
-    app.id === application.id
-      ? {
-          ...app,
-          status: "approved",
-          reviewed_by: profile.id,
-          reviewed_at: now,
-        }
-      : app
-  )
-);
+      setAllApplications((prev) =>
+        prev.map((app) =>
+          app.id === application.id
+            ? { ...app, status: "approved", reviewed_by: profile.id, reviewed_at: now }
+            : app
+        )
+      );
 
       fetch(`${API_BASE}/notify/application/send-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email: application.email,
-            name: application.name,
-            role: application.requested_role,
-            status: 'approved', // or 'rejected'
-        }),
-    }).catch(err => console.warn('Approval email failed:', err.message));
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: application.email, name: application.name, role: application.requested_role, status: "approved" }),
+      }).catch(err => console.warn("Approval email failed:", err.message));
 
       if (onRoleUpdated) onRoleUpdated(profileId, profileRole);
       alert("Application approved.");
-     
     } catch (err) {
       setError(err.message || "Could not approve application.");
     } finally {
@@ -436,69 +324,47 @@ setAllApplications((prev) =>
   }
 
   // ── Reject (review mode) ──────────────────────────────────────────────────
- async function rejectApplication(application) {
-  if (!profile?.id) return;
+  async function rejectApplication(application) {
+    if (!profile?.id) return;
+    setReviewingId(application.id);
+    setError("");
 
-  setReviewingId(application.id);
-  setError("");
+    try {
+      const { error: err } = await supabase
+        .from("role_applications")
+        .update({ status: "rejected", reviewed_by: profile.id, reviewed_at: new Date().toISOString() })
+        .eq("id", application.id);
+      if (err) throw new Error(err.message);
 
-  try {
-    const { error: err } = await supabase
-      .from("role_applications")
-      .update({
-        status: "rejected",
-        reviewed_by: profile.id,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", application.id);
+      fetch(`${API_BASE}/notify/application/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: application.email, name: application.name, role: application.requested_role, status: "rejected" }),
+      }).catch((err) => console.warn("Rejection email failed:", err.message));
 
-    if (err) throw new Error(err.message);
+      setAllApplications((prev) =>
+        prev.map((app) =>
+          app.id === application.id
+            ? { ...app, status: "rejected", reviewed_by: profile.id, reviewed_at: new Date().toISOString() }
+            : app
+        )
+      );
 
-    // Send email notification
-    fetch(`${API_BASE}/notify/application/send-email`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: application.email,
-        name: application.name,
-        role: application.requested_role,
-        status: "rejected",
-      }),
-    }).catch((err) =>
-      console.warn("Rejection email failed:", err.message)
-    );
-
-    // Create in-app notification
-    setAllApplications((prev) =>
-      prev.map((app) =>
-        app.id === application.id
-          ? {
-              ...app,
-              status: "rejected",
-              reviewed_by: profile.id,
-              reviewed_at: new Date().toISOString(),
-            }
-          : app
-      )
-    );
-
-    await loadData();
-  } catch (err) {
-    setError(err.message || "Could not reject application.");
-  } finally {
-    setReviewingId(null);
+      await loadData();
+    } catch (err) {
+      setError(err.message || "Could not reject application.");
+    } finally {
+      setReviewingId(null);
+    }
   }
-}
 
   // ── Apply mode render ─────────────────────────────────────────────────────
   if (isApplyMode) {
     const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
     return (
-      <div className="app-wrapper">
-        <div className="app-card">
+      <main className="app-wrapper">
+        <article className="app-card">
           {onBack && (
             <button type="button" className="app-btn-secondary" onClick={onBack}>← Back</button>
           )}
@@ -506,36 +372,38 @@ setAllApplications((prev) =>
           <h2 className="app-title">Staff Application</h2>
           <p className="app-muted">Complete your application for staff access.</p>
 
-          {error && <p className="app-error">{error}</p>}
+          {error && <p role="alert" className="app-error">{error}</p>}
 
           <form onSubmit={handleApplySubmit} className="app-form">
             {/* Name */}
-            <div className="app-grid-2">
+            <fieldset className="app-grid-2">
+              <legend className="sr-only">Full name</legend>
               <div>
-                <label className="app-label">First Name</label>
-                <input className="app-input" value={form.name} onChange={set("name")} placeholder="Jane" />
+                <label className="app-label" htmlFor="field-name">First Name</label>
+                <input id="field-name" className="app-input" value={form.name} onChange={set("name")} placeholder="Jane" />
               </div>
               <div>
-                <label className="app-label">Surname</label>
-                <input className="app-input" value={form.surname} onChange={set("surname")} placeholder="Dlamini" />
+                <label className="app-label" htmlFor="field-surname">Surname</label>
+                <input id="field-surname" className="app-input" value={form.surname} onChange={set("surname")} placeholder="Dlamini" />
               </div>
-            </div>
+            </fieldset>
 
             {/* Contact */}
-            <div className="app-grid-2">
+            <fieldset className="app-grid-2">
+              <legend className="sr-only">Contact details</legend>
               <div>
-                <label className="app-label">Email</label>
-                <input className="app-input" type="email" value={form.email} onChange={set("email")} placeholder="jane@example.com" />
+                <label className="app-label" htmlFor="field-email">Email</label>
+                <input id="field-email" className="app-input" type="email" value={form.email} onChange={set("email")} placeholder="jane@example.com" />
               </div>
               <div>
-                <label className="app-label">Phone Number</label>
-                <input className="app-input" value={form.phone_number} onChange={set("phone_number")} placeholder="0821234567" />
+                <label className="app-label" htmlFor="field-phone">Phone Number</label>
+                <input id="field-phone" className="app-input" value={form.phone_number} onChange={set("phone_number")} placeholder="0821234567" />
               </div>
-            </div>
+            </fieldset>
 
             {/* Gender */}
-            <div>
-              <label className="app-label">Gender</label>
+            <fieldset>
+              <legend className="app-label">Gender</legend>
               <div className="app-gender-wrap">
                 {["male", "female", "other"].map((g) => (
                   <button
@@ -543,18 +411,21 @@ setAllApplications((prev) =>
                     type="button"
                     className={`app-gender-btn${form.sex === g ? " app-gender-btn--active" : ""}`}
                     onClick={() => setForm((prev) => ({ ...prev, sex: g }))}
+                    aria-pressed={form.sex === g}
                   >
                     {g.charAt(0).toUpperCase() + g.slice(1)}
                   </button>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
             {/* ID + employee number */}
-            <div className="app-grid-2">
+            <fieldset className="app-grid-2">
+              <legend className="sr-only">Identity and employment</legend>
               <div>
-                <label className="app-label">SA ID Number</label>
+                <label className="app-label" htmlFor="field-id">SA ID Number</label>
                 <input
+                  id="field-id"
                   className="app-input"
                   value={form.id_number}
                   onChange={(e) => setForm((p) => ({ ...p, id_number: e.target.value.replace(/\D/g, "") }))}
@@ -563,41 +434,46 @@ setAllApplications((prev) =>
                 />
               </div>
               <div>
-                <label className="app-label">Employee Number</label>
-                <input className="app-input" value={form.professional_id} onChange={set("professional_id")} placeholder="Employee number" />
+                <label className="app-label" htmlFor="field-emp">Employee Number</label>
+                <input id="field-emp" className="app-input" value={form.professional_id} onChange={set("professional_id")} placeholder="Employee number" />
               </div>
-            </div>
+            </fieldset>
 
             {/* License */}
             <div>
-              <label className="app-label">License Number (optional)</label>
-              <input className="app-input" value={form.license_number} onChange={set("license_number")} placeholder="Professional license" />
+              <label className="app-label" htmlFor="field-license">License Number <span className="app-muted">(optional)</span></label>
+              <input id="field-license" className="app-input" value={form.license_number} onChange={set("license_number")} placeholder="Professional license" />
             </div>
 
             {/* Clinic search */}
             <div>
-              <label className="app-label">Clinic</label>
+              <label className="app-label" htmlFor="field-clinic">Clinic</label>
               <input
+                id="field-clinic"
                 className="app-input"
                 value={selectedClinic ? selectedClinic.name : clinicQuery}
                 onChange={(e) => { setSelectedClinic(null); searchClinics(e.target.value); }}
                 placeholder="Search clinic name"
+                autoComplete="off"
+                aria-autocomplete="list"
+                aria-expanded={!selectedClinic && clinicResults.length > 0}
               />
 
               {!selectedClinic && clinicResults.length > 0 && (
-                <div className="app-search-results">
+                <ul className="app-search-results" role="listbox">
                   {clinicResults.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      className="app-search-result-btn"
-                      onClick={() => { setSelectedClinic(c); setClinicQuery(c.name); setClinicResults([]); }}
-                    >
-                      <strong>{c.name}</strong>
-                      <span className="app-search-sub">{c.district || "—"}, {c.province || "—"}</span>
-                    </button>
+                    <li key={c.id} role="option">
+                      <button
+                        type="button"
+                        className="app-search-result-btn"
+                        onClick={() => { setSelectedClinic(c); setClinicQuery(c.name); setClinicResults([]); }}
+                      >
+                        <strong>{c.name}</strong>
+                        <span className="app-search-sub">{c.district || "—"}, {c.province || "—"}</span>
+                      </button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
 
               {searchingClinics && <p className="app-muted-small">Searching clinics…</p>}
@@ -608,25 +484,24 @@ setAllApplications((prev) =>
 
             {/* CV */}
             <div>
-              <label className="app-label">Upload CV</label>
-            <input
-              className="app-input"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={(e) => setCvFile(e.target.files?.[0] || null)}
-            />
-
-            {cvFile && (
-              <p className="app-muted-small">
-                Selected file: {cvFile.name}
-              </p>
-            )}
+              <label className="app-label" htmlFor="field-cv">Upload CV</label>
+              <input
+                id="field-cv"
+                className="app-input"
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => setCvFile(e.target.files?.[0] || null)}
+              />
+              {cvFile && (
+                <p className="app-muted-small">Selected file: {cvFile.name}</p>
+              )}
             </div>
 
             {/* Motivation */}
             <div>
-              <label className="app-label">Motivation</label>
+              <label className="app-label" htmlFor="field-motivation">Motivation</label>
               <textarea
+                id="field-motivation"
                 className="app-textarea"
                 rows={4}
                 value={form.motivation}
@@ -645,102 +520,110 @@ setAllApplications((prev) =>
               </button>
             </div>
           </form>
-        </div>
-      </div>
+        </article>
+      </main>
     );
   }
 
   // ── Review mode render ────────────────────────────────────────────────────
   if (!profile) {
     return (
-      <div className="app-wrapper">
-        <div className="app-card">
+      <main className="app-wrapper">
+        <article className="app-card">
           <h2 className="app-title">Applications</h2>
           <p className="app-muted">No profile loaded.</p>
-        </div>
-      </div>
+        </article>
+      </main>
     );
   }
 
   return (
-    <div className="app-wrapper">
-      <div className="app-card">
-        <div className="app-header-row">
-          <div>
+    <main className="app-wrapper">
+      <section className="app-card">
+        <header className="app-header-row">
+          <section>
             <h2 className="app-title">Role Applications</h2>
             <p className="app-muted">Review staff and admin access requests.</p>
-          </div>
+          </section>
           <button className="app-btn-refresh" onClick={loadData} disabled={loading}>
             {loading ? "Refreshing…" : "Refresh"}
           </button>
-        </div>
+        </header>
 
-        {error && <p className="app-error">{error}</p>}
+        {error && <p role="alert" className="app-error">{error}</p>}
 
         {loading ? (
           <p className="app-muted">Loading applications…</p>
         ) : allApplications.length === 0 ? (
           <p className="app-muted">No applications found.</p>
         ) : (
-          <div className="app-list">
+          <ul className="app-list">
             {allApplications.map((app) => (
-              <div key={app.id} className="app-application-card">
-                <div className="app-application-top">
-                  <div>
-                    <p className="app-app-title">
-                      {`${app.name || ""} ${app.surname || ""}`.trim() || "Unnamed Applicant"}
-                    </p>
-                    <p className="app-app-meta">Requested role: <strong>{app.requested_role || "—"}</strong></p>
-                  </div>
-                  <StatusBadge status={app.status} />
-                </div>
+              <li key={app.id}>
+                <article className="app-application-card">
+                  <header className="app-application-top">
+                    <section>
+                      <p className="app-app-title">
+                        {`${app.name || ""} ${app.surname || ""}`.trim() || "Unnamed Applicant"}
+                      </p>
+                      <p className="app-app-meta">Requested role: <strong>{app.requested_role || "—"}</strong></p>
+                    </section>
+                    <StatusBadge status={app.status} />
+                  </header>
 
-                <div className="app-app-body">
-                  {[
-                    ["Name",            app.name],
-                    ["Surname",         app.surname],
-                    ["Gender",          app.sex],
-                    ["Date of Birth",   app.dob],
-                    ["SA ID Number",    app.id_number],
-                    ["Employee Number", app.professional_id],
-                    ["Email",           app.email],
-                    ["Phone",           app.phone_number],
-                    ["Clinic",          app.clinic_name],
-                    ["License",         app.license_number],
-                    ["Motivation",      app.motivation],
-                    ["Submitted",       formatDateTime(app.submitted_at)],
-                    ["Reviewed",        formatDateTime(app.reviewed_at)],
-                  ].map(([label, val]) => (
-                    <p key={label}><strong>{label}:</strong> {val || "—"}</p>
-                  ))}
-                  {app.cv_url && (
-                    <p><strong>CV:</strong> <a href={app.cv_url} target="_blank" rel="noreferrer">View CV</a></p>
+                  <dl className="app-app-body">
+                    {[
+                      ["Name",            app.name],
+                      ["Surname",         app.surname],
+                      ["Gender",          app.sex],
+                      ["Date of Birth",   app.dob],
+                      ["SA ID Number",    app.id_number],
+                      ["Employee Number", app.professional_id],
+                      ["Email",           app.email],
+                      ["Phone",           app.phone_number],
+                      ["Clinic",          app.clinic_name],
+                      ["License",         app.license_number],
+                      ["Motivation",      app.motivation],
+                      ["Submitted",       formatDateTime(app.submitted_at)],
+                      ["Reviewed",        formatDateTime(app.reviewed_at)],
+                    ].map(([label, val]) => (
+                      <section key={label}>
+                        <dt>{label}</dt>
+                        <dd>{val || "—"}</dd>
+                      </section>
+                    ))}
+                    {app.cv_url && (
+                      <section>
+                        <dt>CV</dt>
+                        <dd><a href={app.cv_url} target="_blank" rel="noreferrer">View CV</a></dd>
+                      </section>
+                    )}
+                  </dl>
+
+                  {app.status === "pending" && (
+                    <footer className="app-form-actions">
+                      <button
+                        className="app-btn-reject"
+                        disabled={reviewingId === app.id}
+                        onClick={() => rejectApplication(app)}
+                      >
+                        {reviewingId === app.id ? "Processing…" : "Reject"}
+                      </button>
+                      <button
+                        className="app-btn-approve"
+                        disabled={reviewingId === app.id}
+                        onClick={() => approveApplication(app)}
+                      >
+                        {reviewingId === app.id ? "Processing…" : "Approve"}
+                      </button>
+                    </footer>
                   )}
-                </div>
-
-                {app.status === "pending" && (
-                  <div className="app-form-actions">
-                    <button
-                      className="app-btn-reject"
-                      disabled={reviewingId === app.id}
-                      onClick={() => rejectApplication(app)}
-                    >
-                      {reviewingId === app.id ? "Processing…" : "Reject"}
-                    </button>
-                    <button
-                      className="app-btn-approve"
-                      disabled={reviewingId === app.id}
-                      onClick={() => approveApplication(app)}
-                    >
-                      {reviewingId === app.id ? "Processing…" : "Approve"}
-                    </button>
-                  </div>
-                )}
-              </div>
+                </article>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

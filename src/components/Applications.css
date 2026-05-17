@@ -224,7 +224,12 @@
   display: grid;
   gap: 14px;
 }
-
+.app-list,
+.app-search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .app-application-card {
   border: 1px solid #e8e8e8;
   border-radius: 14px;

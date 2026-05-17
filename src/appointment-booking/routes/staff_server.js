@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabaseAdmin.js";
 
 const router = express.Router();
 
-// ── Shared sort helper ────────────────────────────────────────────────────────
+// Shared sort helper 
 function sortBySlotDateTime(entries) {
   return [...entries].sort((a, b) => {
     const aAppt = Array.isArray(a.appointments) ? a.appointments[0] : a.appointments;
@@ -14,9 +14,9 @@ function sortBySlotDateTime(entries) {
   });
 }
 
-// ─────────────────────────────────────────────
+
 // Helper: format minutes into readable string
-// ─────────────────────────────────────────────
+
 function formatMinutes(totalMinutes) {
   if (totalMinutes < 0) return "0m";
   const days  = Math.floor(totalMinutes / 1440);
@@ -29,9 +29,8 @@ function formatMinutes(totalMinutes) {
   return out.trim() || "0m";
 }
 
-// ─────────────────────────────────────────────
 // Helper: resolve patient ID from email or phone
-// ─────────────────────────────────────────────
+
 async function getPatientId(contact_details) {
   if (!contact_details) return { error: "Missing contact details" };
 
@@ -47,9 +46,8 @@ async function getPatientId(contact_details) {
   return { patient_id: profile.id };
 }
 
-// ─────────────────────────────────────────────
 // Check if booked
-// ─────────────────────────────────────────────
+
 router.get("/is_booked", async (req, res) => {
   const { contact_details } = req.query;
 
@@ -71,9 +69,9 @@ router.get("/is_booked", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────
+
 // View queue (staff view — today only)
-// ─────────────────────────────────────────────
+
 router.get("/view_queue", async (req, res) => {
   const { facility_id } = req.query;
 
@@ -151,9 +149,9 @@ router.get("/view_queue", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────
+
 // Estimated time (time until patient's slot)
-// ─────────────────────────────────────────────
+
 router.get("/estimated_time", async (req, res) => {
   const { contact_details, facility_id } = req.query;
 
@@ -193,9 +191,8 @@ router.get("/estimated_time", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────
 // Queue position
-// ─────────────────────────────────────────────
+
 router.get("/queue_position", async (req, res) => {
   const { contact_details, facility_id } = req.query;
 
@@ -229,9 +226,8 @@ router.get("/queue_position", async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────
 // Full queue (staff dashboard)
-// ─────────────────────────────────────────────
+
 router.get("/full_queue", async (req, res) => {
   const { facility_id } = req.query;
 

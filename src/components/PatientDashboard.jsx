@@ -17,6 +17,11 @@ import {
 import { PatientHistoryView } from "./AppointmentHistory";
 import { getMyQueue, removeFromQueue, addToQueue } from "../queueApi";
 import "./Dashboard.css";
+import ClinicSearch from "./Clinic_search.jsx";
+import ServicePolicy from "./ServicePolicy.jsx";
+import ProfilePage from "./ProfilePage.jsx";
+import BookAppointment from "./BookAppointment.jsx";
+import { Search } from "lucide-react";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
@@ -51,6 +56,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
   const [sidebarOpen,   setSidebarOpen]   = useState(false);
   const [queueData,     setQueueData]     = useState(null);
   const [reminderBanner, setReminderBanner] = useState(null);
+  const [bookingClinicId, setBookingClinicId] = useState(null);
 
   
   const [rescheduleAppt,   setRescheduleAppt]   = useState(null);
@@ -278,29 +284,12 @@ export default function PatientDashboard({ profile: initialProfile }) {
 
   // ── Content ───────────────────────────────────────────────────────────────
   function goTo(id) {
-    const navState = { 
-    patient: profile,
-    authProvider:  profile.auth_provider,
-    providerUserId: profile.provider_user_id,
-       };
-
+  
   setSidebarOpen(false);
-  switch (id) {
-    case "find-clinic":
-      navigate("/clinic-search");
-      return;
-    case "profile":
-      navigate("/profile", {state: navState});
-      return;
-
-    case "policy":
-      navigate("/service-policy");
-      return;
-      
-    default:
-      setActiveTab(id);
+  setActiveTab(id);
+  if (id !== "book") setBookingClinicId(null);
   }
-}
+
 
 
   function renderContent() {
@@ -311,6 +300,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
       slotDate: bookedAppt?.appointment_slots?.slot_date || null,
       slotTime: bookedAppt?.appointment_slots?.slot_time || null,
       lastClinic, 
+      onBookAgain: (id) => { setBookingClinicId(id); setActiveTab("book"); },
     };
 
     switch (activeTab) {
@@ -334,7 +324,14 @@ export default function PatientDashboard({ profile: initialProfile }) {
       case "appointments":  return <PatientHistoryView appointments={appointments} onReschedule={openReschedule} onCancel={cancelAppointment} />;
       case "queue":         return <PatientQueuePanel queueData={queueData} slotDate={sharedProps.slotDate} slotTime={sharedProps.slotTime} />;
       case "notifications": return <NotificationsPanel notifications={notifications} unreadCount={unreadCount} onMarkAllRead={markAllRead} />;
-
+      case "find-clinic": return <ClinicSearch onBook={(id) => { setBookingClinicId(id); setActiveTab("book"); }} />;
+      case "book": return <BookAppointment 
+          clinicId={bookingClinicId} 
+          onBack={() => setActiveTab("find-clinic")}
+          onDone={() => setActiveTab("overview")}
+        />;
+      case "profile":     return <ProfilePage profile={profile} />;
+      case "policy":        return <ServicePolicy />;
       default:              return <div className="db-section"><h2>{activeTab}</h2></div>;
     }
   }

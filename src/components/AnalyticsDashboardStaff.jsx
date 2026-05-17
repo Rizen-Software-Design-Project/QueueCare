@@ -30,39 +30,46 @@ const STATUS_BADGE = {
 
 function StatCard({ label, value, sub, accent = false }) {
   return (
-    <div className="stat-card">
-      <p className="stat-label">{label}</p>
+    <article className="stat-card">
+      <h3 className="stat-label">{label}</h3>
       <p className={`stat-value${accent ? ' stat-value--accent' : ''}`}>{value}</p>
       {sub && <p className="stat-sub">{sub}</p>}
-    </div>
+    </article>
   )
 }
 
 function ExportBar({ onCSV, onPDF, disabled }) {
   return (
-    <div className="export-bar">
-      <button onClick={onCSV} disabled={disabled} className="btn-export">↓ CSV</button>
-      <button onClick={onPDF} disabled={disabled} className="btn-export btn-export--pdf">↓ PDF</button>
-    </div>
+    <menu className="export-bar">
+      <li>
+        <button onClick={onCSV} disabled={disabled} className="btn-export">↓ CSV</button>
+      </li>
+      <li>
+        <button onClick={onPDF} disabled={disabled} className="btn-export btn-export--pdf">↓ PDF</button>
+      </li>
+    </menu>
   )
 }
 
 function DateRange({ start, end, onStart, onEnd }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <input type="date" value={start} onChange={e => onStart(e.target.value || null)} />
-      <span style={{ color: '#94a3b8' }}>—</span>
-      <input type="date" value={end} onChange={e => onEnd(e.target.value || null)} />
-    </div>
+    <fieldset className="date-range" style={{ border: 0, padding: 0, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <legend className="sr-only">Date range</legend>
+      <label htmlFor="date-start" className="sr-only">Start date</label>
+      <input id="date-start" type="date" value={start} onChange={e => onStart(e.target.value || null)} />
+      <span aria-hidden="true" style={{ color: '#94a3b8' }}>—</span>
+      <label htmlFor="date-end" className="sr-only">End date</label>
+      <input id="date-end" type="date" value={end} onChange={e => onEnd(e.target.value || null)} />
+    </fieldset>
   )
 }
 
 function ChartCard({ title, children }) {
   return (
-    <div className="chart-card">
+    <section className="chart-card">
       <h3 className="chart-title">{title}</h3>
       {children}
-    </div>
+    </section>
   )
 }
 
@@ -92,20 +99,20 @@ function WaitTimesReport({ facilityId }) {
     { header: 'Max Wait (min)', dataKey: 'Max Wait' },
   ]
   return (
-    <div className="tab-section">
-      <div className="controls">
+    <section className="tab-section">
+      <header className="controls">
         <div />
         <ExportBar
           disabled={loading || !data.length}
           onCSV={() => exportCSV(chartData, 'wait-times')}
           onPDF={() => exportPDF(chartData, { title: 'Average Patient Wait Times by Hour of Day', columns: CSV_COLS, filename: 'wait-times' })}
         />
-      </div>
-      <div className="stats-grid stats-grid--3">
-        <StatCard label="Overall Avg Wait" value={loading ? '…' : `${weightedAvg} min`} />
-        <StatCard label="Peak Hour" value={loading ? '…' : (peakRow ? HOUR_LABEL(peakRow.hour_of_day) : '—')} sub={peakRow ? `${peakRow.avg_wait_minutes} min avg` : undefined} accent />
-        <StatCard label="Total Served" value={loading ? '…' : totalServed.toLocaleString()} />
-      </div>
+      </header>
+      <ul className="stats-grid stats-grid--3">
+        <li><StatCard label="Overall Avg Wait" value={loading ? '…' : `${weightedAvg} min`} /></li>
+        <li><StatCard label="Peak Hour" value={loading ? '…' : (peakRow ? HOUR_LABEL(peakRow.hour_of_day) : '—')} sub={peakRow ? `${peakRow.avg_wait_minutes} min avg` : undefined} accent /></li>
+        <li><StatCard label="Total Served" value={loading ? '…' : totalServed.toLocaleString()} /></li>
+      </ul>
       <ChartCard title="Average Wait Time by Hour of Day (minutes)">
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={chartData} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
@@ -120,7 +127,7 @@ function WaitTimesReport({ facilityId }) {
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
-    </div>
+    </section>
   )
 }
 
@@ -145,25 +152,25 @@ function NoShowReport({ facilityId }) {
     { header: 'Total Appointments', dataKey: 'Total' },
   ]
   return (
-    <div className="tab-section">
-      <div className="controls">
+    <section className="tab-section">
+      <header className="controls">
         <DateRange start={start} end={end} onStart={setStart} onEnd={setEnd} />
         <ExportBar
           disabled={loading || !data.length}
           onCSV={() => exportCSV(chartData, 'noshows')}
           onPDF={() => exportPDF(chartData, { title: 'Appointment No-Show Rates', columns: CSV_COLS, filename: 'noshows' })}
         />
-      </div>
-      <div className="stats-grid stats-grid--4">
-        <StatCard label="Overall No-Show Rate" value={loading ? '…' : `${overallRate}%`} accent={isHigh} />
-        <StatCard label="Total No-Shows"        value={loading ? '…' : totalNoShows.toLocaleString()} accent />
-        <StatCard label="Total Appointments"    value={loading ? '…' : totalAppts.toLocaleString()} />
-        <StatCard label="Days Analysed"         value={loading ? '…' : data.length} />
-      </div>
+      </header>
+      <ul className="stats-grid stats-grid--4">
+        <li><StatCard label="Overall No-Show Rate" value={loading ? '…' : `${overallRate}%`} accent={isHigh} /></li>
+        <li><StatCard label="Total No-Shows"        value={loading ? '…' : totalNoShows.toLocaleString()} accent /></li>
+        <li><StatCard label="Total Appointments"    value={loading ? '…' : totalAppts.toLocaleString()} /></li>
+        <li><StatCard label="Days Analysed"         value={loading ? '…' : data.length} /></li>
+      </ul>
       {isHigh && !loading && (
-        <div className="warning-banner">
+        <aside role="alert" className="warning-banner">
           ⚠️ No-show rate is above 20%. Consider enabling appointment reminders 24 hours before each slot.
-        </div>
+        </aside>
       )}
       <ChartCard title="No-Show Rate Over Time (%)">
         <ResponsiveContainer width="100%" height={280}>
@@ -178,7 +185,7 @@ function NoShowReport({ facilityId }) {
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
-    </div>
+    </section>
   )
 }
 
@@ -187,7 +194,7 @@ const COLUMNS = [
   { key: 'patient_name', label: 'Patient', render: (_v, row) => [row.patient_name, row.patient_surname].filter(Boolean).join(' ') || '—', exportValue: (_v, row) => [row.patient_name, row.patient_surname].filter(Boolean).join(' ') },
   { key: 'patient_contact', label: 'Contact', render: (_v, row) => row.patient_email ?? row.patient_phone ?? '—', exportValue: (_v, row) => row.patient_email || row.patient_phone || '' },
   { key: 'appointment_type', label: 'Type', render: v => v?.replace('_', ' ') ?? '—' },
-  { key: 'status', label: 'Status', render: v => <span className={`badge ${STATUS_BADGE[v] ?? 'badge--cancelled'}`}>{v?.replace('_', ' ')}</span> },
+  { key: 'status', label: 'Status', render: v => <mark className={`badge ${STATUS_BADGE[v] ?? 'badge--cancelled'}`}>{v?.replace('_', ' ')}</mark> },
   { key: 'queue_status',    label: 'Queue',   render: v => v ?? '—' },
   { key: 'wait_minutes',    label: 'Wait',    render: v => v != null ? `${v} min` : '—' },
   { key: 'service_minutes', label: 'Service', render: v => v != null ? `${v} min` : '—' },
@@ -202,10 +209,12 @@ function CustomViewReport({ facilityId }) {
   const flatForExport = data.map(row => Object.fromEntries(COLUMNS.map(c => [c.label, c.exportValue ? c.exportValue(row[c.key], row) : (row[c.key] ?? '')])))
   const PDF_COLS = COLUMNS.map(c => ({ header: c.label, dataKey: c.label }))
   return (
-    <div className="tab-section">
-      <div className="controls">
-        <div className="controls-left">
-          <select value={status} onChange={e => setStatus(e.target.value)}>
+    <section className="tab-section">
+      <header className="controls">
+        <fieldset className="controls-left" style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend className="sr-only">Filter appointments</legend>
+          <label htmlFor="filter-status" className="sr-only">Status</label>
+          <select id="filter-status" value={status} onChange={e => setStatus(e.target.value)}>
             <option value="">All Statuses</option>
             <option value="booked">Booked</option>
             <option value="confirmed">Confirmed</option>
@@ -213,26 +222,31 @@ function CustomViewReport({ facilityId }) {
             <option value="no_show">No-Show</option>
             <option value="cancelled">Cancelled</option>
           </select>
-          <select value={type} onChange={e => setType(e.target.value)}>
+          <label htmlFor="filter-type" className="sr-only">Appointment type</label>
+          <select id="filter-type" value={type} onChange={e => setType(e.target.value)}>
             <option value="">All Types</option>
             <option value="scheduled">Scheduled</option>
             <option value="walk_in">Walk-in</option>
           </select>
           <DateRange start={start} end={end} onStart={setStart} onEnd={setEnd} />
-        </div>
+        </fieldset>
         <ExportBar disabled={loading || !data.length} onCSV={() => exportCSV(flatForExport, 'appointments')} onPDF={() => exportPDF(flatForExport, { title: 'Custom Appointments View', columns: PDF_COLS, filename: 'appointments' })} />
-      </div>
-      <div className="table-card">
-        <div className="table-header">
+      </header>
+      <section className="table-card">
+        <header className="table-header">
           <h3>Appointments</h3>
-          <span className="table-count">{loading ? 'Loading…' : `${data.length.toLocaleString()} records`}</span>
-        </div>
+          <output className="table-count">{loading ? 'Loading…' : `${data.length.toLocaleString()} records`}</output>
+        </header>
         <div className="table-scroll">
-          {loading ? <div className="table-empty">Loading…</div>
-          : data.length === 0 ? <div className="table-empty">No appointments match your filters.</div>
-          : (
+          {loading ? (
+            <p className="table-empty">Loading…</p>
+          ) : data.length === 0 ? (
+            <p className="table-empty">No appointments match your filters.</p>
+          ) : (
             <table>
-              <thead><tr>{COLUMNS.map(col => <th key={col.key}>{col.label}</th>)}</tr></thead>
+              <thead>
+                <tr>{COLUMNS.map(col => <th key={col.key} scope="col">{col.label}</th>)}</tr>
+              </thead>
               <tbody>
                 {data.map((row, i) => (
                   <tr key={row.id ?? i}>
@@ -243,8 +257,8 @@ function CustomViewReport({ facilityId }) {
             </table>
           )}
         </div>
-      </div>
-    </div>
+      </section>
+    </section>
   )
 }
 
@@ -270,28 +284,45 @@ export default function AnalyticsDashboardStaff() {
     loadFacility()
   }, [])
 
-  if (loadingFacility) return <div className="analytics-page loading"><p>Loading facility…</p></div>
-  if (facilityError)   return <div className="analytics-page loading"><p style={{ color: '#f43f5e' }}>{facilityError}</p></div>
+  if (loadingFacility) return <main className="analytics-page loading"><p>Loading facility…</p></main>
+  if (facilityError)   return <main className="analytics-page loading"><p style={{ color: '#f43f5e' }}>{facilityError}</p></main>
 
   return (
-    <div className="analytics-page">
-      <div className="analytics-inner">
-        <div className="page-header">
+    <section className="analytics-page">
+      <main className="analytics-inner">
+        <header className="page-header">
           <h1>Analytics</h1>
           <p>📍 {facilityName}</p>
-        </div>
-        <div className="tab-bar">
-          {TABS.map((tab, i) => (
-            <button key={tab} onClick={() => setActiveTab(i)} className={activeTab === i ? 'tab-btn tab-btn--active' : 'tab-btn'}>
-              {tab}
-            </button>
-          ))}
-        </div>
-        {activeTab === 0 && <WaitTimesReport  facilityId={facilityId} />}
-        {activeTab === 1 && <NoShowReport     facilityId={facilityId} />}
-        {activeTab === 2 && <CustomViewReport facilityId={facilityId} />}
-      </div>
+        </header>
+        <nav aria-label="Analytics sections">
+          <ul role="tablist" className="tab-bar">
+            {TABS.map((tab, i) => (
+              <li key={tab} role="presentation">
+                <button
+                  role="tab"
+                  aria-selected={activeTab === i}
+                  aria-controls={`tabpanel-${i}`}
+                  id={`tab-${i}`}
+                  onClick={() => setActiveTab(i)}
+                  className={activeTab === i ? 'tab-btn tab-btn--active' : 'tab-btn'}
+                >
+                  {tab}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <section id="tabpanel-0" role="tabpanel" aria-labelledby="tab-0" hidden={activeTab !== 0}>
+          <WaitTimesReport facilityId={facilityId} />
+        </section>
+        <section id="tabpanel-1" role="tabpanel" aria-labelledby="tab-1" hidden={activeTab !== 1}>
+          <NoShowReport facilityId={facilityId} />
+        </section>
+        <section id="tabpanel-2" role="tabpanel" aria-labelledby="tab-2" hidden={activeTab !== 2}>
+          <CustomViewReport facilityId={facilityId} />
+        </section>
+      </main>
       <AIAssistant context={{ role: 'staff', facilityId, facilityName, pageContext: 'analytics - ' + TABS[activeTab] }} />
-    </div>
+    </section>
   )
 }

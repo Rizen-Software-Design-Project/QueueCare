@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+
 import { supabase } from "#lib/supabase";  
  
 import { onAuthStateChanged } from "firebase/auth";
@@ -11,12 +11,8 @@ const API_BASE = import.meta.env.VITE_API_BASE
   || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
 
 
-export default function BookAppointment() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-
-  const clinicId = searchParams.get("id");
-  // We only trust the name from the database not from the URL since anyone can type anything in the address bar
+export default function BookAppointment({ clinicId, onBack, onDone }) {
+  
   const [clinicName, setClinicName] = useState("");
 
   const [slots, setSlots] = useState([]);
@@ -28,45 +24,28 @@ export default function BookAppointment() {
   });
   const [booking, setBooking] = useState(null);
   const [patientId, setPatientId] = useState(null);
-  const [profile, setProfile]   = useState(null);
+  const [profile, setProfile] = useState(null);
   const [clinicDetails, setClinicDetails] = useState(null);
+
   const REASON_SUGGESTIONS = [
-  "General Checkup",
-  "Flu Symptoms",
-  "Medication Refill",
-  "Follow-up Visit",
-  "Chronic Condition",
-  "Headache",
-  "Stomach Pain",
-  "Vaccination",
-  "Blood Pressure Check",
-  "Family Planning",
-];
+    "General Checkup", "Flu Symptoms", "Medication Refill", "Follow-up Visit",
+    "Chronic Condition", "Headache", "Stomach Pain", "Vaccination",
+    "Blood Pressure Check", "Family Planning",
+  ];
+
   useEffect(() => {
     let unsub = null;
 
     async function resolveProfile() {
-      const {
-        data: { user: supabaseUser },
-      } = await supabase.auth.getUser();
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser();
 
       unsub = onAuthStateChanged(auth, async (firebaseUser) => {
         const resolvedFirebaseUser = firebaseUser || auth.currentUser || null;
-
-        const authProvider = supabaseUser
-          ? "supabase"
-          : resolvedFirebaseUser
-          ? "firebase"
-          : null;
-
-        const providerUserId =
-          supabaseUser?.id || resolvedFirebaseUser?.uid || null;
+        const authProvider = supabaseUser ? "supabase" : resolvedFirebaseUser ? "firebase" : null;
+        const providerUserId = supabaseUser?.id || resolvedFirebaseUser?.uid || null;
 
         if (!authProvider || !providerUserId) {
-          setStatus({
-            type: "error",
-            message: "You must be signed in to book an appointment.",
-          });
+          setStatus({ type: "error", message: "You must be signed in to book an appointment." });
           return;
         }
 
@@ -78,10 +57,7 @@ export default function BookAppointment() {
           .maybeSingle();
 
         if (profileError || !profile) {
-          setStatus({
-            type: "error",
-            message: "Patient profile not found.",
-          });
+          setStatus({ type: "error", message: "Patient profile not found." });
           return;
         }
 
@@ -91,49 +67,34 @@ export default function BookAppointment() {
     }
 
     resolveProfile();
-
-    return () => {
-      if (unsub) unsub();
-    };
+    return () => { if (unsub) unsub(); };
   }, []);
+
   useEffect(() => {
-  async function fetchClinicDetails() {
-    // We validate that the id in the URL is actually a positive integer before using it
-    const parsed = parseInt(clinicId, 10);
-    if (!clinicId || isNaN(parsed) || parsed <= 0 || String(parsed) !== String(clinicId)) {
-      navigate("/clinic-search", { replace: true });
-      return;
+    async function fetchClinicDetails() {
+      const parsed = parseInt(String(clinicId), 10);
+      if (!clinicId || isNaN(parsed) || parsed <= 0) { onBack?.(); return; }
+
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("id, name, facility_type, province, district, services_offered, operating_hours, is_active")
+        .eq("id", parsed)
+        .maybeSingle();
+
+      
+    if (error) { console.error("Clinic details error:", error); return; }
+    if (!data || data.is_active === false) { onBack?.(); return; }
+
+      setClinicName(data.name);
+      setClinicDetails(data);
     }
 
-    const { data, error } = await supabase
-      .from("facilities")
-      .select("id, name, facility_type, province, district, services_offered, operating_hours, is_active")
-      .eq("id", parsed)
-      .maybeSingle();
+    fetchClinicDetails();
+  }, [clinicId]);
 
-    if (error) {
-      console.error("Clinic details error:", error);
-      return;
-    }
-
-    // If the clinic doesn't exist or has been deactivated by an admin we send the user back to search
-    if (!data || data.is_active === false) {
-      navigate("/clinic-search", { replace: true });
-      return;
-    }
-
-    // We set the name from the DB so it can never be spoofed through the URL
-    setClinicName(data.name);
-    setClinicDetails(data);
-  }
-
-  fetchClinicDetails();
-}, [clinicId, navigate]);
   useEffect(() => {
     if (!clinicId || !patientId) {
-      if (!clinicId) {
-        setStatus({ type: "error", message: "No clinic ID provided." });
-      }
+      if (!clinicId) setStatus({ type: "error", message: "No clinic ID provided." });
       return;
     }
 
@@ -148,24 +109,16 @@ export default function BookAppointment() {
 
         if (!data || data.length === 0) {
           setSlots([]);
-          setStatus({
-            type: "error",
-            message: "No available slots for this clinic.",
-          });
+          setStatus({ type: "error", message: "No available slots for this clinic." });
           return;
         }
+
         const now = new Date();
-
         let available = data.filter((s) => {
-      // Filter 1: slot must not be full
-      const hasCapacity = (s.booked_count || 0) < (s.total_capacity || 1);
-
-      // Filter 2: slot datetime must be in the future
-      const slotDateTime = new Date(`${s.slot_date}T${s.slot_time}`);
-      const isFuture = slotDateTime > now;
-
-      return hasCapacity && isFuture;
-    });
+          const hasCapacity = (s.booked_count || 0) < (s.total_capacity || 1);
+          const slotDateTime = new Date(`${s.slot_date}T${s.slot_time}`);
+          return hasCapacity && slotDateTime > now;
+        });
 
         const { data: existing } = await supabase
           .from("appointments")
@@ -180,23 +133,16 @@ export default function BookAppointment() {
 
         if (available.length === 0) {
           setSlots([]);
-          setStatus({
-            type: "error",
-            message: "No available slots for this clinic.",
-          });
+          setStatus({ type: "error", message: "No available slots for this clinic." });
           return;
         }
-        available.sort((a, b) => {
-      const aDateTime = `${a.slot_date}T${a.slot_time}`;
-      const bDateTime = `${b.slot_date}T${b.slot_time}`;
-      return aDateTime.localeCompare(bDateTime);
-    });
-    
+
+        available.sort((a, b) =>
+          `${a.slot_date}T${a.slot_time}`.localeCompare(`${b.slot_date}T${b.slot_time}`)
+        );
+
         setSlots(available);
-        setStatus({
-          type: "count",
-          message: `${available.length} slot(s) available`,
-        });
+        setStatus({ type: "count", message: `${available.length} slot(s) available` });
       } catch (err) {
         setStatus({ type: "error", message: err.message });
       }
@@ -205,268 +151,220 @@ export default function BookAppointment() {
     fetchSlots();
   }, [clinicId, patientId]);
 
-  const handleSelectSlot = (slotId) => {
-    setSelectedSlotId(slotId);
-  };
+  const handleSelectSlot = (slotId) => setSelectedSlotId(slotId);
+
   const handleSelectReason = (suggestion) => {
-  const reasons = reason
-    .split(",")
-    .map((r) => r.trim())
-    .filter(Boolean);
-
-  const alreadySelected = reasons.includes(suggestion);
-
-  let updatedReasons;
-
-  if (alreadySelected) {
-    // remove if already selected
-    updatedReasons = reasons.filter((r) => r !== suggestion);
-  } else {
-    // add new suggestion
-    updatedReasons = [...reasons, suggestion];
-  }
-
-  setReason(updatedReasons.join(", "));
-};
+    const reasons = reason.split(",").map((r) => r.trim()).filter(Boolean);
+    const alreadySelected = reasons.includes(suggestion);
+    const updatedReasons = alreadySelected
+      ? reasons.filter((r) => r !== suggestion)
+      : [...reasons, suggestion];
+    setReason(updatedReasons.join(", "));
+  };
 
   async function handleBook() {
-  if (!selectedSlotId) {
-    setStatus({
-      type: "error",
-      message: "Please select a time slot first.",
-    });
-    return;
-  }
-
-  if (!reason.trim()) {
-    setStatus({
-      type: "error",
-      message: "Please enter a reason for the appointment.",
-    });
-    return;
-  }
-
-  setStatus({ type: "loading", message: "Booking appointment..." });
-
-  try {
-    // ✅ Step 1: Book appointment
-    const res = await fetch(`${API_BASE}/appointments/book`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        patient_id: patientId,
-        facility_id: Number(clinicId),
-        slot_id: selectedSlotId,
-        reason: reason.trim(),
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Booking failed.");
+    if (!selectedSlotId) {
+      setStatus({ type: "error", message: "Please select a time slot first." });
+      return;
     }
-   
-    // ✅ Step 2: Update UI
-    setBooking(data.appointment);
-    setStatus({
-      type: "success",
-      message: "Appointment booked successfully",
-    });
+    if (!reason.trim()) {
+      setStatus({ type: "error", message: "Please enter a reason for the appointment." });
+      return;
+    }
 
-    fetch(`${API_BASE}/appointments/send-confirmation`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      patient_id: patientId,
-      facility_id: Number(clinicId),
-      slot_id: selectedSlotId,
-      reason: reason.trim(),
-    }),
-  }).catch(err => console.warn("Confirmation email failed:", err.message));
+    setStatus({ type: "loading", message: "Booking appointment..." });
 
-  } 
-  
-  catch (err) {
-    setStatus({
-      type: "error",
-      message: `Booking failed: ${err.message}`,
-    });
+    try {
+      const res = await fetch(`${API_BASE}/appointments/book`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id:  patientId,
+          facility_id: Number(clinicId),
+          slot_id:     selectedSlotId,
+          reason:      reason.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Booking failed.");
+
+      setBooking(data.appointment);
+      setStatus({ type: "success", message: "Appointment booked successfully" });
+
+      fetch(`${API_BASE}/appointments/send-confirmation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patient_id:  patientId,
+          facility_id: Number(clinicId),
+          slot_id:     selectedSlotId,
+          reason:      reason.trim(),
+        }),
+      }).catch(err => console.warn("Confirmation email failed:", err.message));
+    } catch (err) {
+      setStatus({ type: "error", message: `Booking failed: ${err.message}` });
+    }
   }
-}
-  
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-ZA", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    return new Date(dateStr).toLocaleDateString("en-ZA", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
     });
   };
 
-  const formatTime = (timeStr) => {
-    if (!timeStr) return "N/A";
-    return timeStr.slice(0, 5);
-  };
+  const formatTime = (timeStr) => timeStr ? timeStr.slice(0, 5) : "N/A";
+
   const formatHours = (hours) => {
-  if (!hours) return [];
+    if (!hours) return [];
+    const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+    return days.map((day) => {
+      const entry = hours[day];
+      if (!entry) return { day, text: "Not listed" };
+      if (entry.closed) return { day, text: "Closed" };
+      return { day, text: entry.open && entry.close ? `${entry.open} - ${entry.close}` : "Not listed" };
+    });
+  };
 
-  const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-
-  return days.map((day) => {
-    const entry = hours[day];
-
-    if (!entry) return { day, text: "Not listed" };
-    if (entry.closed) return { day, text: "Closed" };
-
-    return {
-      day,
-      text: entry.open && entry.close ? `${entry.open} - ${entry.close}` : "Not listed",
-    };
-  });
-};
   return (
-    <>
-    
-      <div className="booking-module">
-        <div className="container">
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            <FiArrowLeft /> Back to search
-          </button>
+    <main className="booking-module">
+      <section className="container">
+         <button className="back-btn" onClick={onBack}>
+          <FiArrowLeft aria-hidden="true" /> Back to search
+        </button>
 
-          <h2><FiCalendar /> Book Appointment</h2>
-          <h3>{clinicName || "Unknown Clinic"}</h3>
-          {clinicDetails && (
-          <div className="booking-clinic-details">
-            <div>
+        <h2><FiCalendar aria-hidden="true" /> Book Appointment</h2>
+        <h3>{clinicName || "Unknown Clinic"}</h3>
+
+        {clinicDetails && (
+          <article className="booking-clinic-details">
+            <header>
               <h4>{clinicDetails.name}</h4>
               <p>
                 {clinicDetails.facility_type || "Clinic"} · {clinicDetails.district || "Unknown district"}
                 {clinicDetails.province ? `, ${clinicDetails.province}` : ""}
               </p>
-            </div>
+            </header>
 
-            <div className="booking-clinic-section">
-              <strong>Services offered</strong>
-              {Array.isArray(clinicDetails.services_offered) &&
-              clinicDetails.services_offered.length > 0 ? (
-                <div className="booking-service-tags">
+            <section className="booking-clinic-section">
+              <h5>Services offered</h5>
+              {Array.isArray(clinicDetails.services_offered) && clinicDetails.services_offered.length > 0 ? (
+                <ul className="booking-service-tags">
                   {clinicDetails.services_offered.map((service) => (
-                    <span key={service} className="booking-service-tag">
-                      {service}
-                    </span>
+                    <li key={service} className="booking-service-tag">{service}</li>
                   ))}
-                </div>
+                </ul>
               ) : (
                 <p className="booking-muted">No services listed.</p>
               )}
-            </div>
+            </section>
 
-            <div className="booking-clinic-section">
-              <strong>Operating hours</strong>
-              <div className="booking-hours-list">
+            <section className="booking-clinic-section">
+              <h5>Operating hours</h5>
+              <dl className="booking-hours-list">
                 {formatHours(clinicDetails.operating_hours).map(({ day, text }) => (
                   <div key={day} className="booking-hour-row">
-                    <span>{day.charAt(0).toUpperCase() + day.slice(1)}</span>
-                    <span>{text}</span>
+                    <dt>{day.charAt(0).toUpperCase() + day.slice(1)}</dt>
+                    <dd>{text}</dd>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
+              </dl>
+            </section>
+          </article>
         )}
-          <div className={`status ${status.type}`}>{status.message}</div>
 
-          {/* Booking confirmation */}
-          {booking && (
-            <div className="confirmation">
-              <h3><FiCheck /> Appointment Confirmed</h3>
-              <p><strong>Status:</strong> {booking.status}</p>
-              <p><strong>Reason:</strong> {booking.reason}</p>
-              <button onClick={() => navigate("/dashboard")}>
-                Back to Dashboard
-              </button>
-            </div>
-          )}
+        <p role="status" className={`status ${status.type}`}>{status.message}</p>
 
-          {/* Slot selection */}
-          {!booking && slots.length > 0 && (
-            <>
-              <div className="slots">
-                <h4>Available Time Slots</h4>
+        {/* Booking confirmation */}
+        {booking && (
+          <section className="confirmation">
+            <h3><FiCheck aria-hidden="true" /> Appointment Confirmed</h3>
+            <p><strong>Status:</strong> {booking.status}</p>
+            <p><strong>Reason:</strong> {booking.reason}</p>
+           <button onClick={onDone}>Back to Dashboard</button>
+          </section>
+        )}
+
+        {/* Slot selection */}
+        {!booking && slots.length > 0 && (
+          <>
+            <section className="slots">
+              <h4>Available Time Slots</h4>
+              <ul>
                 {slots.map((slot) => {
                   const isSelected = String(selectedSlotId) === String(slot.id);
+                  const spotsLeft = slot.total_capacity - (slot.booked_count || 0);
                   return (
-                    <div
-                      key={slot.id}
-                      className={`slot-card ${isSelected ? "selected" : ""}`}
-                      onClick={() => handleSelectSlot(slot.id)}
-                    >
-                      <div className="slot-date">{formatDate(slot.slot_date)}</div>
-                      <div className="slot-time">
-                        <FiClock /> {formatTime(slot.slot_time)}
-                      </div>
-                      <div className="slot-meta">
-                        {slot.duration_minutes ? `${slot.duration_minutes} min` : ""}
-                        {slot.total_capacity
-                          ? ` · ${slot.total_capacity - (slot.booked_count || 0)} spot${slot.total_capacity - (slot.booked_count || 0) !== 1 ? "s" : ""} left`
-                          : ""}
-                      </div>
-                      {isSelected && (
-                        <div className="slot-check">
-                          <FiCheck /> Selected
-                        </div>
-                      )}
-                    </div>
+                    <li key={slot.id}>
+                      <article
+                        className={`slot-card ${isSelected ? "selected" : ""}`}
+                        onClick={() => handleSelectSlot(slot.id)}
+                        aria-pressed={isSelected}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === "Enter" && handleSelectSlot(slot.id)}
+                      >
+                        <p className="slot-date">{formatDate(slot.slot_date)}</p>
+                        <p className="slot-time">
+                          <FiClock aria-hidden="true" /> {formatTime(slot.slot_time)}
+                        </p>
+                        <p className="slot-meta">
+                          {slot.duration_minutes ? `${slot.duration_minutes} min` : ""}
+                          {slot.total_capacity
+                            ? ` · ${spotsLeft} spot${spotsLeft !== 1 ? "s" : ""} left`
+                            : ""}
+                        </p>
+                        {isSelected && (
+                          <p className="slot-check">
+                            <FiCheck aria-hidden="true" /> Selected
+                          </p>
+                        )}
+                      </article>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
+            </section>
 
-              <div className="reason-group">
-                <label htmlFor="reason">Reason for visit</label>
-                <textarea
-                  id="reason"
-                  placeholder="e.g. General checkup, Flu symptoms, Follow-up..."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={3}
-                />
-                <div className="reason-suggestions">
-                  {REASON_SUGGESTIONS.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      className={`reason-chip ${
-                          reason
-                            .split(",")
-                            .map((r) => r.trim())
-                            .includes(suggestion)
-                              ? "active"
-                              : ""
-                        }`}
-                      onClick={() => handleSelectReason(suggestion)}
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-                
-              </div>
+            <section className="reason-group">
+              <label htmlFor="reason">Reason for visit</label>
+              <textarea
+                id="reason"
+                placeholder="e.g. General checkup, Flu symptoms, Follow-up..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+              />
+              <ul className="reason-suggestions">
+                {REASON_SUGGESTIONS.map((suggestion) => {
+                  const isActive = reason.split(",").map((r) => r.trim()).includes(suggestion);
+                  return (
+                    <li key={suggestion}>
+                      <button
+                        type="button"
+                        className={`reason-chip ${isActive ? "active" : ""}`}
+                        aria-pressed={isActive}
+                        onClick={() => handleSelectReason(suggestion)}
+                      >
+                        {suggestion}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
 
-              <button
-                className="book-btn"
-                onClick={handleBook}
-                disabled={!selectedSlotId || !reason.trim()}
-              >
-                Confirm Booking
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </>
+            <button
+              className="book-btn"
+              onClick={handleBook}
+              disabled={!selectedSlotId || !reason.trim()}
+            >
+              Confirm Booking
+            </button>
+          </>
+        )}
+      </section>
+    </main>
   );
 }

@@ -73,25 +73,25 @@ export { isProfileComplete };
 
 // ── Reusable UI Components ────────────────────────────────────────────────────
 const Logo = () => (
-  <div className="auth-logo">
-    <div className="auth-logo-mark">
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="1.8">
+  <header className="auth-logo">
+    <figure className="auth-logo-mark">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="1.8" aria-hidden="true">
         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
         <path d="M2 17l10 5 10-5"/>
         <path d="M2 12l10 5 10-5"/>
       </svg>
-    </div>
+    </figure>
     <div>
       <h1 className="auth-logo-name">MediAccess</h1>
       <p className="auth-logo-sub">Integrated Healthcare Management</p>
     </div>
-  </div>
+  </header>
 );
 
 const LoadingSpinner = () => (
-  <div className="auth-spinner">
+  <section className="auth-spinner" aria-label="Loading" role="status">
     <div className="auth-spinner-circle" />
-  </div>
+  </section>
 );
 
 const StrengthMeter = ({ score }) => {
@@ -99,7 +99,7 @@ const StrengthMeter = ({ score }) => {
   const levels = ["Very weak", "Weak", "Fair", "Good", "Strong"];
   const colors = ["#E24B4A", "#EF9F27", "#F4C542", "#1D9E75", "#0F6E56"];
   return (
-    <div className="auth-strength-container">
+    <section className="auth-strength-container" aria-label={`Password strength: ${levels[score - 1] ?? ""}`}>
       <div className="auth-strength-bar-container">
         {[0, 1, 2, 3, 4].map((i) => (
           <div
@@ -110,7 +110,7 @@ const StrengthMeter = ({ score }) => {
         ))}
       </div>
       {score > 0 && <span className="auth-strength-label">{levels[score - 1]}</span>}
-    </div>
+    </section>
   );
 };
 
@@ -141,11 +141,12 @@ const OtpInput = ({ value, onChange }) => {
   };
 
   return (
-    <div className="auth-otp-container">
+    <fieldset className="auth-otp-container" style={{ border: 0, padding: 0, margin: 0 }}>
+      <legend className="sr-only">One-time password</legend>
       {value.map((digit, idx) => (
         <input
           key={idx}
-          data-testid={`otp-input-${idx}`} // To help with testing
+          data-testid={`otp-input-${idx}`}
           ref={(el) => (inputsRef.current[idx] = el)}
           type="text"
           inputMode="numeric"
@@ -158,7 +159,7 @@ const OtpInput = ({ value, onChange }) => {
           aria-label={`OTP digit ${idx + 1}`}
         />
       ))}
-    </div>
+    </fieldset>
   );
 };
 
@@ -171,7 +172,7 @@ const SocialButton = ({ icon, label, onClick, disabled }) => (
 
 const BackButton = ({ onClick }) => (
   <button type="button" className="auth-btn-back" onClick={onClick}>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
       <polyline points="15 18 9 12 15 6" />
     </svg>
     Back
@@ -179,15 +180,15 @@ const BackButton = ({ onClick }) => (
 );
 
 const Divider = () => (
-  <div className="auth-divider">
+  <section className="auth-divider" aria-hidden="true">
     <div className="auth-div-line" />
     <span className="auth-div-text">or</span>
     <div className="auth-div-line" />
-  </div>
+  </section>
 );
 
 const ErrorMessage = ({ msg }) =>
-  msg ? <div className="auth-error">⚠️ {msg}</div> : null;
+  msg ? <p role="alert" className="auth-error">⚠️ {msg}</p> : null;
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AuthPage() {
@@ -215,7 +216,6 @@ export default function AuthPage() {
 
   function chooseRole(role) { setSelectedRole(role); setError(""); setPage("home"); }
 
-  // Invisible reCAPTCHA for phone login
   useEffect(() => {
     if (!auth) return;
     window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
@@ -225,7 +225,6 @@ export default function AuthPage() {
     return () => { window.recaptchaVerifier = null; };
   }, []);
 
-  // Resend OTP timer
   useEffect(() => {
     if (resendTimer <= 0) return;
     const interval = setInterval(() => setResendTimer((t) => t - 1), 1000);
@@ -234,52 +233,48 @@ export default function AuthPage() {
 
   // ── Central routing decision ───────────────────────────────────────────────
   async function routeAfterLogin(identity) {
-  localStorage.setItem("userIdentity", JSON.stringify(identity));
+    localStorage.setItem("userIdentity", JSON.stringify(identity));
 
-  const [profile, application] = await Promise.all([
-    fetchProfile(identity),
-    fetchLatestApplication(identity),
-  ]);
+    const [profile, application] = await Promise.all([
+      fetchProfile(identity),
+      fetchLatestApplication(identity),
+    ]);
 
-  // Enforce role if profile exists
-  if (profile && selectedRole && profile.role !== selectedRole) {
-    setError(`You selected continue as "${selectedRole}" but this account is a "${profile.role}" account.`);
-    await supabase.auth.signOut();
-    setPage("role-select");
-    return;
-  }
+    if (profile && selectedRole && profile.role !== selectedRole) {
+      setError(`You selected continue as "${selectedRole}" but this account is a "${profile.role}" account.`);
+      await supabase.auth.signOut();
+      setPage("role-select");
+      return;
+    }
 
-  // Existing user with complete profile
-  if (profile && isProfileComplete(profile)) {
-    navigate("/dashboard");
-    return;
-  }
+    if (profile && isProfileComplete(profile)) {
+      navigate("/dashboard");
+      return;
+    }
 
-  // Application states
-  if (application?.status === "pending") {
-    go(application.requested_role === "admin" ? "admin-pending" : "application-pending");
-    return;
-  }
+    if (application?.status === "pending") {
+      go(application.requested_role === "admin" ? "admin-pending" : "application-pending");
+      return;
+    }
 
-  if (application?.status === "rejected") {
-    setError(`Your ${application.requested_role} application was rejected.`);
-    go("home");
-    return;
-  }
+    if (application?.status === "rejected") {
+      setError(`Your ${application.requested_role} application was rejected.`);
+      go("home");
+      return;
+    }
 
-  //New or incomplete profile
-  navigate("/profile-setup", {
-    state: {
-      identity: {
-        ...identity,
-        name: profile?.name || identity.name || "",
-        surname: profile?.surname || identity.surname || "",
-        sex: profile?.sex || "",
+    navigate("/profile-setup", {
+      state: {
+        identity: {
+          ...identity,
+          name:    profile?.name    || identity.name    || "",
+          surname: profile?.surname || identity.surname || "",
+          sex:     profile?.sex     || "",
+        },
+        selectedRole,
       },
-      selectedRole,
-    },
-  });
-}
+    });
+  }
 
   // ── Email / password ──────────────────────────────────────────────────────
   async function handleEmailSubmit(e) {
@@ -365,7 +360,7 @@ export default function AuthPage() {
         provider_user_id: firebaseUser.uid,
         email:   firebaseUser.email || "",
         phone:   normalised || firebaseUser.phoneNumber || "",
-        name:    firebaseUser.displayName?.split(" ")[0]          || "",
+        name:    firebaseUser.displayName?.split(" ")[0]               || "",
         surname: firebaseUser.displayName?.split(" ").slice(1).join(" ") || "",
       });
     } catch {
@@ -405,7 +400,7 @@ export default function AuthPage() {
         provider_user_id: u.uid,
         email:   u.email       || "",
         phone:   u.phoneNumber || "",
-        name:    first         || "",
+        name:    first          || "",
         surname: rest.join(" ") || "",
       });
     } catch (err) {
@@ -416,52 +411,39 @@ export default function AuthPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="auth-root">
+    <section className="auth-root">
       <Logo />
 
-      <div className="auth-card">
+      <main className="auth-card">
+
         {/* Role select */}
         {page === "role-select" && (
-          <div className="auth-section">
+          <section className="auth-section">
             <ErrorMessage msg={error} />
             <h2 className="auth-title">Welcome to MediAccess</h2>
             <p className="auth-sub">Select how you'd like to continue</p>
-            <button className="auth-btn-primary" onClick={() => chooseRole("patient")}>
-              Continue as Patient
-            </button>
-            <button className="auth-btn-outline" onClick={() => chooseRole("staff")}>
-              Continue as Staff
-            </button>
-            <button className="auth-btn-outline" onClick={() => chooseRole("admin")}>
-              Continue as Admin
-            </button>
-          </div>
+            <menu style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              <li><button className="auth-btn-primary"  onClick={() => chooseRole("patient")}>Continue as Patient</button></li>
+              <li><button className="auth-btn-outline"  onClick={() => chooseRole("staff")}>Continue as Staff</button></li>
+              <li><button className="auth-btn-outline"  onClick={() => chooseRole("admin")}>Continue as Admin</button></li>
+            </menu>
+          </section>
         )}
 
         {/* Login method picker */}
         {page === "home" && (
-          <div className="auth-section">
+          <section className="auth-section">
             <BackButton onClick={() => go("role-select")} />
             <h2 className="auth-title">Sign in to MediAccess</h2>
             <p className="auth-sub">Continue as <strong>{selectedRole}</strong></p>
 
-            <SocialButton
-              icon={<GoogleIcon />}
-              label="Continue with Google"
-              onClick={() => handleSocialLogin(googleAuthProvider)}
-              disabled={loading}
-            />
-            <SocialButton
-              icon={<FacebookIcon />}
-              label="Continue with Facebook"
-              onClick={() => handleSocialLogin(facebookProvider)}
-              disabled={loading}
-            />
+            <SocialButton icon={<GoogleIcon />}   label="Continue with Google"   onClick={() => handleSocialLogin(googleAuthProvider)} disabled={loading} />
+            <SocialButton icon={<FacebookIcon />} label="Continue with Facebook" onClick={() => handleSocialLogin(facebookProvider)}   disabled={loading} />
 
             <Divider />
 
             <button className="auth-btn-outline" onClick={() => go("email")}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
@@ -469,7 +451,7 @@ export default function AuthPage() {
             </button>
 
             <button className="auth-btn-outline" onClick={() => go("phone")}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
                 <line x1="12" y1="18" x2="12.01" y2="18"/>
               </svg>
@@ -477,19 +459,20 @@ export default function AuthPage() {
             </button>
 
             <ErrorMessage msg={error} />
-          </div>
+          </section>
         )}
 
         {/* Email sign-in / sign-up */}
         {page === "email" && (
-          <div className="auth-section">
+          <section className="auth-section">
             <BackButton onClick={() => go("home")} />
             <h2 className="auth-title">{isNewEmail ? "Create account" : "Sign in"}</h2>
             <p className="auth-sub">Use your email address</p>
 
             <form onSubmit={handleEmailSubmit}>
-              <label className="auth-label">Email address</label>
+              <label className="auth-label" htmlFor="email-address">Email address</label>
               <input
+                id="email-address"
                 className="auth-input"
                 type="email"
                 placeholder="jane@example.com"
@@ -500,8 +483,9 @@ export default function AuthPage() {
 
               {!isNewEmail && (
                 <>
-                  <label className="auth-label">Password</label>
+                  <label className="auth-label" htmlFor="login-password">Password</label>
                   <input
+                    id="login-password"
                     className="auth-input"
                     type="password"
                     placeholder="Enter your password"
@@ -513,8 +497,9 @@ export default function AuthPage() {
 
               {isNewEmail && (
                 <>
-                  <label className="auth-label">New password</label>
+                  <label className="auth-label" htmlFor="new-password">New password</label>
                   <input
+                    id="new-password"
                     className="auth-input"
                     type="password"
                     placeholder="Create a strong password"
@@ -522,8 +507,9 @@ export default function AuthPage() {
                     onChange={(e) => setNewPw(e.target.value)}
                   />
                   <StrengthMeter score={strengthScore(newPw)} />
-                  <label className="auth-label">Confirm password</label>
+                  <label className="auth-label" htmlFor="confirm-password">Confirm password</label>
                   <input
+                    id="confirm-password"
                     className="auth-input"
                     type="password"
                     placeholder="Repeat your password"
@@ -539,18 +525,15 @@ export default function AuthPage() {
               </button>
             </form>
 
-            <button
-              className="auth-btn-link"
-              onClick={() => { setIsNewEmail(!isNewEmail); setError(""); }}
-            >
+            <button className="auth-btn-link" onClick={() => { setIsNewEmail(!isNewEmail); setError(""); }}>
               {isNewEmail ? "Already have an account? Sign in" : "Don't have an account? Create one"}
             </button>
-          </div>
+          </section>
         )}
 
         {/* Email OTP */}
         {page === "email-otp" && (
-          <div className="auth-section">
+          <section className="auth-section">
             <BackButton onClick={() => go("email")} />
             <h2 className="auth-title">Check your email</h2>
             <p className="auth-sub">We sent a 6‑digit code to <strong>{loginEmail}</strong></p>
@@ -559,27 +542,25 @@ export default function AuthPage() {
             <button className="auth-btn-primary" onClick={handleEmailOtp} disabled={loading}>
               {loading ? <LoadingSpinner /> : "Verify code"}
             </button>
-            <button
-              className="auth-btn-link"
-              onClick={() => supabase.auth.resend({ type: "signup", email: loginEmail })}
-            >
+            <button className="auth-btn-link" onClick={() => supabase.auth.resend({ type: "signup", email: loginEmail })}>
               Resend code
             </button>
-          </div>
+          </section>
         )}
 
         {/* Phone number entry */}
         {page === "phone" && (
-          <div className="auth-section">
+          <section className="auth-section">
             <BackButton onClick={() => go("home")} />
             <h2 className="auth-title">Enter your number</h2>
             <p className="auth-sub">We'll send a one‑time code via SMS</p>
 
             <form onSubmit={handlePhoneSubmit}>
-              <label className="auth-label">Phone number</label>
-              <div className="auth-phone-wrap">
-                <span className="auth-phone-code">+27</span>
+              <label className="auth-label" htmlFor="phone-number">Phone number</label>
+              <section className="auth-phone-wrap">
+                <section className="auth-phone-code" aria-hidden="true">+27</section>
                 <input
+                  id="phone-number"
                   className="auth-input auth-input--phone"
                   type="tel"
                   placeholder="821234567"
@@ -587,19 +568,19 @@ export default function AuthPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   required
                 />
-              </div>
+              </section>
               <p className="auth-hint">South African numbers only</p>
               <ErrorMessage msg={error} />
               <button className="auth-btn-primary auth-btn-primary--mt" type="submit" disabled={loading}>
                 {loading ? <LoadingSpinner /> : "Send OTP"}
               </button>
             </form>
-          </div>
+          </section>
         )}
 
         {/* Phone OTP */}
         {page === "phone-otp" && (
-          <div className="auth-section">
+          <section className="auth-section">
             <BackButton onClick={() => go("phone")} />
             <h2 className="auth-title">Enter OTP</h2>
             <p className="auth-sub">Code sent to <strong>+27 {phone}</strong></p>
@@ -616,41 +597,41 @@ export default function AuthPage() {
             >
               {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
             </button>
-          </div>
+          </section>
         )}
 
         {/* Pending screens */}
         {page === "application-pending" && (
-          <div className="auth-section">
+          <section className="auth-section">
             <h2 className="auth-title">Application submitted</h2>
             <p className="auth-sub">
               Your staff application has been sent to the admin for approval.
               You'll receive a notification once it's reviewed.
             </p>
             <button className="auth-btn-primary" onClick={() => go("home")}>Back to sign in</button>
-          </div>
+          </section>
         )}
 
         {page === "admin-pending" && (
-          <div className="auth-section">
+          <section className="auth-section">
             <h2 className="auth-title">Admin application submitted</h2>
             <p className="auth-sub">
               Your admin request is pending approval. You'll be able to access
               the admin dashboard once approved.
             </p>
             <button className="auth-btn-primary" onClick={() => go("home")}>Back to sign in</button>
-          </div>
+          </section>
         )}
-      </div>
+      </main>
 
-      <div id="recaptcha-container" />
-    </div>
+      <section id="recaptcha-container" />
+    </section>
   );
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const GoogleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24">
+  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
@@ -659,7 +640,7 @@ const GoogleIcon = () => (
 );
 
 const FacebookIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24">
+  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
   </svg>
 );

@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { FiCalendar, FiClock } from "react-icons/fi";
 import { DAYS, CountdownTimer } from "./DashboardHelpers";
 
@@ -116,9 +115,9 @@ export function OverviewPanel({
   profile, appointments, upcomingAppts = [], activeQueue, unreadCount,
   staffAssignments, latestAssignment, queueData, availability,
   availabilityStatus, savingAvailability, onSaveAvailability,
-  onUpdateAvailabilityDay, onReschedule, onCancel, slotDate, slotTime, onJoinQueue,isAppointmentToday, lastClinic,
+  onUpdateAvailabilityDay, onReschedule, onCancel, slotDate, slotTime, onJoinQueue,isAppointmentToday, lastClinic,onBookAgain,
 }) {
-  const navigate = useNavigate();
+  
   if (!profile) return null;
 
   return (
@@ -173,7 +172,7 @@ export function OverviewPanel({
             </div>
             <button
               className="db-btn db-btn-reschedule"
-              onClick={() => navigate(`/clinic?id=${lastClinic.facility_id}`)}
+              onClick={() => onBookAgain(lastClinic.facility_id)}
             >
               Book Again
             </button>

@@ -76,6 +76,13 @@
   font-family: inherit;
 }
 
+.analytics-dashboard ul,
+.analytics-dashboard menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 @media (max-width: 768px) {
   .analytics-dashboard {
     padding: 24px 16px;

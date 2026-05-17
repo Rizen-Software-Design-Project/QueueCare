@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabaseAdmin.js";
 
 const router = express.Router();
 
-// ── Shared sort helper ────────────────────────────────────────────────────────
+// Shared sort helper
 function sortBySlotDateTime(entries) {
   return [...entries].sort((a, b) => {
     const aAppt = Array.isArray(a.appointments) ? a.appointments[0] : a.appointments;
@@ -14,9 +14,9 @@ function sortBySlotDateTime(entries) {
   });
 }
 
-// ─────────────────────────────────────────────
-// GET MY QUEUE
-// ─────────────────────────────────────────────
+
+// Get my queue status and position
+
 router.get("/my_queue", async (req, res) => {
   const { contact_details, facility_id } = req.query;
 
@@ -106,9 +106,9 @@ router.get("/my_queue", async (req, res) => {
   });
 });
 
-// ─────────────────────────────────────────────
-// ADD TO QUEUE
-// ─────────────────────────────────────────────
+
+// Add to queue
+
 router.post("/add_to_queue", async (req, res) => {
   const { contact_details, facility_id } = req.body;
 
@@ -163,9 +163,8 @@ router.post("/add_to_queue", async (req, res) => {
   return res.json({ success: true });
 });
 
-// ─────────────────────────────────────────────
-// REMOVE FROM QUEUE
-// ─────────────────────────────────────────────
+// Remove from queue
+
 router.delete("/remove_queue", async (req, res) => {
   const { contact_details, facility_id } = req.query;
 
@@ -190,9 +189,8 @@ router.delete("/remove_queue", async (req, res) => {
   return res.json({ success: true });
 });
 
-// ─────────────────────────────────────────────
 // UPDATE QUEUE STATUS
-// ─────────────────────────────────────────────
+
 router.patch("/update_status", async (req, res) => {
   const { contact_details, facility_id, status } = req.body;
 
@@ -223,9 +221,8 @@ router.patch("/update_status", async (req, res) => {
   return res.json({ success: true });
 });
 
-// ─────────────────────────────────────────────
 // VIEW FULL QUEUE (for staff dashboard)
-// ─────────────────────────────────────────────
+
 router.get("/full_queue", async (req, res) => {
   const { facility_id } = req.query;
 
