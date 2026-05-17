@@ -169,11 +169,6 @@ export default function QueueCarePolicy() {
   const navigate = useNavigate();
   return (
     <section style={{ padding: "20px" }}>
-      <button
-        onClick={() => navigate("/dashboard")}
-        className="qc-back-btn">
-        ← Back
-      </button>
       <h1>QueueCare Policies</h1>
       <p>This page outlines the terms and operational policies of QueueCare.</p>
 

@@ -357,13 +357,13 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
 
         {/* Appointments Table */}
         {!queueOnly && (
-          <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
-              <h2 style={{ margin: 0 }}>{appointmentView === "today" ? "Today's Appointments" : "Upcoming Appointments"}</h2>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button type="button" onClick={() => setAppointmentView("today")} style={{ padding: "10px 16px", background: appointmentView === "today" ? "#1d4ed8" : "#2563eb", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>Today</button>
-                <button type="button" onClick={() => setAppointmentView("upcoming")} style={{ padding: "10px 16px", background: appointmentView === "upcoming" ? "#15803d" : "#16a34a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>View Upcoming</button>
-                {facilityId && <button type="button" onClick={() => fetchAppointments(facilityId)} style={{ padding: "10px 16px", background: "#111827", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>{apptLoading ? "Refreshing..." : "Refresh"}</button>}
+           <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+            <h2 style={{ margin: 0 }}>{appointmentView === "today" ? "Today's Appointments" : "Upcoming Appointments"}</h2>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => setAppointmentView("today")} style={{ padding: "10px 16px", background: appointmentView === "today" ? "#1d4ed8" : "#2563eb", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>Today</button>
+              <button type="button" onClick={() => setAppointmentView("upcoming")} style={{ padding: "10px 16px", background: appointmentView === "upcoming" ? "#15803d" : "#16a34a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>View Upcoming</button>
+              {facilityId && <button type="button" onClick={() => fetchAppointments(facilityId)} style={{ padding: "10px 16px", background: "#b45309", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>{apptLoading ? "Refreshing..." : "Refresh"}</button>}
               </div>
             </div>
             {apptLoading && <p style={{ color: "#888" }}>Loading appointments...</p>}

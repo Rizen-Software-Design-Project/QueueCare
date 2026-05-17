@@ -8,30 +8,39 @@ import { FaStethoscope } from "react-icons/fa";
 import AIAssistant from "./AIAssistant";
 
 import { STAFF_NAV, normalizeAvailability } from "./DashboardHelpers";
-import { OverviewPanel, NotificationsPanel, ProfilePanel } from "./DashboardPanels";
+import {
+  OverviewPanel,
+  NotificationsPanel,
+  ProfilePanel,
+} from "./DashboardPanels";
 import { StaffHistoryView } from "./AppointmentHistory";
 import "./Dashboard.css";
 
 import StaffClinicManagement from "./StaffClinicManagement";
-import WalkIn               from "./Walkin";
-import Schedule             from "./Schedule";
-import ProfilePage          from "./ProfilePage";
+import WalkIn from "./Walkin";
+import Schedule from "./Schedule";
+import ProfilePage from "./ProfilePage";
 import AnalyticsDashboardStaff from "./AnalyticsDashboardStaff";
-import ServicePolicy        from "./ServicePolicy";
+import ServicePolicy from "./ServicePolicy";
 
 export default function StaffDashboard({ profile: initialProfile }) {
   const navigate = useNavigate();
 
-  const [profile,           setProfile]           = useState(initialProfile);
-  const [staffAssignments,  setStaffAssignments]  = useState([]);
-  const [notifications,     setNotifications]     = useState([]);
-  const [unreadCount,       setUnreadCount]       = useState(0);
-  const [activeTab,         setActiveTab]         = useState("overview");
-  const [sidebarOpen,       setSidebarOpen]       = useState(false);
+  const [profile, setProfile] = useState(initialProfile);
+  const [staffAssignments, setStaffAssignments] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [availability,       setAvailability]       = useState(normalizeAvailability(null));
+  const [availability, setAvailability] = useState(
+    normalizeAvailability(null)
+  );
   const [savingAvailability, setSavingAvailability] = useState(false);
-  const [availabilityStatus, setAvailabilityStatus] = useState({ type: "", message: "" });
+  const [availabilityStatus, setAvailabilityStatus] = useState({
+    type: "",
+    message: "",
+  });
 
   // ── Load data ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -41,6 +50,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
           .from("staff_assignments")
           .select("*, facilities(name, district, province)")
           .eq("profile_id", profile.id),
+
         supabase
           .from("notifications")
           .select("*")
@@ -52,41 +62,68 @@ export default function StaffDashboard({ profile: initialProfile }) {
       const assignments = results[0]?.data ?? [];
       const notif       = results[1]?.data ?? [];
       localStorage.setItem("staff_id", profile.id);
-      localStorage.setItem("facility_id", assignments?.[0]?.facility_id ?? "");
+      localStorage.setItem(
+        "facility_id",
+        assignments?.[0]?.facility_id ?? ""
+      );
+
       setStaffAssignments(assignments || []);
-      setAvailability(normalizeAvailability(assignments?.[0]?.availability ?? null));
+      setAvailability(
+        normalizeAvailability(assignments?.[0]?.availability ?? null)
+      );
+
       setNotifications(notif || []);
       setUnreadCount((notif || []).filter((n) => !n.is_read).length);
     }
+
     load();
   }, [profile.id]);
 
   // ── Actions ───────────────────────────────────────────────────────────────
   async function handleLogout() {
     await Promise.allSettled([supabase.auth.signOut(), signOut(auth)]);
+
     localStorage.removeItem("userIdentity");
     navigate("/signin");
   }
 
   async function markAllRead() {
-    await supabase.from("notifications").update({ is_read: true }).eq("profile_id", profile.id);
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    await supabase
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("profile_id", profile.id);
+
+    setNotifications((prev) =>
+      prev.map((n) => ({
+        ...n,
+        is_read: true,
+      }))
+    );
+
     setUnreadCount(0);
   }
 
   async function saveAvailability() {
     const assignment = staffAssignments[0];
+
     if (!assignment) return;
+
     setSavingAvailability(true);
+
     const { error } = await supabase
       .from("staff_assignments")
       .update({ availability })
       .eq("id", assignment.id);
+
     setSavingAvailability(false);
+
     setAvailabilityStatus(
       error
-        ? { type: "error",   message: error.message }
-        : { type: "success", message: "Availability saved successfully." }
+        ? { type: "error", message: error.message }
+        : {
+            type: "success",
+            message: "Availability saved successfully.",
+          }
     );
   }
 
@@ -96,13 +133,17 @@ export default function StaffDashboard({ profile: initialProfile }) {
       [day]: {
         ...prev[day],
         [field]: value,
-        ...(field === "available" && !value ? { start: "", end: "" } : {}),
+        ...(field === "available" && !value
+          ? { start: "", end: "" }
+          : {}),
       },
     }));
   }
 
   const latestAssignment = staffAssignments[0] || null;
-  const facilityId   = latestAssignment?.facility_id ?? null;
+
+  const facilityId = latestAssignment?.facility_id ?? null;
+
   const facilityName = latestAssignment?.facilities?.name ?? "";
 
   function goTo(id) {
@@ -134,16 +175,69 @@ export default function StaffDashboard({ profile: initialProfile }) {
               slotDate={null}
               slotTime={null}
             />
-            <div className="db-card" style={{ marginTop: 20 }}>
-              <p style={{ color: "#6b7280", marginBottom: 16 }}>Quick Actions</p>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("staff-appointments")}>Clinic Appointments</button>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("staff-queue")}>Patient Queue</button>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("walk-in")}>Walk-In Patients</button>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("analytics")}>View Analytics</button>
-                <button className="db-btn db-btn-reschedule" onClick={() => goTo("schedule")}>Availability</button>
-              </div>
-            </div>
+
+            <section
+              className="db-card"
+              style={{ marginTop: 20 }}
+              aria-labelledby="quick-actions-heading"
+            >
+              <header>
+                <h2
+                  id="quick-actions-heading"
+                  style={{
+                    color: "#6b7280",
+                    marginBottom: 16,
+                    fontSize: "1rem",
+                  }}
+                >
+                  Quick Actions
+                </h2>
+              </header>
+
+              <nav
+                aria-label="Quick actions"
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  className="db-btn db-btn-reschedule"
+                  onClick={() => goTo("staff-appointments")}
+                >
+                  Clinic Appointments
+                </button>
+
+                <button
+                  className="db-btn db-btn-reschedule"
+                  onClick={() => goTo("staff-queue")}
+                >
+                  Patient Queue
+                </button>
+
+                <button
+                  className="db-btn db-btn-reschedule"
+                  onClick={() => goTo("walk-in")}
+                >
+                  Walk-In Patients
+                </button>
+
+                <button
+                  className="db-btn db-btn-reschedule"
+                  onClick={() => goTo("analytics")}
+                >
+                  View Analytics
+                </button>
+
+                <button
+                  className="db-btn db-btn-reschedule"
+                  onClick={() => goTo("schedule")}
+                >
+                  Availability
+                </button>
+              </nav>
+            </section>
           </>
         );
       case "staff-appointments":
@@ -199,46 +293,125 @@ export default function StaffDashboard({ profile: initialProfile }) {
             />
           );
       case "profile":
-        return <ProfilePage profile={profile} onBack={() => goTo("overview")} />;
+        return (
+          <ProfilePage
+            profile={profile}
+            onBack={() => goTo("overview")}
+          />
+        );
 
       case "policy":
         return <ServicePolicy />;
 
       default:
-        return <section className="db-section"><h2>{activeTab}</h2></section>;
+        return (
+          <section className="db-section">
+            <header>
+              <h2>{activeTab}</h2>
+            </header>
+          </section>
+        );
     }
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="db-root">
-      <aside className={`db-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div className="db-sidebar-brand"><FaStethoscope style={{ color: "white" }} /> QueueCare</div>
-        <nav className="db-nav">
-          {STAFF_NAV.map((item) => (
-            <button
-              key={item.id}
-              className={`db-nav-item ${activeTab === item.id ? "db-nav-active" : ""}`}
-              onClick={() => goTo(item.id)}
-            >
-              {item.icon} {item.label}
-            </button>
-          ))}
+      <aside
+        className={`db-sidebar ${sidebarOpen ? "open" : ""}`}
+        aria-label="Staff dashboard sidebar"
+      >
+        <header className="db-sidebar-brand">
+          <FaStethoscope
+            style={{ color: "white" }}
+            aria-hidden="true"
+          />
+
+          <span>QueueCare</span>
+        </header>
+
+        <nav
+          className="db-nav"
+          aria-label="Staff dashboard navigation"
+        >
+          <ul
+            style={{
+              listStyle: "none",
+              padding: 0,
+              margin: 0,
+            }}
+          >
+            {STAFF_NAV.map((item) => (
+              <li key={item.id}>
+                <button
+                  className={`db-nav-item ${
+                    activeTab === item.id
+                      ? "db-nav-active"
+                      : ""
+                  }`}
+                  onClick={() => goTo(item.id)}
+                  aria-current={
+                    activeTab === item.id ? "page" : undefined
+                  }
+                >
+                  <span aria-hidden="true">{item.icon}</span>
+
+                  <span>{item.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </nav>
-        <button className="db-sidebar-logout" onClick={handleLogout}><FiLogOut /> Logout</button>
+
+        <footer>
+          <button
+            className="db-sidebar-logout"
+            onClick={handleLogout}
+          >
+            <FiLogOut aria-hidden="true" />
+
+            <span>Logout</span>
+          </button>
+        </footer>
       </aside>
 
-      <div className="db-main">
+      <section className="db-main">
         <header className="db-topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button className="db-hamburger" onClick={() => setSidebarOpen((v) => !v)}>☰</button>
-            <span>{STAFF_NAV.find((n) => n.id === activeTab)?.label || "Staff Dashboard"}</span>
-          </div>
-          <div>Hi, {profile.name || "Staff"} (staff)</div>
+          <section
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+            aria-label="Dashboard header controls"
+          >
+            <button
+              className="db-hamburger"
+              onClick={() => setSidebarOpen((v) => !v)}
+              aria-label="Toggle sidebar navigation"
+              aria-expanded={sidebarOpen}
+            >
+              ☰
+            </button>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "1rem",
+              }}
+            >
+              {STAFF_NAV.find((n) => n.id === activeTab)?.label ||
+                "Staff Dashboard"}
+            </h1>
+          </section>
+
+          <p style={{ margin: 0 }}>
+            Hi, {profile.name || "Staff"} (staff)
+          </p>
         </header>
 
         <main className="db-content">{renderContent()}</main>
-      </div>
+      </section>
 
       <AIAssistant
         context={{
