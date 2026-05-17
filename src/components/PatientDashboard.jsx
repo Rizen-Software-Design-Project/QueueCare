@@ -14,6 +14,7 @@ import {
   OverviewPanel, AppointmentsPanel, PatientQueuePanel,
   NotificationsPanel, ProfilePanel,
 } from "./DashboardPanels";
+import { PatientHistoryView } from "./AppointmentHistory";
 import { getMyQueue, removeFromQueue, addToQueue } from "../queueApi";
 import "./Dashboard.css";
 
@@ -330,7 +331,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
             </div>
             </>
         );
-      case "appointments":  return <AppointmentsPanel profile={profile} appointments={appointments} onReschedule={openReschedule} onCancel={cancelAppointment} />;
+      case "appointments":  return <PatientHistoryView appointments={appointments} onReschedule={openReschedule} onCancel={cancelAppointment} />;
       case "queue":         return <PatientQueuePanel queueData={queueData} slotDate={sharedProps.slotDate} slotTime={sharedProps.slotTime} />;
       case "notifications": return <NotificationsPanel notifications={notifications} unreadCount={unreadCount} onMarkAllRead={markAllRead} />;
 

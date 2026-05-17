@@ -204,14 +204,14 @@ export default function QueueCarePolicy() {
           </h2>
           <p>Last updated: {section.lastUpdated}</p>
 
-          <div style={{ marginTop: "15px", paddingLeft: "10px" }}>
+          <section style={{ marginTop: "15px", paddingLeft: "10px" }}>
             {section.content.map((item, index) => (
-              <div key={index} style={{ marginBottom: "20px" }}>
+              <section key={index} style={{ marginBottom: "20px" }}>
                 <h3>{item.heading}</h3>
                 <p>{item.body}</p>
-              </div>
+              </section>
             ))}
-          </div>
+          </section>
         </section>
       ))}
 
