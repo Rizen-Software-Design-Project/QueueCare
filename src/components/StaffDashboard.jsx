@@ -120,6 +120,16 @@ function goTo(id) {
       navigate("/staff-manage", { state: navState });
       return;
 
+    case "appointment-history":
+      navigate("/appointment-history", {
+        state: {
+          staff: profile,
+          facilityId:   staffAssignments[0]?.facility_id ?? null,
+          facilityName: latestAssignment?.facilities?.name ?? "",
+        },
+      });
+      return;
+
     case "walk-in":
       navigate("/walk-in", { state: navState });
       return;
@@ -171,6 +181,9 @@ function goTo(id) {
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button className="db-btn db-btn-reschedule" onClick={() => goTo("staff-appointments")}>
                     Clinic Appointments
+                </button>
+                <button className="db-btn db-btn-reschedule" onClick={() => goTo("appointment-history")}>
+                    Appointment History
                 </button>
                 <button className="db-btn db-btn-reschedule" onClick={() => goTo("staff-queue")}>
                     Patient Queue

@@ -1,0 +1,340 @@
+/* ===================================================
+   APPOINTMENT HISTORY — QueueCare
+   Extends Dashboard.css design tokens
+   =================================================== */
+
+/* ── Page wrapper ──────────────────────────────────── */
+.ah-page {
+  padding: 32px 32px 48px;
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  animation: fadeUp 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
+}
+
+/* ── Back button row ───────────────────────────────── */
+.ah-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px 6px 6px;
+  border-radius: var(--radius-xs);
+  margin-bottom: 24px;
+  transition: background 0.15s, color 0.15s;
+}
+.ah-back:hover {
+  background: var(--primary-bg);
+  color: var(--primary-dark);
+}
+
+/* ── Tab switcher ──────────────────────────────────── */
+.ah-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.ah-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: 40px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  color: var(--gray-700);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.ah-tab:hover {
+  border-color: var(--primary-light);
+  color: var(--primary);
+  background: var(--primary-xlight);
+}
+.ah-tab-active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(27, 94, 32, 0.25);
+}
+.ah-tab-active:hover {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: white;
+}
+
+.ah-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 40px;
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+}
+.ah-tab:not(.ah-tab-active) .ah-tab-count {
+  background: var(--gray-300);
+  color: var(--gray-700);
+}
+
+/* ── Filter row ────────────────────────────────────── */
+.ah-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.ah-filter-icon {
+  color: var(--text-sub);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.ah-select {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 6px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.18s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C9A87' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+.ah-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.ah-search {
+  flex: 1;
+  min-width: 200px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 6px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--white);
+  transition: border-color 0.18s;
+}
+.ah-search:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.1);
+}
+.ah-search::placeholder { color: var(--gray-400); }
+
+.ah-clear {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-xs);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.ah-clear:hover {
+  background: var(--gray-200);
+  color: var(--text);
+}
+
+/* ── Appointment list ──────────────────────────────── */
+.ah-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Appointment card ──────────────────────────────── */
+.ah-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s, transform 0.15s;
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+.ah-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.ah-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ah-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ah-card-datetime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.ah-card-datetime svg {
+  color: var(--text-sub);
+  flex-shrink: 0;
+}
+
+.ah-card-duration {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  font-weight: 400;
+}
+
+.ah-card-clinic {
+  font-size: 0.85rem;
+  color: var(--gray-700);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ah-card-patient {
+  font-size: 0.85rem;
+  color: var(--gray-700);
+}
+.ah-card-patient-sub {
+  color: var(--text-sub);
+  font-size: 0.82rem;
+}
+
+.ah-card-reason {
+  font-size: 0.82rem;
+  color: var(--text-sub);
+}
+
+.ah-card-footer {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
+/* ── Card actions ──────────────────────────────────── */
+.ah-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Empty state ───────────────────────────────────── */
+.ah-empty {
+  background: var(--white);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-sub);
+}
+.ah-empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+.ah-empty p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ── Loading state ─────────────────────────────────── */
+.ah-loading {
+  color: var(--text-sub);
+  font-size: 0.9rem;
+  padding: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Unauthenticated / error ───────────────────────── */
+.ah-auth-wall {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.ah-auth-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  padding: 48px 40px;
+  text-align: center;
+  max-width: 380px;
+  width: 100%;
+}
+.ah-auth-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 12px;
+}
+.ah-auth-card p {
+  color: var(--text-sub);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ah-page {
+    padding: 20px 16px 40px;
+  }
+
+  .ah-tabs {
+    width: 100%;
+  }
+  .ah-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 9px 12px;
+  }
+
+  .ah-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ah-search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .ah-card-top {
+    flex-direction: column;
+  }
+}
