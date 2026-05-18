@@ -34,7 +34,7 @@ function isValidEmail(email) {
 }
 
 function isValidSAPhone(phone) {
-  return /^0[6-8][0-9]{8}$/.test(phone);
+  return /^0[6-8][0-9]{8}$/.test(phone) || /^\+27[6-8][0-9]{8}$/.test(phone);
 }
 
 function dobFromSAId(id) {
