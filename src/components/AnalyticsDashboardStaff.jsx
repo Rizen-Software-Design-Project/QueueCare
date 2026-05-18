@@ -57,7 +57,7 @@ function DateRange({ start, end, onStart, onEnd }) {
       <legend className="sr-only">Date range</legend>
       <label htmlFor="date-start" className="sr-only">Start date</label>
       <input id="date-start" type="date" value={start} onChange={e => onStart(e.target.value || null)} />
-      <span aria-hidden="true" style={{ color: '#94a3b8' }}>—</span>
+      <section aria-hidden="true" style={{ color: '#94a3b8' }}>—</section>
       <label htmlFor="date-end" className="sr-only">End date</label>
       <input id="date-end" type="date" value={end} onChange={e => onEnd(e.target.value || null)} />
     </fieldset>
@@ -101,7 +101,7 @@ function WaitTimesReport({ facilityId }) {
   return (
     <section className="tab-section">
       <header className="controls">
-        <div />
+        <section />
         <ExportBar
           disabled={loading || !data.length}
           onCSV={() => exportCSV(chartData, 'wait-times')}
@@ -237,7 +237,7 @@ function CustomViewReport({ facilityId }) {
           <h3>Appointments</h3>
           <output className="table-count">{loading ? 'Loading…' : `${data.length.toLocaleString()} records`}</output>
         </header>
-        <div className="table-scroll">
+        <section className="table-scroll">
           {loading ? (
             <p className="table-empty">Loading…</p>
           ) : data.length === 0 ? (
@@ -256,7 +256,7 @@ function CustomViewReport({ facilityId }) {
               </tbody>
             </table>
           )}
-        </div>
+        </section>
       </section>
     </section>
   )

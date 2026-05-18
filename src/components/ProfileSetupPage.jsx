@@ -62,14 +62,14 @@ function getAgeFromDob(dob) {
 function Err({ msg }) {
   if (!msg) return null;
   return (
-    <div className="psp-error">
+    <p className="psp-error">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="10" />
         <line x1="12" y1="8"  x2="12"    y2="12" />
         <line x1="12" y1="16" x2="12.01" y2="16" />
       </svg>
-      <span>{msg}</span>
-    </div>
+      <em>{msg}</em>
+    </p>
   );
 }
 
@@ -87,9 +87,9 @@ function BackBtn({ onClick }) {
 function Dots({ step, total = 2 }) {
   const colors  = ["#E24B4A", "#EF9F27", "#F4C542", "#1D9E75", "#0F6E56"];
   return (
-    <div className="psp-dots">
+    <ol className="psp-dots">
       {Array.from({ length: total }, (_, i) => (
-        <div
+        <li
           key={i}
           className="psp-dot"
           style={{
@@ -99,7 +99,7 @@ function Dots({ step, total = 2 }) {
           }}
         />
       ))}
-    </div>
+    </ol>
   );
 }
 
@@ -107,23 +107,23 @@ function StrengthBar({ score }) {
   const colors = ["#DC2626", "#F59E0B", "#1B5E20", "#0F3B1A"];
   if (!score) return null;
   return (
-    <div className="psp-strength-bar">
+    <ul className="psp-strength-bar">
       {[0, 1, 2, 3].map((i) => (
-        <div
+        <li
           key={i}
           className="psp-strength-segment"
           style={{ backgroundColor: i < score ? colors[score - 1] : "#E2E8F0" }}
         />
       ))}
-    </div>
+    </ul>
   );
 }
 
 function LoadingSpinner() {
   return (
-    <div className="psp-spinner">
-      <div className="psp-spinner-circle" />
-    </div>
+    <figure className="psp-spinner">
+      <i className="psp-spinner-circle" />
+    </figure>
   );
 }
 
@@ -285,14 +285,14 @@ if (getAgeFromDob(dob) < 13) {
   const totalDots = selectedRole === "admin" ? 3 : 2;
 
   return (
-    <div className="psp-section">
+    <section className="psp-section">
       <Dots step={2} total={totalDots} />
       <h2 className="psp-title">Complete your profile</h2>
       <p className="psp-sub">We need a few more details to get you started.</p>
 
       <form onSubmit={handleSubmit}>
-        <div className="psp-two-col">
-          <div>
+        <section className="psp-two-col">
+          <section>
             <label className="psp-label">First name</label>
             <input
               className="psp-input"
@@ -301,8 +301,8 @@ if (getAgeFromDob(dob) < 13) {
               onChange={(e) => setFirstName(e.target.value)}
               required
             />
-          </div>
-          <div>
+          </section>
+          <section>
             <label className="psp-label">Surname</label>
             <input
               className="psp-input"
@@ -311,11 +311,11 @@ if (getAgeFromDob(dob) < 13) {
               onChange={(e) => setSurname(e.target.value)}
               required
             />
-          </div>
-        </div>
+          </section>
+        </section>
 
         <label className="psp-label">Gender</label>
-        <div className="psp-pill-group">
+        <section className="psp-pill-group">
           {["male", "female", "other"].map((g) => (
             <button
               key={g}
@@ -326,7 +326,7 @@ if (getAgeFromDob(dob) < 13) {
               {g.charAt(0).toUpperCase() + g.slice(1)}
             </button>
           ))}
-        </div>
+        </section>
 
         <label className="psp-label">SA ID Number</label>
         <input
@@ -370,7 +370,7 @@ if (getAgeFromDob(dob) < 13) {
           {loading ? <LoadingSpinner /> : "Save & continue"}
         </button>
       </form>
-    </div>
+    </section>
   );
 }
 
@@ -508,7 +508,7 @@ const uploadedCvUrl = publicUrlData.publicUrl;
   }
 
   return (
-    <div className="psp-section">
+    <section className="psp-section">
       <BackBtn onClick={onBack} />
       <Dots step={3} total={3} />
       <h2 className="psp-title">Admin verification</h2>
@@ -568,7 +568,7 @@ const uploadedCvUrl = publicUrlData.publicUrl;
           {loading ? <LoadingSpinner /> : "Submit admin application"}
         </button>
       </form>
-    </div>
+    </section>
   );
 }
 
@@ -608,26 +608,26 @@ export default function ProfileSetupPage() {
   }
 
   return (
-    <div className="psp-root">
-      <div className="psp-bg-gradient" />
-      <div className="psp-bg-blob" />
+    <main className="psp-root">
+      <figure className="psp-bg-gradient" />
+      <figure className="psp-bg-blob" />
 
       {/* Logo */}
-      <div className="psp-logo">
-        <div className="psp-logo-mark">
+      <header className="psp-logo">
+        <figure className="psp-logo-mark">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="1.8">
             <path d="M12 2L2 7l10 5 10-5-10-5z"/>
             <path d="M2 17l10 5 10-5"/>
             <path d="M2 12l10 5 10-5"/>
           </svg>
-        </div>
-        <div>
+        </figure>
+        <hgroup>
           <h1 className="psp-logo-name">MediAccess</h1>
           <p className="psp-logo-sub">Integrated Healthcare Management</p>
-        </div>
-      </div>
+        </hgroup>
+      </header>
 
-      <div className="psp-card">
+      <article className="psp-card">
         {step === "profile" && (
           <ProfileStep
             identity={identity}
@@ -655,8 +655,8 @@ export default function ProfileSetupPage() {
         )}
         
         {step === "staff-pending" && (
-          <div className="psp-section">
-            <div className="psp-success-icon">✓</div>
+          <section className="psp-section">
+            <i className="psp-success-icon">✓</i>
             <h2 className="psp-title">Application submitted</h2>
             <p className="psp-sub">
               Your staff application has been sent to the admin for approval.
@@ -665,12 +665,12 @@ export default function ProfileSetupPage() {
             <button className="psp-btn-primary" onClick={() => navigate("/signin")}>
               Back to sign in
             </button>
-          </div>
+          </section>
         )}
 
         {step === "admin-pending" && (
-          <div className="psp-section">
-            <div className="psp-success-icon">✓</div>
+          <section className="psp-section">
+            <i className="psp-success-icon">✓</i>
             <h2 className="psp-title">Admin application submitted</h2>
             <p className="psp-sub">
               Your request is pending approval. You'll be able to access the
@@ -679,9 +679,9 @@ export default function ProfileSetupPage() {
             <button className="psp-btn-primary" onClick={() => navigate("/signin")}>
               Back to sign in
             </button>
-          </div>
+          </section>
         )}
-      </div>
-    </div>
+      </article>
+    </main>
   );
 }

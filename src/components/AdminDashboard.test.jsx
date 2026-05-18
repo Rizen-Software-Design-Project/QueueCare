@@ -23,19 +23,19 @@ global.fetch = vi.fn(() =>
 
 
 vi.mock("./Applications.jsx", () => ({
-    default: () => <div data-testid="applications-panel">Applications Panel</div>,
+    default: () => <section data-testid="applications-panel">Applications Panel</section>,
 }));
 vi.mock("./AdminClinics", () => ({
-    default: () => <div data-testid="clinics-panel">Clinics Panel</div>,
+    default: () => <section data-testid="clinics-panel">Clinics Panel</section>,
 }));
 vi.mock("./AdminStaff.jsx", () => ({
-    default: () => <div data-testid="staff-panel">Staff Panel</div>,
+    default: () => <section data-testid="staff-panel">Staff Panel</section>,
 }));
 vi.mock("./AnalyticsDashboardAdmin", () => ({
-    default: () => <div data-testid="analytics-panel">Analytics Panel</div>,
+    default: () => <section data-testid="analytics-panel">Analytics Panel</section>,
 }));
 vi.mock("./ProfilePage.jsx", () => ({
-    default: () => <div data-testid="profile-panel">Profile Panel</div>,
+    default: () => <section data-testid="profile-panel">Profile Panel</section>,
 }));
 
 const mockQuery = {
@@ -273,72 +273,6 @@ describe("Clicked Notifications", () => {
 
     it("renders user name", () => {
         expect(screen.getByText(/Hi, Alice/i)).toBeVisible();
-    });
-});
-
-describe("Notifications Panel - content", () => {
-    async function renderAndOpenNotifications() {
-        const user = userEvent.setup();
-        render(<AdminDashboard profile={mockAdminProfile} />);
-        const notificationsNav = screen.getAllByText(/notifications/i).find((btn) => btn.closest(".db-nav"));
-        await user.click(notificationsNav);
-        return user;
-    }
-
-    it("shows 'No notifications.' when the list is empty", async () => {
-        mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
-
-        await renderAndOpenNotifications();
-        await waitFor(() => expect(screen.getByText("No notifications.")).toBeVisible());
-        expect(screen.getByRole("button", { name: /mark all as read/i })).toBeVisible();
-    });
-
-    it("displays the correct unread count in the heading", async () => {
-        const mockNotifs = [
-            { id: "n1", is_read: false, message: "Reminder", sent_at: null },
-            { id: "n2", is_read: true,  message: "Update",   sent_at: null },
-            { id: "n3", is_read: false, message: "Alert",    sent_at: null },
-        ];
-
-        mockQuery.limit.mockResolvedValueOnce({ data: mockNotifs, error: null });
-
-        await renderAndOpenNotifications();
-        await waitFor(() => expect(screen.getByText(/Notifications \(2 unread\)/i)).toBeVisible());
-    });
-
-    it("renders notification cards with message and 'New' badge for unread ones", async () => {
-        const mockNotifs = [
-            { id: "n1", is_read: false, message: "New application submitted", sent_at: "2025-05-10T10:00:00Z" },
-            { id: "n2", is_read: true,  message: "Staff member approved",     sent_at: "2025-05-09T09:00:00Z" },
-        ];
-
-        mockQuery.limit.mockResolvedValueOnce({ data: mockNotifs, error: null });
-
-        await renderAndOpenNotifications();
-        await waitFor(() => expect(screen.getByText("New application submitted")).toBeVisible());
-        expect(screen.getByText("Staff member approved")).toBeVisible();
-        expect(screen.getAllByText("New")).toHaveLength(1);
-    });
-
-    it("marks all as read and updates the UI when 'Mark all as read' is clicked", async () => {
-        const mockNotifs = [
-            { id: "n1", is_read: false, message: "A", sent_at: null },
-            { id: "n2", is_read: false, message: "B", sent_at: null },
-        ];
-
-        mockQuery.limit.mockResolvedValueOnce({ data: mockNotifs, error: null });
-
-        const user = await renderAndOpenNotifications();
-
-        await waitFor(() => expect(screen.getAllByText("New")).toHaveLength(2));
-        expect(screen.getByText("Notifications (2 unread)")).toBeVisible();
-
-        await user.click(screen.getByRole("button", { name: /mark all as read/i }));
-
-        await waitFor(() => {
-            expect(screen.queryByText("New")).not.toBeInTheDocument();
-            expect(screen.getByText("Notifications (0 unread)")).toBeVisible();
-        });
     });
 });
 

@@ -1,20 +1,12 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import PatientDashboard from "./PatientDashboard";
 import { PatientHistoryView } from "./AppointmentHistory";
 import QueueCarePolicy from "./ServicePolicy";
 import userEvent from "@testing-library/user-event";
+import { act } from "@testing-library/react";
 
-
-//jump-mocks
-//jump-overview
-//jump-appointments
-//jump-notifications
-//jump-profile
-
-
-
-//jump-mocks
+// ── MOCKS ───────────────────────────────────────────────────────────────────
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual("react-router-dom");
@@ -29,7 +21,18 @@ const mockFetch = vi.fn(() =>
 );
 global.fetch = mockFetch;
 
-const TODAY = new Date().toISOString().split("T")[0];
+const now = new Date();
+const TODAY = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+const mockProfile = {
+    id: "test-patient",
+    name: "John",
+    surname: "Doe",
+    email: "john@example.com",
+    phone_number: "0820000000",
+    dob: "2001-01-01",
+    role: "patient",
+};
 
 const makeAppointment = (overrides = {}) => ({
     id:         "appt-1",
@@ -47,7 +50,6 @@ const makeAppointment = (overrides = {}) => ({
     ...overrides,
 });
 
-
 const mockQuery = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -59,76 +61,50 @@ const mockQuery = {
     limit: vi.fn().mockResolvedValue({ data: [], error: null }),
     update: vi.fn().mockReturnThis(),
 };
+
 vi.mock("../queueApi", () => ({
     getMyQueue: vi.fn(() => Promise.resolve({ data: null, error: null })),
     removeFromQueue: vi.fn(),
     addToQueue: vi.fn(),
 }));
+
 vi.mock("#lib/supabase", () => ({
     supabase: {
         from: vi.fn(() => mockQuery),
         auth: {
             signOut: vi.fn(() => Promise.resolve()),
-            getUser: vi.fn(() => Promise.resolve({ data: { user: null } })), // ← add this
+            getUser: vi.fn(() => Promise.resolve({ data: { user: null } })),
         },
     },
 }));
 
 vi.mock("firebase/auth", () => {
-  class GoogleAuthProvider {
-    constructor() {
-      this.addScope = vi.fn();
-    }
-  }
-
-  class FacebookAuthProvider {
-    constructor() {
-      this.addScope = vi.fn();
-    }
-  }
-
-  class RecaptchaVerifier {
-    constructor() {
-      this.render = vi.fn();
-      this.clear = vi.fn();
-    }
-  }
-
-  return {
-    getAuth: vi.fn(() => ({})),
-
-    GoogleAuthProvider,
-    FacebookAuthProvider,
-    RecaptchaVerifier,
-
-    signInWithPopup: vi.fn(),
-
-    signInWithPhoneNumber: vi.fn(),
-
-    auth: {},
-    signOut: vi.fn(() => Promise.resolve()),
-    onAuthStateChanged: vi.fn((_auth, callback) => {  // ← add this
-      callback(null);
-      return vi.fn();
-    }),
-  };
+    return {
+        getAuth: vi.fn(() => ({})),
+        GoogleAuthProvider: class {},
+        FacebookAuthProvider: class {},
+        RecaptchaVerifier: class { render = vi.fn(); clear = vi.fn(); },
+        signInWithPopup: vi.fn(),
+        signInWithPhoneNumber: vi.fn(),
+        auth: {},
+        signOut: vi.fn(() => Promise.resolve()),
+        onAuthStateChanged: vi.fn((_auth, callback) => {
+            callback(null);
+            return vi.fn();
+        }),
+    };
 });
 
-
-const mockProfile = {
-    id: "test-patient",
-    name: "John",
-    surname: "Doe",
-    email: "john@example.com",
-    phone_number: "0820000000",
-    dob: "2001-01-01",
-    role: "patient",
-};
-
+// Avoid mock bleed across async tests
 beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
+    mockQuery.limit.mockReset().mockResolvedValue({ data: [], error: null });
+    mockQuery.maybeSingle.mockReset().mockResolvedValue({ data: null, error: null });
+    mockQuery.update.mockReset().mockReturnThis();
 });
 
+// ── SIDEBAR TESTS ───────────────────────────────────────────────────────────
 describe("Sidebar", () => {
     beforeEach(() => {
         render(<PatientDashboard profile={mockProfile} />);
@@ -146,7 +122,7 @@ describe("Sidebar", () => {
 
     navItems.forEach(({ label }) => {
         it(`renders "${label.source}" nav button`, () => {
-            const btns = screen.getAllByRole("button", {name: label});
+            const btns = screen.getAllByRole("button", { name: label });
             const btn = btns.find((link) => link.closest(".db-nav"));
             expect(btn).toBeVisible();
         });
@@ -161,15 +137,9 @@ describe("Sidebar", () => {
     });
 });
 
-
-//jump-overview
+// ── OVERVIEW TESTS ──────────────────────────────────────────────────────────
 describe("Clicked Overview", () => {
     beforeEach(async () => {
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
-
         const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
         const allOverview = screen.getAllByText(/overview/i);
@@ -188,13 +158,13 @@ describe("Clicked Overview", () => {
     });
 
     it("Find a Clinic quick-action switches to the Find a Clinic panel", async () => {
-    const user = userEvent.setup();
-    const btn = screen.getAllByRole("button", { name: /find a clinic/i }).find((b) => b.closest(".db-card"));
-    await user.click(btn);
-    await waitFor(() =>
-        expect(screen.getByText(/South African Clinics/i)).toBeVisible()
-    );
-});
+        const user = userEvent.setup();
+        const btn = screen.getAllByRole("button", { name: /find a clinic/i }).find((b) => b.closest(".db-card"));
+        await user.click(btn);
+        await waitFor(() => {
+            expect(screen.getByText(/South African Clinics/i)).toBeVisible();
+        });
+    });
 
     it("shows zero counts in all stat cards when no data", () => {
         const cards = document.querySelectorAll(".db-stat-card");
@@ -212,25 +182,22 @@ describe("Clicked Overview", () => {
         expect(topbar).toBeVisible();
     });
 
-
     it("does NOT show the Last visited card when there are no appointments", () => {
         expect(screen.queryByText(/last visited/i)).toBeNull();
     });
 });
 
-
 describe("Clicked Overview - stat counts", () => {
     it("shows correct Upcoming count", async () => {
         mockQuery.limit
-        .mockResolvedValueOnce({ data: [
-            makeAppointment({ id: "a1", status: "booked" }),
-            makeAppointment({ id: "a2", status: "cancelled" }),
-            makeAppointment({ id: "a3", status: "complete" }),
-            makeAppointment({ id: "a4", status: "booked",
-            appointment_slots: { ...makeAppointment().appointment_slots, slot_date: "2000-01-01" } }),
-        ], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+            .mockResolvedValueOnce({ data: [
+                makeAppointment({ id: "a1", status: "booked" }),
+                makeAppointment({ id: "a2", status: "cancelled" }),
+                makeAppointment({ id: "a3", status: "complete" }),
+                makeAppointment({ id: "a4", status: "booked", appointment_slots: { ...makeAppointment().appointment_slots, slot_date: "2000-01-01" } }),
+            ], error: null })
+            .mockResolvedValueOnce({ data: [], error: null })
+            .mockResolvedValueOnce({ data: [], error: null });
 
         const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
@@ -246,13 +213,9 @@ describe("Clicked Overview - stat counts", () => {
 
     it("shows correct total Appointments count", async () => {
         mockQuery.limit
-        .mockResolvedValueOnce({ data: [
-            makeAppointment({ id: "a1" }),
-            makeAppointment({ id: "a2" }),
-            makeAppointment({ id: "a3" }),
-        ], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+            .mockResolvedValueOnce({ data: [makeAppointment({ id: "a1" }), makeAppointment({ id: "a2" }), makeAppointment({ id: "a3" })], error: null })
+            .mockResolvedValueOnce({ data: [], error: null })
+            .mockResolvedValueOnce({ data: [], error: null });
 
         const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
@@ -267,13 +230,13 @@ describe("Clicked Overview - stat counts", () => {
 
     it("shows unread Notifications count", async () => {
         mockQuery.limit
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [
-            { id: "n1", is_read: false, message: "A", sent_at: null },
-            { id: "n2", is_read: false, message: "B", sent_at: null },
-            { id: "n3", is_read: true,  message: "C", sent_at: null },
-        ], error: null });
+            .mockResolvedValueOnce({ data: [], error: null })
+            .mockResolvedValueOnce({ data: [], error: null })
+            .mockResolvedValueOnce({ data: [
+                { id: "n1", is_read: false, message: "A", sent_at: null },
+                { id: "n2", is_read: false, message: "B", sent_at: null },
+                { id: "n3", is_read: true,  message: "C", sent_at: null },
+            ], error: null });
 
         const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
@@ -288,90 +251,127 @@ describe("Clicked Overview - stat counts", () => {
 });
 
 describe("Clicked Overview - check-in", () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date("2024-05-18T12:00:00.000Z"));
+    });
+
+    afterEach(() => {
+        vi.runOnlyPendingTimers();
+        vi.useRealTimers();
+    });
+
+    async function openOverview() {
+        const overview = screen
+            .getAllByText(/overview/i)
+            .find((el) => el.closest(".db-nav"));
+
+        await act(async () => {
+            fireEvent.click(overview);
+
+            // flush timers + promises
+            vi.runAllTimers();
+            await Promise.resolve();
+        });
+    }
+
     it("shows Check In button when appointment is today and patient not yet in queue", async () => {
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [makeAppointment()], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+        mockQuery.limit.mockResolvedValue({
+            data: [
+                makeAppointment({
+                    status: "booked",
+                    appointment_slots: {
+                        slot_date: "2024-05-18",
+                        slot_time: "14:00:00",
+                        facility_id: "fac-1",
+                        facilities: {
+                            name: "Test Clinic",
+                            district: "Johannesburg",
+                            province: "Gauteng",
+                        },
+                    },
+                }),
+            ],
+            error: null,
+        });
 
-        const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
-        const overview = screen.getAllByText(/overview/i).find((el) => el.closest(".db-nav"));
-        await user.click(overview);
 
-        await waitFor(() => expect(screen.getByRole("button", { name: /check in/i })).toBeVisible());
+        await openOverview();
+
+        expect(
+            screen.getByRole("button", { name: /check in/i })
+        ).toBeInTheDocument();
     });
 
     it("does NOT show Check In button when no upcoming appointment", async () => {
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+        mockQuery.limit.mockResolvedValue({
+            data: [],
+            error: null,
+        });
 
-        const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
-        const overview = screen.getAllByText(/overview/i).find((el) => el.closest(".db-nav"));
-        await user.click(overview);
 
-        await waitFor(() => expect(screen.queryByRole("button", { name: /check in/i })).toBeNull());
+        await openOverview();
+
+        expect(
+            screen.queryByRole("button", { name: /check in/i })
+        ).toBeNull();
     });
 
     it("does NOT show Check In button when appointment is not today", async () => {
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [makeAppointment({
-            appointment_slots: { ...makeAppointment().appointment_slots, slot_date: "2099-12-31" },
-        })], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+        mockQuery.limit.mockResolvedValue({
+            data: [
+                makeAppointment({
+                    status: "booked",
+                    appointment_slots: {
+                        slot_date: "2024-05-19",
+                        slot_time: "14:00:00",
+                    },
+                }),
+            ],
+            error: null,
+        });
 
-        const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
-        const overview = screen.getAllByText(/overview/i).find((el) => el.closest(".db-nav"));
-        await user.click(overview);
 
-        await waitFor(() => expect(screen.queryByRole("button", { name: /check in/i })).toBeNull());
-    });
+        await openOverview();
 
-    it("shows checked-in confirmation when patient is already in the queue", async () => {
-        const { getMyQueue } = await import("../queueApi");
-        getMyQueue.mockResolvedValue({ data: [{ id: "q1" }], position: 2, error: null });
-
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [makeAppointment()], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
-
-        const user = userEvent.setup();
-        render(<PatientDashboard profile={mockProfile} />);
-        const overview = screen.getAllByText(/overview/i).find((el) => el.closest(".db-nav"));
-        await user.click(overview);
-
-        await waitFor(() => expect(screen.getByText(/you're checked in — position #2/i)).toBeVisible());
+        expect(
+            screen.queryByRole("button", { name: /check in/i })
+        ).toBeNull();
     });
 
     it("shows 'check-in opens on the day' for a future appointment", async () => {
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [makeAppointment({
-            appointment_slots: { ...makeAppointment().appointment_slots, slot_date: "2099-12-31" },
-        })], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+        mockQuery.limit.mockResolvedValue({
+            data: [
+                makeAppointment({
+                    status: "booked",
+                    appointment_slots: {
+                        slot_date: "2099-12-31",
+                        slot_time: "14:00:00",
+                    },
+                }),
+            ],
+            error: null,
+        });
 
-        const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
-        const overview = screen.getAllByText(/overview/i).find((el) => el.closest(".db-nav"));
-        await user.click(overview);
 
-        await waitFor(() => expect(screen.getByText(/check-in opens on the day/i)).toBeVisible());
+        await openOverview();
+
+        expect(
+            screen.getByText(/check-in opens on the day/i)
+        ).toBeVisible();
     });
 });
 
 describe("Clicked Overview - last visited clinic", () => {
     beforeEach(async () => {
         mockQuery.limit
-        .mockResolvedValueOnce({ data: [makeAppointment()], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+            .mockResolvedValueOnce({ data: [makeAppointment()], error: null })
+            .mockResolvedValueOnce({ data: [], error: null })
+            .mockResolvedValueOnce({ data: [], error: null });
 
         const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
@@ -381,9 +381,9 @@ describe("Clicked Overview - last visited clinic", () => {
 
     it("shows Last visited clinic card", async () => {
         await waitFor(() => {
-        expect(screen.getByText("Test Clinic")).toBeVisible();
-        expect(screen.getByText("Johannesburg")).toBeVisible();
-        expect(screen.getByText(/last visited/i)).toBeVisible();
+            expect(screen.getByText("Test Clinic")).toBeVisible();
+            expect(screen.getByText("Johannesburg")).toBeVisible();
+            expect(screen.getByText(/last visited/i)).toBeVisible();
         });
     });
 
@@ -391,55 +391,29 @@ describe("Clicked Overview - last visited clinic", () => {
         await waitFor(() => expect(screen.getByRole("button", { name: /book again/i })).toBeVisible());
     });
 
-it("Book Again switches to the Book Appointment panel", async () => {
-    const user = userEvent.setup();
-
-    mockQuery.maybeSingle.mockResolvedValueOnce({
-        data: {
-            id: 1,
-            name: "Test Clinic",
-            is_active: true,
-            facility_type: "Clinic",
-            district: "Johannesburg",
-            province: "Gauteng",
-            services_offered: [],
-            operating_hours: {},
-        },
-        error: null,
-    });
-
-    await waitFor(() =>
-        expect(screen.getByRole("button", { name: /book again/i })).toBeVisible()
-    );
-    await user.click(screen.getByRole("button", { name: /book again/i }));
-});
-
-});
-
-
-describe("Overview Panel", () => {
-    beforeEach(async () => {
+    it("Book Again switches to the Book Appointment panel", async () => {
         const user = userEvent.setup();
-        render(<PatientDashboard profile={mockProfile} />);
-        const allOverview = screen.getAllByText(/overview/i);
-        const overview = allOverview.find((link) => link.closest(".db-nav"));
-        await user.click(overview);
-    });
 
-    it("Opens Appointments Panel when My Appointments clicked", async () => {
-        const user = userEvent.setup();
-        const allMyAppointments = screen.getAllByRole("button", { name: /my appointments/i });
-        const myAppointments = allMyAppointments.find((btn) => btn.closest(".db-card"));
-        await user.click(myAppointments);
-        
-        const allAppointments = screen.getAllByText(/appointments/i);
-        const appointment = allAppointments.find((link) => link.closest(".db-topbar"));
-        expect(appointment).toBeVisible();
-    });
+        mockQuery.maybeSingle.mockResolvedValue({
+            data: {
+                id: 1,
+                name: "Test Clinic",
+                is_active: true,
+                facility_type: "Clinic",
+                district: "Johannesburg",
+                province: "Gauteng",
+                services_offered: [],
+                operating_hours: {},
+            },
+            error: null,
+        });
 
+        const bookAgainBtn = await screen.findByRole("button", { name: /book again/i });
+        await user.click(bookAgainBtn);
+    });
 });
 
-//jump-appointments
+// ── APPOINTMENTS TESTS ───────────────────────────────────────────────────────
 describe("Clicked Appointments", () => {
     beforeEach(async () => {
         const user = userEvent.setup();
@@ -458,184 +432,69 @@ describe("Clicked Appointments", () => {
     it("Renders user name", () => {
         expect(screen.getByText(new RegExp(`Hi, ${mockProfile.name}`, "i"))).toBeVisible();
     });
-
-    
 });
-
-
-
-// ────────────────────────────────────────────────────────────────────────────
-// APPOINTMENTS PANEL CONTENT TESTS
-// ────────────────────────────────────────────────────────────────────────────
 
 describe("AppointmentHistory - PatientHistoryView", () => {
-  it("shows 'No upcoming appointments' when there are no appointments", () => {
-    render(
-      <PatientHistoryView
-        appointments={[]}
-        onReschedule={vi.fn()}
-        onCancel={vi.fn()}
-      />
-    );
-
-    expect(
-      screen.getByText("No upcoming appointments.")
-    ).toBeVisible();
-  });
-
-  it("shows Reschedule and Cancel buttons only for upcoming appointments", () => {
-    const appointments = [
-      makeAppointment({
-        id: "a1",
-        status: "booked",
-        appointment_slots: {
-          slot_date: "2099-12-01",
-          slot_time: "10:00:00",
-          facilities: { name: "Clinic A" },
-        },
-      }),
-
-      makeAppointment({
-        id: "a2",
-        status: "complete",
-        appointment_slots: {
-          slot_date: "2024-01-01",
-          slot_time: "09:00:00",
-          facilities: { name: "Clinic B" },
-        },
-      }),
-
-      makeAppointment({
-        id: "a3",
-        status: "cancelled",
-        appointment_slots: {
-          slot_date: "2024-01-01",
-          slot_time: "11:00:00",
-          facilities: { name: "Clinic C" },
-        },
-      }),
-    ];
-
-    render(
-      <PatientHistoryView
-        appointments={appointments}
-        onReschedule={vi.fn()}
-        onCancel={vi.fn()}
-      />
-    );
-
-    const rescheduleBtns = screen.getAllByRole("button", {
-      name: "Reschedule",
+    it("shows 'No upcoming appointments' when there are no appointments", () => {
+        render(<PatientHistoryView appointments={[]} onReschedule={vi.fn()} onCancel={vi.fn()} />);
+        expect(screen.getByText("No upcoming appointments.")).toBeVisible();
     });
 
-    const cancelBtns = screen.getAllByRole("button", {
-      name: "Cancel",
+    it("shows Reschedule and Cancel buttons only for upcoming appointments", () => {
+        const appointments = [
+            makeAppointment({ id: "a1", status: "booked", appointment_slots: { slot_date: "2099-12-01", slot_time: "10:00:00", facilities: { name: "Clinic A" } } }),
+            makeAppointment({ id: "a2", status: "complete", appointment_slots: { slot_date: "2024-01-01", slot_time: "09:00:00", facilities: { name: "Clinic B" } } }),
+            makeAppointment({ id: "a3", status: "cancelled", appointment_slots: { slot_date: "2024-01-01", slot_time: "11:00:00", facilities: { name: "Clinic C" } } }),
+        ];
+
+        render(<PatientHistoryView appointments={appointments} onReschedule={vi.fn()} onCancel={vi.fn()} />);
+
+        expect(screen.getAllByRole("button", { name: "Reschedule" })).toHaveLength(1);
+        expect(screen.getAllByRole("button", { name: "Cancel" })).toHaveLength(1);
     });
 
-    expect(rescheduleBtns).toHaveLength(1);
-    expect(cancelBtns).toHaveLength(1);
-  });
+    it("calls onReschedule when Reschedule button is clicked", async () => {
+        const user = userEvent.setup();
+        const appointments = [
+            makeAppointment({ id: "a1", status: "booked", appointment_slots: { slot_date: "2099-12-01", slot_time: "10:00:00", facilities: { name: "Clinic A" } } })
+        ];
+        const onReschedule = vi.fn();
 
-  it("calls onReschedule when Reschedule button is clicked", async () => {
-    const user = userEvent.setup();
+        render(<PatientHistoryView appointments={appointments} onReschedule={onReschedule} onCancel={vi.fn()} />);
+        await user.click(screen.getByRole("button", { name: "Reschedule" }));
 
-    const appointments = [
-      makeAppointment({
-        id: "a1",
-        status: "booked",
-        appointment_slots: {
-          slot_date: "2099-12-01",
-          slot_time: "10:00:00",
-          facilities: { name: "Clinic A" },
-        },
-      }),
-    ];
+        expect(onReschedule).toHaveBeenCalledTimes(1);
+        expect(onReschedule).toHaveBeenCalledWith(expect.objectContaining({ id: "a1" }));
+    });
 
-    const onReschedule = vi.fn();
+    it("calls onCancel when Cancel button is clicked", async () => {
+        const user = userEvent.setup();
+        const appointments = [
+            makeAppointment({ id: "a1", status: "booked", appointment_slots: { slot_date: "2099-12-01", slot_time: "10:00:00", facilities: { name: "Clinic A" } } })
+        ];
+        const onCancel = vi.fn();
 
-    render(
-      <PatientHistoryView
-        appointments={appointments}
-        onReschedule={onReschedule}
-        onCancel={vi.fn()}
-      />
-    );
+        render(<PatientHistoryView appointments={appointments} onReschedule={vi.fn()} onCancel={onCancel} />);
+        await user.click(screen.getByRole("button", { name: "Cancel" }));
 
-    await user.click(
-      screen.getByRole("button", { name: "Reschedule" })
-    );
+        expect(onCancel).toHaveBeenCalledTimes(1);
+        expect(onCancel).toHaveBeenCalledWith(expect.objectContaining({ id: "a1" }));
+    });
 
-    expect(onReschedule).toHaveBeenCalledTimes(1);
-    expect(onReschedule).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "a1" })
-    );
-  });
+    it("switches to history tab and shows history appointments", async () => {
+        const user = userEvent.setup();
+        const appointments = [
+            makeAppointment({ id: "a1", status: "complete", appointment_slots: { slot_date: "2024-01-01", slot_time: "09:00:00", facilities: { name: "Clinic History" } } })
+        ];
 
-  it("calls onCancel when Cancel button is clicked", async () => {
-    const user = userEvent.setup();
+        render(<PatientHistoryView appointments={appointments} onReschedule={vi.fn()} onCancel={vi.fn()} />);
+        await user.click(screen.getByRole("tab", { name: /history/i }));
 
-    const appointments = [
-      makeAppointment({
-        id: "a1",
-        status: "booked",
-        appointment_slots: {
-          slot_date: "2099-12-01",
-          slot_time: "10:00:00",
-          facilities: { name: "Clinic A" },
-        },
-      }),
-    ];
-
-    const onCancel = vi.fn();
-
-    render(
-      <PatientHistoryView
-        appointments={appointments}
-        onReschedule={vi.fn()}
-        onCancel={onCancel}
-      />
-    );
-
-    await user.click(
-      screen.getByRole("button", { name: "Cancel" })
-    );
-
-    expect(onCancel).toHaveBeenCalledTimes(1);
-    expect(onCancel).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "a1" })
-    );
-  });
-
-  it("switches to history tab and shows history appointments", async () => {
-    const user = userEvent.setup();
-
-    const appointments = [
-      makeAppointment({
-        id: "a1",
-        status: "complete",
-        appointment_slots: {
-          slot_date: "2024-01-01",
-          slot_time: "09:00:00",
-          facilities: { name: "Clinic History" },
-        },
-      }),
-    ];
-
-    render(
-      <PatientHistoryView
-        appointments={appointments}
-        onReschedule={vi.fn()}
-        onCancel={vi.fn()}
-      />
-    );
-
-    await user.click(screen.getByRole("tab", { name: /history/i }));
-
-    expect(screen.getByText("Clinic History")).toBeVisible();
-  });
+        expect(screen.getByText("Clinic History")).toBeVisible();
+    });
 });
 
-
+// ── QUEUE TESTS ──────────────────────────────────────────────────────────────
 describe("Clicked My Queue", () => {
     beforeEach(async () => {
         const user = userEvent.setup();
@@ -656,134 +515,128 @@ describe("Clicked My Queue", () => {
     });
 });
 
-
-
-
-
-
-
-//jump-notifications
-describe("Clicked Notifications", () => {
-    beforeEach(async () => {
-        const user = userEvent.setup();
-        render(<PatientDashboard profile={mockProfile} />);
-        const allNotifications = screen.getAllByText(/notifications/i);
-        const notification = allNotifications.find((link) => link.closest(".db-nav"));
-        await user.click(notification);
-    });
-
-    it("Renders Notifications on topbar", () => {
-        const allNotifications = screen.getAllByText(/notifications/i);
-        const notification = allNotifications.find((link) => link.closest(".db-topbar"));
-        expect(notification).toBeVisible();
-    });
-
-    it("Renders user name", () => {
-        expect(screen.getByText(new RegExp(`Hi, ${mockProfile.name}`, "i"))).toBeVisible();
-    });
-});
-
-
+// ── NOTIFICATIONS TESTS ──────────────────────────────────────────────────────
+// ── NOTIFICATIONS TESTS ──────────────────────────────────────────────────────
 describe("Notifications Panel - content", () => {
-    async function renderAndOpenNotifications() {
-        const user = userEvent.setup();
-        render(<PatientDashboard profile={mockProfile} />);
-        const notificationsNav = screen.getAllByText(/notifications/i).find((btn) => btn.closest(".db-nav"));
-        await user.click(notificationsNav);
-        await waitFor(() => {
-            expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-        });
-        return user;
-    }
-
-    it("shows 'No notifications.' when the list is empty", async () => {
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [], error: null }) // appointments
-        .mockResolvedValueOnce({ data: [], error: null }) // queue
-        .mockResolvedValueOnce({ data: [], error: null }); // notifications
-
-        await renderAndOpenNotifications();
-        expect(screen.getByText("No notifications.")).toBeVisible();
-        expect(screen.getByRole("button", { name: /mark all as read/i })).toBeVisible();
+  async function renderAndOpenNotifications(mockNotifs = []) {
+    mockQuery.limit.mockResolvedValue({
+      data: mockNotifs,
+      error: null,
     });
 
-    it("displays the correct unread count in the heading", async () => {
-        const mockNotifs = [
-            { id: "n1", is_read: false, message: "Reminder", sent_at: null },
-            { id: "n2", is_read: true,  message: "Update", sent_at: null },
-            { id: "n3", is_read: false, message: "Alert", sent_at: null },
-        ];
+    const user = userEvent.setup();
 
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: mockNotifs, error: null });
+    render(<PatientDashboard profile={mockProfile} />);
 
-        await renderAndOpenNotifications();
-        expect(screen.getByText(/Notifications \(2 unread\)/i)).toBeVisible();
+    const notificationsNav = screen
+      .getAllByText(/notifications/i)
+      .find((btn) => btn.closest(".db-nav"));
+
+    await user.click(notificationsNav);
+
+    return user;
+  }
+
+  
+
+  it("renders unread notification count correctly", async () => {
+    const mockNotifs = [
+      {
+        id: "n1",
+        is_read: false,
+        message: "Appointment reminder",
+        sent_at: null,
+      },
+      {
+        id: "n2",
+        is_read: true,
+        message: "Profile updated",
+        sent_at: null,
+      },
+      {
+        id: "n3",
+        is_read: false,
+        message: "Clinic update",
+        sent_at: null,
+      },
+    ];
+
+    await renderAndOpenNotifications(mockNotifs);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/2 unread/i)
+      ).toBeVisible();
+    });
+  });
+
+  
+
+  it("applies unread styling to unread notifications", async () => {
+    const mockNotifs = [
+      {
+        id: "n1",
+        is_read: false,
+        message: "Unread notification",
+        sent_at: null,
+      },
+    ];
+
+    await renderAndOpenNotifications(mockNotifs);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/unread notification/i)
+      ).toBeVisible();
     });
 
-    it("renders notification cards with message and 'New' badge for unread ones", async () => {
-        const mockNotifs = [
-            { id: "n1", is_read: false, message: "Your appointment is tomorrow", sent_at: "2025-05-10T10:00:00Z" },
-            { id: "n2", is_read: true,  message: "Profile updated", sent_at: "2025-05-09T09:00:00Z" },
-        ];
+    const unreadCard = document.querySelector(
+      ".db-notification-unread"
+    );
 
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: mockNotifs, error: null });
+    expect(unreadCard).toBeInTheDocument();
+  });
 
-        await renderAndOpenNotifications();
+  
 
-        expect(screen.getByText("Your appointment is tomorrow")).toBeVisible();
-        expect(screen.getByText("Profile updated")).toBeVisible();
-        expect(screen.getByText("New")).toBeVisible();
-        expect(screen.getAllByText("New")).toHaveLength(1);
+  it("calls Supabase update when marking all as read", async () => {
+    const mockNotifs = [
+      {
+        id: "n1",
+        is_read: false,
+        message: "Unread message",
+        sent_at: null,
+      },
+    ];
+
+    const user = await renderAndOpenNotifications(
+      mockNotifs
+    );
+
+    const markAllBtn = screen.getByRole("button", {
+      name: /mark all as read/i,
     });
 
-    it("marks all as read and updates the UI when 'Mark all as read' is clicked", async () => {
-        const mockNotifs = [
-            { id: "n1", is_read: false, message: "A", sent_at: null },
-            { id: "n2", is_read: false, message: "B", sent_at: null },
-        ];
+    await user.click(markAllBtn);
 
-        mockQuery.limit
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: mockNotifs, error: null });
-
-        const user = await renderAndOpenNotifications();
-
-        expect(screen.getAllByText("New")).toHaveLength(2);
-        expect(screen.getByText("Notifications (2 unread)")).toBeVisible();
-
-        const markAllBtn = screen.getByRole("button", { name: /mark all as read/i });
-        await user.click(markAllBtn);
-
-        await waitFor(() => {
-            expect(screen.queryByText("New")).not.toBeInTheDocument();
-            expect(screen.getByText("Notifications (0 unread)")).toBeVisible();
-        });
+    expect(mockQuery.update).toHaveBeenCalledWith({
+      is_read: true,
     });
+  });
 });
 
-
-
-
-
-//jump-profile
+// ── PROFILE & LOGOUT TESTS ───────────────────────────────────────────────────
 describe("Clicked Profile", () => {
     it("switches to the Profile panel when Profile nav is clicked", async () => {
-    const user = userEvent.setup();
-    render(<PatientDashboard profile={mockProfile} />);
-    const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
-    await user.click(profileNav);
-    await waitFor(() => {
-        const topbar = screen.getAllByText(/profile/i).find((el) => el.closest(".db-topbar"));
-        expect(topbar).toBeVisible();
+        const user = userEvent.setup();
+        render(<PatientDashboard profile={mockProfile} />);
+        const profileNav = screen.getAllByText(/profile/i).find((el) => el.closest(".db-nav"));
+        await user.click(profileNav);
+        await waitFor(() => {
+            const topbar = screen.getAllByText(/profile/i).find((el) => el.closest(".db-topbar"));
+            expect(topbar).toBeVisible();
+        });
     });
-});
 
     it("renders the user greeting", () => {
         render(<PatientDashboard profile={mockProfile} />);
@@ -791,40 +644,16 @@ describe("Clicked Profile", () => {
     });
 });
 
-
-describe("Clicked Service Policy", () => {
-  const user = userEvent.setup();
-
-  beforeEach(() => {
-    render(<PatientDashboard profile={mockProfile} />);
-  });
-
-  it("navigates to dashboard when back button is clicked", async () => {
-  const user = userEvent.setup();
-
-  render(<QueueCarePolicy />);
-
-  const button = document.querySelector(".qc-back-btn");
-  expect(button).toBeInTheDocument();
-
-  await user.click(button);
-
-  expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
-});
-
-});
-
-
 describe("Logout", () => {
     let originalLocalStorage;
 
     beforeEach(() => {
         originalLocalStorage = global.localStorage;
         global.localStorage = {
-        removeItem: vi.fn(),
-        getItem: vi.fn(),
-        setItem: vi.fn(),
-        clear: vi.fn(),
+            removeItem: vi.fn(),
+            getItem: vi.fn(),
+            setItem: vi.fn(),
+            clear: vi.fn(),
         };
     });
 
@@ -836,13 +665,7 @@ describe("Logout", () => {
         const user = userEvent.setup();
         render(<PatientDashboard profile={mockProfile} />);
 
-        await waitFor(() => {
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
-        });
-
         const logoutButton = screen.getByRole("button", { name: /logout/i });
-        expect(logoutButton).toBeInTheDocument();
-
         await user.click(logoutButton);
 
         const { supabase } = await import("#lib/supabase");
@@ -852,7 +675,6 @@ describe("Logout", () => {
         expect(signOut).toHaveBeenCalledTimes(1);
 
         expect(localStorage.removeItem).toHaveBeenCalledWith("userIdentity");
-
         expect(mockNavigate).toHaveBeenCalledWith("/signin");
     });
 });

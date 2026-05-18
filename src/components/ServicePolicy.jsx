@@ -167,58 +167,76 @@ const sections = [
 
 export default function QueueCarePolicy() {
   const navigate = useNavigate();
+
   return (
-    <section style={{ padding: "20px" }}>
-      <h1>QueueCare Policies</h1>
-      <p>This page outlines the terms and operational policies of QueueCare.</p>
+    <section className="policy-page">
+      <header className="policy-header">
+        <h1 className="policy-title">QueueCare Policies</h1>
 
-      <hr />
+        <p className="policy-subtitle">
+          This page outlines the terms and operational policies of QueueCare.
+        </p>
+      </header>
 
-      <section>
+      <hr className="policy-divider" />
 
-        <p>
+      <section className="policy-intro">
+        <p className="policy-intro-text">
           QueueCare operates under the Protection of Personal Information Act
           (POPIA) 4 of 2013, the National Health Act 61 of 2003, and the
           Electronic Communications and Transactions Act 25 of 2002.
         </p>
       </section>
 
-      <hr />
+      <hr className="policy-divider" />
 
-      {sections.map((section) => (
-        <section
-          key={section.id}
-          style={{
-            marginBottom: "40px",
-            border: "1px solid black",
-            padding: "10px",
-          }}
-        >
-          <h2>
-            {section.icon} {section.title} ({section.label})
-          </h2>
-          <p>Last updated: {section.lastUpdated}</p>
+      <section className="policy-sections">
+        {sections.map((section) => (
+          <article key={section.id} className="policy-card">
+            <section className="policy-card-header">
+              <h2 className="policy-card-title">
+                <section className="policy-icon">{section.icon}</section>
 
-          <section style={{ marginTop: "15px", paddingLeft: "10px" }}>
-            {section.content.map((item, index) => (
-              <section key={index} style={{ marginBottom: "20px" }}>
-                <h3>{item.heading}</h3>
-                <p>{item.body}</p>
-              </section>
-            ))}
-          </section>
-        </section>
-      ))}
+                {section.title}
 
-      <hr />
+                <section className="policy-label">
+                  ({section.label})
+                </section>
+              </h2>
 
-      <footer>
-        <h3>Support</h3>
-        <p>
+              <p className="policy-last-updated">
+                Last updated: {section.lastUpdated}
+              </p>
+            </section>
+
+            <section className="policy-content">
+              {section.content.map((item, index) => (
+                <article key={index} className="policy-item">
+                  <h3 className="policy-item-heading">
+                    {item.heading}
+                  </h3>
+
+                  <p className="policy-item-body">
+                    {item.body}
+                  </p>
+                </article>
+              ))}
+            </section>
+          </article>
+        ))}
+      </section>
+
+      <hr className="policy-divider" />
+
+      <footer className="policy-footer">
+        <h3 className="policy-footer-title">Support</h3>
+
+        <p className="policy-footer-text">
           Support is available Monday to Friday, 08:00 to 17:00 SAST. Contact
           support@queuecare.co.za or use the in-app help centre.
         </p>
-        <p>
+
+        <p className="policy-footer-copy">
           © 2026 QueueCare (Pty) Ltd. All rights reserved. Registered in South
           Africa.
         </p>

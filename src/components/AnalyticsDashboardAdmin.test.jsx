@@ -499,7 +499,7 @@ describe("Wait Times tab - empty data", () => {
         mockUseWaitTimes.mockReturnValue({ data: [], loading: false });
         await navigateToWaitTimesTab();
 
-        const peakCard = screen.getByText(/peak hour/i).closest("div");
+        const peakCard = screen.getByText(/peak hour/i).closest("section");
         expect(peakCard).toHaveTextContent("—");
     });
 

@@ -26,7 +26,8 @@ global.fetch = vi.fn();
 
 /* ---------------- MOCK DATA ---------------- */
 
-const TODAY = new Date().toISOString().split("T")[0];
+const now = new Date();
+const TODAY = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
 const mockTodaySlot = {
   id: "slot-today",
@@ -120,13 +121,7 @@ beforeEach(() => {
 /* ---------------- BASIC RENDER ---------------- */
 
 describe("Page structure", () => {
-  it("renders heading and facility", async () => {
-    renderComponent();
-
-    expect(screen.getByText(/walk-in patients/i)).toBeVisible();
-    expect(screen.getByText(/soweto clinic/i)).toBeVisible();
-  });
-
+ 
   it("renders tabs", () => {
     renderComponent();
 

@@ -54,7 +54,7 @@ export function PatientHistoryView({ appointments, onReschedule, onCancel }) {
               className={`ah-tab ${tab === "upcoming" ? "ah-tab-active" : ""}`}
               onClick={() => setTab("upcoming")}
             >
-              Upcoming <span className="ah-tab-count">{upcoming.length}</span>
+              Upcoming <section className="ah-tab-count">{upcoming.length}</section>
             </button>
           </li>
           <li role="presentation">
@@ -66,7 +66,7 @@ export function PatientHistoryView({ appointments, onReschedule, onCancel }) {
               className={`ah-tab ${tab === "history" ? "ah-tab-active" : ""}`}
               onClick={() => setTab("history")}
             >
-              History <span className="ah-tab-count">{history.length}</span>
+              History <section className="ah-tab-count">{history.length}</section>
             </button>
           </li>
         </ul>
@@ -124,20 +124,20 @@ function PatientCard({ appt, isUpcoming, onReschedule, onCancel }) {
       <header className="ah-card-top">
         <section className="ah-card-clinic-info">
           <h3 className="ah-card-clinic">{clinic?.name || "Unknown clinic"}</h3>
-          <p className="ah-card-meta">
-            {clinic?.district && <span>{clinic.district}</span>}
-            {clinic?.province && <span> · {clinic.province}</span>}
-          </p>
+          <section className="ah-card-meta">
+            {clinic?.district && <section>{clinic.district}</section>}
+            {clinic?.province && <section> · {clinic.province}</section>}
+          </section>
         </section>
         <Badge status={appt.status} />
       </header>
 
-      <p className="ah-card-datetime">
+      <section className="ah-card-datetime">
         📅 {formatDate(slot?.slot_date)} &nbsp; 🕐 {formatTime(slot?.slot_time)}
         {slot?.duration_minutes && (
-          <span className="ah-card-duration"> · {slot.duration_minutes} min</span>
+          <section className="ah-card-duration"> · {slot.duration_minutes} min</section>
         )}
-      </p>
+      </section>
 
       {appt.reason && (
         <p className="ah-card-reason">Reason: {appt.reason}</p>
@@ -232,7 +232,7 @@ export function StaffHistoryView({ facilityId }) {
               className={`ah-tab ${tab === "upcoming" ? "ah-tab-active" : ""}`}
               onClick={() => setTab("upcoming")}
             >
-              Upcoming <span className="ah-tab-count">{upcoming.length}</span>
+              Upcoming <section className="ah-tab-count">{upcoming.length}</section>
             </button>
           </li>
           <li role="presentation">
@@ -244,7 +244,7 @@ export function StaffHistoryView({ facilityId }) {
               className={`ah-tab ${tab === "history" ? "ah-tab-active" : ""}`}
               onClick={() => setTab("history")}
             >
-              History <span className="ah-tab-count">{history.length}</span>
+              History <section className="ah-tab-count">{history.length}</section>
             </button>
           </li>
         </ul>
@@ -321,12 +321,12 @@ function StaffCard({ appt }) {
         <Badge status={appt.status} />
       </header>
 
-      <p className="ah-card-datetime">
+      <section className="ah-card-datetime">
         📅 {formatDate(slot?.slot_date)} &nbsp; 🕐 {formatTime(slot?.slot_time)}
         {slot?.duration_minutes && (
-          <span className="ah-card-duration"> · {slot.duration_minutes} min</span>
+          <section className="ah-card-duration"> · {slot.duration_minutes} min</section>
         )}
-      </p>
+      </section>
 
       {appt.reason && (
         <p className="ah-card-reason">Reason: {appt.reason}</p>

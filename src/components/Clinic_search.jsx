@@ -132,11 +132,11 @@ export default function ClinicSearch({ onBook }) {
         const infoWindow = new window.google.maps.InfoWindow();
         const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${clinic.latitude},${clinic.longitude}`;
         infoWindow.setContent(`
-          <div style="font-family: system-ui; padding: 4px;">
+          <section style="font-family: system-ui; padding: 4px;">
             <strong style="color: #1B5E20;">${clinic.name}</strong>
             <p style="margin: 6px 0; font-size: 0.85rem;">${clinic.district || ""}</p>
             <a href="${mapsUrl}" target="_blank" style="color: #1B5E20; text-decoration: none; font-weight: 500;">🚗 Get Directions</a>
-          </div>
+          </section>
         `);
         marker.addListener("click", () => infoWindow.open(map, marker));
         markersRef.current.push(marker);
@@ -328,8 +328,8 @@ export default function ClinicSearch({ onBook }) {
         </fieldset>
 
         {/* Nearby row */}
-        <div className="nearby-row">
-          <div className="filter-group-inline">
+        <section className="nearby-row">
+          <section className="filter-group-inline">
             <button id="nearMeBtn" onClick={findNearbyClinics}><FiMapPin aria-hidden="true" /> Clinics Near Me</button>
             <label htmlFor="radius-select" className="sr-only">Search radius</label>
             <select id="radius-select" value={radius} onChange={(e) => setRadius(e.target.value)}>
@@ -339,8 +339,8 @@ export default function ClinicSearch({ onBook }) {
               <option value="50">50 km</option>
               <option value="100">100 km</option>
             </select>
-          </div>
-        </div>
+          </section>
+        </section>
       </search>
 
       {/* Status message */}

@@ -85,11 +85,11 @@ vi.stubGlobal("crypto", {
 
 vi.mock("./Applications", () => ({
     default: ({ onSubmitted, onBack }) => (
-        <div>
-        <div>Applications mock</div>
+        <section>
+        <section>Applications mock</section>
         <button onClick={onBack}>Back</button>
         <button onClick={onSubmitted}>Submit staff application</button>
-        </div>
+        </section>
     ),
 }));
 

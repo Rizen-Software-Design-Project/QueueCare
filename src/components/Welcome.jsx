@@ -149,23 +149,23 @@ function Welcome() {
             <ul className="about_features">
 
               <li className="about_feature_item">
-                <span className="about_feature_dot" />
-                Real-time wait time updates
+                <section className="about_feature_dot" />
+                <section>Real-time wait time updates</section>
               </li>
 
               <li className="about_feature_item">
-                <span className="about_feature_dot" />
-                Public &amp; private clinic listings
+                <section className="about_feature_dot" />
+                <section>Public &amp; private clinic listings</section>
               </li>
 
               <li className="about_feature_item">
-                <span className="about_feature_dot" />
-                Available in all 9 provinces
+                <section className="about_feature_dot" />
+                <section>Available in all 9 provinces</section>
               </li>
 
               <li className="about_feature_item">
-                <span className="about_feature_dot" />
-                Completely free for patients
+                <section className="about_feature_dot" />
+                <section>Completely free for patients</section>
               </li>
 
             </ul>
@@ -330,7 +330,7 @@ function Welcome() {
             </p>
 
             <h2 className="contact_header">
-              Contact <span className="contact_header_colored">Us</span>
+              Contact <section className="contact_header_colored">Us</section>
             </h2>
 
             <p className="contact_paragraph">
@@ -347,7 +347,7 @@ function Welcome() {
                 </aside>
 
                 <section className="contact_text_wrap">
-                  <span className="contact_info_label">Email</span>
+                  <section className="contact_info_label">Email</section>
 
                   <a
                     href="mailto:support@queuecare.co.za"
@@ -366,7 +366,7 @@ function Welcome() {
                 </aside>
 
                 <section className="contact_text_wrap">
-                  <span className="contact_info_label">Phone</span>
+                  <section className="contact_info_label">Phone</section>
 
                   <a
                     href="tel:+27123456789"
@@ -385,7 +385,7 @@ function Welcome() {
                 </aside>
 
                 <section className="contact_text_wrap">
-                  <span className="contact_info_label">Address</span>
+                  <section className="contact_info_label">Address</section>
 
                   <p className="contact_info_value">
                     123 Health St, Johannesburg, South Africa

@@ -345,32 +345,32 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
   const filteredSlots = slotDateFilter ? slots.filter((slot) => slot.slot_date === slotDateFilter) : slots;
 
   return (
-    <div className="staff-dash">
+    <main className="staff-dash">
       <header className="staff-dash-header">
-        <div>
+        <hgroup>
           <h1>{queueOnly ? "Live Patient Queue" : "Staff Dashboard"}</h1>
           {facilityName && <p style={{ margin: 0, fontSize: 14, color: "#ccc" }}>📍 {facilityName}</p>}
-        </div>
+        </hgroup>
       </header>
 
-      <div className="staff-dash-grid">
+      <section className="staff-dash-grid">
 
         {/* Appointments Table */}
         {!queueOnly && (
-           <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
-            <h2 style={{ margin: 0 }}>{appointmentView === "today" ? "Today's Appointments" : "Upcoming Appointments"}</h2>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="button" onClick={() => setAppointmentView("today")} style={{ padding: "10px 16px", background: appointmentView === "today" ? "#1d4ed8" : "#2563eb", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>Today</button>
-              <button type="button" onClick={() => setAppointmentView("upcoming")} style={{ padding: "10px 16px", background: appointmentView === "upcoming" ? "#15803d" : "#16a34a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>View Upcoming</button>
-              {facilityId && <button type="button" onClick={() => fetchAppointments(facilityId)} style={{ padding: "10px 16px", background: "#b45309", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>{apptLoading ? "Refreshing..." : "Refresh"}</button>}
-              </div>
-            </div>
+          <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
+            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+              <h2 style={{ margin: 0 }}>{appointmentView === "today" ? "Today's Appointments" : "Upcoming Appointments"}</h2>
+              <menu style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="button" onClick={() => setAppointmentView("today")} style={{ padding: "10px 16px", background: appointmentView === "today" ? "#1d4ed8" : "#2563eb", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>Today</button>
+                <button type="button" onClick={() => setAppointmentView("upcoming")} style={{ padding: "10px 16px", background: appointmentView === "upcoming" ? "#15803d" : "#16a34a", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>View Upcoming</button>
+                {facilityId && <button type="button" onClick={() => fetchAppointments(facilityId)} style={{ padding: "10px 16px", background: "#111827", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}>{apptLoading ? "Refreshing..." : "Refresh"}</button>}
+              </menu>
+            </header>
             {apptLoading && <p style={{ color: "#888" }}>Loading appointments...</p>}
             {apptError && <p className="staff-error">{apptError}</p>}
             {!apptLoading && !apptError && visibleAppointments.length === 0 && <p style={{ color: "#888" }}>{appointmentView === "today" ? "No appointments found for today." : "No upcoming appointments found."}</p>}
             {!apptLoading && visibleAppointments.length > 0 && (
-              <div style={{ overflowX: "auto" }}>
+              <section style={{ overflowX: "auto" }}>
                 <table className="staff-table">
                   <thead>
                     <tr><th>Patient</th><th>Email</th><th>Phone</th><th>Date</th><th>Time</th><th>Duration</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
@@ -385,26 +385,26 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                         <td>{formatTime(a.appointment_slots?.slot_time)}</td>
                         <td>{a.appointment_slots?.duration_minutes ?? "—"} min</td>
                         <td>{a.reason || "—"}</td>
-                        <td><span className={`staff-badge staff-badge-${a.status}`}>{a.status}</span></td>
+                        <td><mark className={`staff-badge staff-badge-${a.status}`}>{a.status}</mark></td>
                         <td>
                           {a.status === "complete" || a.status === "cancelled" || a.status === "no_show" ? (
-                            <span style={{ color: "#9ca3af", fontSize: 12 }}>—</span>
+                            <small style={{ color: "#9ca3af", fontSize: 12 }}>—</small>
                           ) : (
-                            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            <menu style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                               <button type="button" className="staff-action-btn" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => openRescheduleModal(a)}>Reschedule</button>
                               {STATUS_OPTIONS.filter((s) => s !== a.status).map((s) => (
                                 <button key={s} className="staff-back-btn" style={{ fontSize: 11, padding: "3px 8px" }} disabled={updatingId === a.id} onClick={() => updateStatus(a.id, s)}>
                                   {updatingId === a.id ? "..." : s}
                                 </button>
                               ))}
-                            </div>
+                            </menu>
                           )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </section>
             )}
           </section>
         )}
@@ -413,12 +413,12 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
         {!queueOnly && rescheduleModalOpen && rescheduleAppointment && (
           <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
             <h2>Reschedule Appointment</h2>
-            <div style={{ marginBottom: 16, padding: 12, background: "#f3f4f6", borderRadius: 6 }}>
+            <aside style={{ marginBottom: 16, padding: 12, background: "#f3f4f6", borderRadius: 6 }}>
               <p style={{ margin: "0 0 8px 0", fontWeight: 600 }}>Current Appointment:</p>
               <p style={{ margin: "0 0 4px 0", fontSize: 14 }}><strong>Patient:</strong> {rescheduleAppointment.profiles?.name} {rescheduleAppointment.profiles?.surname}</p>
               <p style={{ margin: "0 0 4px 0", fontSize: 14 }}><strong>Current Date & Time:</strong> {formatDate(rescheduleAppointment.appointment_slots?.slot_date)} at {formatTime(rescheduleAppointment.appointment_slots?.slot_time)}</p>
               <p style={{ margin: 0, fontSize: 14 }}><strong>Reason:</strong> {rescheduleAppointment.reason || "—"}</p>
-            </div>
+            </aside>
             <form onSubmit={handleRescheduleAppointment} className="staff-form">
               <label>
                 Select New Slot
@@ -431,10 +431,10 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                   ))}
                 </select>
               </label>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <menu style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="submit" disabled={rescheduling}>{rescheduling ? "Rescheduling..." : "Confirm Reschedule"}</button>
                 <button type="button" className="staff-action-btn" onClick={closeRescheduleModal} disabled={rescheduling}>Cancel</button>
-              </div>
+              </menu>
             </form>
             {rescheduleMsg.text && <p className={rescheduleMsg.type === "error" ? "staff-error" : "staff-success"}>{rescheduleMsg.text}</p>}
           </section>
@@ -448,7 +448,7 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
             <p style={{ color: "#888" }}>No patients currently in queue.</p>
           ) : (
             !queueLoading && (
-              <div style={{ overflowX: "auto", minHeight: 220 }}>
+              <section style={{ overflowX: "auto", minHeight: 220 }}>
                 <table className="staff-table">
                   <thead>
                     <tr><th>Position</th><th>Patient</th><th>Reason</th><th>Slot Time</th><th>End Time</th><th>Status</th><th>Actions</th></tr>
@@ -466,15 +466,15 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                           <td>{appt?.reason || "—"}</td>
                           <td>{slot?.slot_time?.slice(0, 5) || "—"}</td>
                           <td>{slot?.end_time?.slice(0, 5) || "—"}</td>
-                          <td><span className={`staff-badge staff-badge-${String(status || "").toLowerCase().replaceAll(" ", "-")}`}>{status}</span></td>
+                          <td><mark className={`staff-badge staff-badge-${String(status || "").toLowerCase().replaceAll(" ", "-")}`}>{status}</mark></td>
                           <td style={{ minWidth: "220px" }}>
                             {status !== "completed" && (
-                              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                              <menu style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                                 {QUEUE_STATUS_OPTIONS.filter((o) => o.value !== status).map((option) => (
                                   <button key={option.value} className="staff-back-btn" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => handleQueueStatusUpdate(contact, option.value)}>{option.label}</button>
                                 ))}
                                 <button className="staff-back-btn" style={{ fontSize: 11, padding: "3px 8px", background: "#dc2626", color: "white" }} onClick={() => handleRemoveFromQueue(contact)}>Remove</button>
-                              </div>
+                              </menu>
                             )}
                           </td>
                         </tr>
@@ -482,7 +482,7 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                     })}
                   </tbody>
                 </table>
-              </div>
+              </section>
             )
           )}
         </section>
@@ -490,24 +490,24 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
         {/* Create Appointment Slots */}
         {!queueOnly && (
           <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <div>
+            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <hgroup>
                 <h2 style={{ margin: 0 }}>Create Appointment Slots</h2>
                 <p style={{ margin: "6px 0 0", color: "#6b7280", fontSize: 14 }}>Add distributed slots with breaks, lunch time, and custom capacity.</p>
-              </div>
+              </hgroup>
               <button type="button" className="staff-action-btn" onClick={() => setShowCreateSlots((prev) => !prev)} style={{ fontSize: 20, width: 40, height: 40, borderRadius: "50%" }}>{showCreateSlots ? "−" : "+"}</button>
-            </div>
+            </header>
 
             {showCreateSlots && (
               <>
                 <form onSubmit={handleCreateBatchSlots} className="staff-form" style={{ marginTop: 18 }}>
-                  <div className="slot-quick-card">
+                  <article className="slot-quick-card">
                     <h3>Slot distribution</h3>
                     <p>Create slots in blocks. Disable lunch or admin time so no appointments are created during breaks.</p>
                     <label>Date<input type="date" value={slotBatchDate} onChange={(e) => setSlotBatchDate(e.target.value)} required /></label>
-                    <div className="slot-blocks">
+                    <ul className="slot-blocks">
                       {slotBlocks.map((block) => (
-                        <div key={block.id} className={`slot-block-row ${!block.enabled ? "disabled" : ""}`}>
+                        <li key={block.id} className={`slot-block-row ${!block.enabled ? "disabled" : ""}`}>
                           <label>Block name<input type="text" value={block.label} onChange={(e) => updateSlotBlock(block.id, "label", e.target.value)} /></label>
                           <label>Start<input type="time" value={block.start} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "start", e.target.value)} /></label>
                           <label>End<input type="time" value={block.end} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "end", e.target.value)} /></label>
@@ -520,20 +520,20 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                           <label>Capacity<input type="number" min="1" value={block.capacity} disabled={!block.enabled} onChange={(e) => updateSlotBlock(block.id, "capacity", e.target.value)} /></label>
                           <label className="slot-toggle"><input type="checkbox" checked={block.enabled} onChange={(e) => updateSlotBlock(block.id, "enabled", e.target.checked)} />Create slots</label>
                           <button type="button" className="staff-action-btn" onClick={() => removeSlotBlock(block.id)} disabled={slotBlocks.length === 1}>Remove</button>
-                        </div>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                     <button type="button" className="staff-action-btn" onClick={addSlotBlock}>+ Add time block</button>
-                  </div>
-                  <div className="slot-preview">
+                  </article>
+                  <aside className="slot-preview">
                     <strong>Preview:</strong>
-                    <div className="slot-preview-list">
+                    <ul className="slot-preview-list">
                       {distributedSlotPreview.map((slot) => (
-                        <span key={`${slot.blockLabel}-${slot.time}`} className="slot-chip">{slot.time} · {slot.duration}min · cap {slot.capacity}</span>
+                        <li key={`${slot.blockLabel}-${slot.time}`} className="slot-chip">{slot.time} · {slot.duration}min · cap {slot.capacity}</li>
                       ))}
-                    </div>
+                    </ul>
                     {distributedSlotPreview.length === 0 && <p style={{ color: "#888", marginTop: 8 }}>No slots will be created yet.</p>}
-                  </div>
+                  </aside>
                   <button type="submit" disabled={creatingSlot || !facilityId}>{creatingSlot ? "Creating slots..." : "Create Distributed Slots"}</button>
                 </form>
                 {createSlotMsg.text && <p className={createSlotMsg.type === "error" ? "staff-error" : "staff-success"}>{createSlotMsg.text}</p>}
@@ -545,19 +545,19 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
         {/* Available Slots */}
         {!queueOnly && (
           <section className="staff-card" style={{ gridColumn: "1 / -1" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
               <h2 style={{ margin: 0 }}>Available Appointment Slots</h2>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <section style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 <input type="date" className="slot-date-filter" value={slotDateFilter} onChange={(e) => setSlotDateFilter(e.target.value)} />
                 {slotDateFilter && <button type="button" className="staff-action-btn" onClick={() => setSlotDateFilter("")}>Clear date</button>}
                 {facilityId && <button className="staff-back-btn" onClick={() => fetchSlots(facilityId)} disabled={slotsLoading}>{slotsLoading ? "Refreshing..." : "↻ Refresh"}</button>}
-              </div>
-            </div>
+              </section>
+            </header>
             {slotsLoading && <p style={{ color: "#888" }}>Loading slots...</p>}
             {slotsError && <p className="staff-error">{slotsError}</p>}
             {!slotsLoading && !slotsError && filteredSlots.length === 0 && <p style={{ color: "#888" }}>No slots found for this facility.</p>}
             {!slotsLoading && filteredSlots.length > 0 && (
-              <div style={{ overflowX: "auto" }}>
+              <section style={{ overflowX: "auto" }}>
                 <table className="staff-table">
                   <thead><tr><th>Date</th><th>Time</th><th>Duration</th><th>Capacity</th><th>Booked</th><th>Available</th><th>Actions</th></tr></thead>
                   <tbody>
@@ -570,18 +570,18 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                         <td>{slot.booked_count ?? 0}</td>
                         <td>{(slot.total_capacity ?? 0) - (slot.booked_count ?? 0)}</td>
                         <td>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <menu style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                             <button type="button" className="staff-action-btn" onClick={() => startEditSlot(slot)}>Edit</button>
                             <button type="button" className="staff-action-btn" style={{ background: "#dc2626" }} disabled={deletingSlotId === slot.id || (slot.booked_count ?? 0) > 0} onClick={() => handleDeleteSlot(slot)} title={(slot.booked_count ?? 0) > 0 ? "Cannot delete booked slots" : "Delete slot"}>
                               {deletingSlotId === slot.id ? "Deleting..." : "Delete"}
                             </button>
-                          </div>
+                          </menu>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </section>
             )}
             {editingSlotId && (
               <section className="staff-card">
@@ -591,10 +591,10 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                   <label>Time<input type="time" value={editSlotTime} onChange={(e) => setEditSlotTime(e.target.value)} required /></label>
                   <label>Capacity<input type="number" min="1" value={editSlotCapacity} onChange={(e) => setEditSlotCapacity(e.target.value)} required /></label>
                   <label>Duration (min)<input type="number" min="5" value={editSlotDuration} onChange={(e) => setEditSlotDuration(e.target.value)} required /></label>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <menu style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button type="submit" disabled={updatingSlot}>{updatingSlot ? "Saving..." : "Save Changes"}</button>
                     <button type="button" className="staff-action-btn" onClick={cancelEditSlot}>Cancel</button>
-                  </div>
+                  </menu>
                 </form>
                 {updateSlotMsg.text && <p className={updateSlotMsg.type === "error" ? "staff-error" : "staff-success"}>{updateSlotMsg.text}</p>}
               </section>
@@ -602,9 +602,9 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
           </section>
         )}
 
-      </div>
+      </section>
 
       <AIAssistant context={{ role: "staff", facilityId, facilityName, pageContext: "clinic management - appointments, queue, slots" }} />
-    </div>
+    </main>
   );
 }

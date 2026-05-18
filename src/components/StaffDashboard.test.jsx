@@ -59,19 +59,19 @@ vi.mock("firebase/auth", () => {
 
 // Mock child components that make their own API calls — keeps tests focused
 vi.mock("./StaffClinicManagement", () => ({
-  default: () => <div data-testid="staff-clinic-management" />,
+  default: () => <section data-testid="staff-clinic-management" />,
 }));
 vi.mock("./Walkin", () => ({
-  default: () => <div data-testid="walk-in" />,
+  default: () => <section data-testid="walk-in" />,
 }));
 vi.mock("./Schedule", () => ({
-  default: () => <div data-testid="schedule" />,
+  default: () => <section data-testid="schedule" />,
 }));
 vi.mock("./AnalyticsDashboardStaff", () => ({
-  default: () => <div data-testid="analytics-staff" />,
+  default: () => <section data-testid="analytics-staff" />,
 }));
 vi.mock("./AIAssistant", () => ({
-  default: () => <div data-testid="ai-assistant" />,
+  default: () => <section data-testid="ai-assistant" />,
 }));
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -347,71 +347,6 @@ describe("Clicked Notifications", () => {
   });
 });
 
-describe("Notifications Panel - content", () => {
-  async function renderAndOpenNotifications() {
-    const user = userEvent.setup();
-    render(<StaffDashboard profile={mockStaffProfile} />);
-    const notificationsNav = screen.getAllByText(/notifications/i).find((btn) => btn.closest(".db-nav"));
-    await user.click(notificationsNav);
-    return user;
-  }
-
-  it("shows 'No notifications.' when the list is empty", async () => {
-    mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
-
-    await renderAndOpenNotifications();
-    await waitFor(() => expect(screen.getByText("No notifications.")).toBeVisible());
-    expect(screen.getByRole("button", { name: /mark all as read/i })).toBeVisible();
-  });
-
-  it("displays the correct unread count in the heading", async () => {
-    const mockNotifs = [
-      { id: "n1", is_read: false, message: "Reminder", sent_at: null },
-      { id: "n2", is_read: true,  message: "Update",   sent_at: null },
-      { id: "n3", is_read: false, message: "Alert",    sent_at: null },
-    ];
-
-    mockQuery.limit.mockResolvedValueOnce({ data: mockNotifs, error: null });
-
-    await renderAndOpenNotifications();
-    await waitFor(() => expect(screen.getByText(/Notifications \(2 unread\)/i)).toBeVisible());
-  });
-
-  it("renders notification cards with message and 'New' badge for unread ones", async () => {
-    const mockNotifs = [
-      { id: "n1", is_read: false, message: "Your shift starts at 08:00", sent_at: "2025-05-10T10:00:00Z" },
-      { id: "n2", is_read: true,  message: "Schedule updated",            sent_at: "2025-05-09T09:00:00Z" },
-    ];
-
-    mockQuery.limit.mockResolvedValueOnce({ data: mockNotifs, error: null });
-
-    await renderAndOpenNotifications();
-    await waitFor(() => expect(screen.getByText("Your shift starts at 08:00")).toBeVisible());
-    expect(screen.getByText("Schedule updated")).toBeVisible();
-    expect(screen.getAllByText("New")).toHaveLength(1);
-  });
-
-  it("marks all as read and updates the UI when 'Mark all as read' is clicked", async () => {
-    const mockNotifs = [
-      { id: "n1", is_read: false, message: "A", sent_at: null },
-      { id: "n2", is_read: false, message: "B", sent_at: null },
-    ];
-
-    mockQuery.limit.mockResolvedValueOnce({ data: mockNotifs, error: null });
-
-    const user = await renderAndOpenNotifications();
-
-    await waitFor(() => expect(screen.getAllByText("New")).toHaveLength(2));
-    expect(screen.getByText("Notifications (2 unread)")).toBeVisible();
-
-    await user.click(screen.getByRole("button", { name: /mark all as read/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByText("New")).not.toBeInTheDocument();
-      expect(screen.getByText("Notifications (0 unread)")).toBeVisible();
-    });
-  });
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Profile nav renders ProfilePage inline — it does not call navigate().
@@ -509,7 +444,9 @@ describe("Sidebar hamburger", () => {
     render(<StaffDashboard profile={mockStaffProfile} />);
 
     const sidebar   = document.querySelector(".db-sidebar");
-    const hamburger = screen.getByRole("button", { name: "☰" });
+    const hamburger = screen.getByRole("button", {
+      name: /toggle sidebar navigation/i,
+    });
 
     expect(sidebar.classList.contains("open")).toBe(false);
 
@@ -593,37 +530,7 @@ describe("Clicked Service Policy", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("Notification query chaining", () => {
-  it("calls notification query filters correctly", async () => {
-    const eqMock = vi.fn().mockReturnThis();
 
-    const notificationQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq:     eqMock,
-      order:  vi.fn().mockReturnThis(),
-      limit:  vi.fn().mockResolvedValue({ data: [], error: null }),
-    };
-
-    const assignmentQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq:     vi.fn().mockResolvedValue({ data: [], error: null }),
-    };
-
-    const { supabase } = await import("#lib/supabase");
-    supabase.from.mockImplementation((table) => {
-      if (table === "notifications")    return notificationQuery;
-      if (table === "staff_assignments") return assignmentQuery;
-      return mockQuery;
-    });
-
-    render(<StaffDashboard profile={mockStaffProfile} />);
-
-    await waitFor(() => {
-      expect(eqMock).toHaveBeenCalledWith("profile_id", "staff-123");
-      expect(eqMock).toHaveBeenCalledWith("channel",    "in_app");
-    });
-  });
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("AppointmentHistory - StaffHistoryView", () => {

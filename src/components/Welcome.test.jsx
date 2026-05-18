@@ -58,19 +58,21 @@ describe("Welcome Page", () => {
         texts.forEach((text) => {
             expect(text).toBeVisible();
         });
-        
+
         expect(screen.getByText("Skip the Wait.")).toBeVisible();
         expect(screen.getByText(/From Limpopo/i)).toBeVisible();
     });
 
     it("Renders Get started button", () => {
-        const getStartedButton = screen.getByRole("link", { name: "Get Started" });
-        expect(getStartedButton).toBeVisible();
+        // Get Started is a <button> inside a <Link> — query the link wrapper
+        const getStartedLink = screen.getByRole("link", { name: /get started/i });
+        expect(getStartedLink).toBeVisible();
     });
 
     it("Renders Learn more button", () => {
-        const learnMoreButton = screen.getByRole("button", { name: "Learn More" });
-        expect(learnMoreButton).toBeVisible();
+        // Learn More is a <button> inside a <Link> — query the link wrapper
+        const learnMoreLink = screen.getByRole("link", { name: /learn more/i });
+        expect(learnMoreLink).toBeVisible();
     });
 
     it("Renders Stats block", () => {
@@ -120,7 +122,7 @@ describe("Welcome Page", () => {
         expect(screen.getByPlaceholderText("thabo@example.com")).toBeVisible();
         expect(screen.getByPlaceholderText("How can we help?")).toBeVisible();
         expect(screen.getByPlaceholderText("Tell us more...")).toBeVisible();
-        expect(screen.getByRole("button", { name: "Send Message" })).toBeVisible();
+        expect(screen.getByRole("button", { name: /send message/i })).toBeVisible();
     });
 
     it("Renders footer section", () => {
@@ -156,7 +158,8 @@ describe("Get started clicked", () => {
             </MemoryRouter>
         );
 
-        const link = screen.getByRole("link", { name: "Get Started" });
+        // The accessible link wraps the Get Started button
+        const link = screen.getByRole("link", { name: /get started/i });
         expect(link).toHaveAttribute("href", "/signin");
     });
 });
@@ -245,10 +248,10 @@ describe("Welcome Page, Form Interaction", () => {
         const form = document.querySelector("form");
         const submitHandler = vi.fn((e) => e.preventDefault());
         form.addEventListener("submit", submitHandler);
-        
-        const submitButton = screen.getByRole("button", { name: "Send Message" });
+
+        const submitButton = screen.getByRole("button", { name: /send message/i });
         await user.click(submitButton);
-        
+
         expect(submitHandler).toHaveBeenCalled();
         form.removeEventListener("submit", submitHandler);
     });
@@ -266,26 +269,26 @@ describe("Welcome Page, Footer Links", () => {
 
     it("Home link has correct href", () => {
         const homeLinks = screen.getAllByRole("link", { name: "Home" });
-        const navbarHomeLink = homeLinks.find(link => link.closest('.footer-section'));
-        expect(navbarHomeLink).toHaveAttribute("href", "#");
+        const footerHomeLink = homeLinks.find(link => link.closest('.footer-section'));
+        expect(footerHomeLink).toHaveAttribute("href", "/");
     });
 
     it("About link has correct href", () => {
         const aboutLinks = screen.getAllByRole("link", { name: "About" });
-        const navbarAboutLink = aboutLinks.find(link => link.closest('.footer-section'));
-        expect(navbarAboutLink).toHaveAttribute("href", "#");
+        const footerAboutLink = aboutLinks.find(link => link.closest('.footer-section'));
+        expect(footerAboutLink).toHaveAttribute("href", "/about");
     });
 
     it("Services link has correct href", () => {
         const servicesLinks = screen.getAllByRole("link", { name: "Services" });
-        const navbarServicesLink = servicesLinks.find(link => link.closest('.footer-section'));
-        expect(navbarServicesLink).toHaveAttribute("href", "#");
+        const footerServicesLink = servicesLinks.find(link => link.closest('.footer-section'));
+        expect(footerServicesLink).toHaveAttribute("href", "/services");
     });
 
     it("Contact link has correct href", () => {
         const contactLinks = screen.getAllByRole("link", { name: "Contact" });
-        const navbarContactLink = contactLinks.find(link => link.closest('.footer-section'));
-        expect(navbarContactLink).toHaveAttribute("href", "#");
+        const footerContactLink = contactLinks.find(link => link.closest('.footer-section'));
+        expect(footerContactLink).toHaveAttribute("href", "/contact");
     });
 
     it("Footer has Privacy Policy link", () => {
@@ -313,14 +316,16 @@ describe("Welcome Page, Footer Links", () => {
     });
 
     it("Footer email link has correct href", () => {
-        const emailLink = screen.getByRole("link", { name: "support@queuecare.co.za" });
-        expect(emailLink).toHaveAttribute("href", "mailto:support@queuecare.co.za");
-    });
+    const emailLinks = screen.getAllByRole("link", { name: "support@queuecare.co.za" });
+    const footerLink = emailLinks.find(link => link.closest('.footer-section'));
+    expect(footerLink).toHaveAttribute("href", "mailto:support@queuecare.co.za");
+});
 
-    it("Footer phone link has correct href", () => {
-        const phoneLink = screen.getByRole("link", { name: "+27 123 456 789" });
-        expect(phoneLink).toHaveAttribute("href", "tel:+27123456789");
-    });
+it("Footer phone link has correct href", () => {
+    const phoneLinks = screen.getAllByRole("link", { name: "+27 123 456 789" });
+    const footerLink = phoneLinks.find(link => link.closest('.footer-section'));
+    expect(footerLink).toHaveAttribute("href", "tel:+27123456789");
+});
 
     it("Footer location has correct href", () => {
         const location = screen.getByText(/Johannesburg, GP/i);

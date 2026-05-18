@@ -1,4 +1,33 @@
-/* ── Applications.css ─────────────────────────────────────────────────────── */
+/* ── Applications.css — South African Inspired Theme ───────────────────── */
+
+:root {
+  --sa-green: #007749;
+  --sa-gold: #ffb81c;
+  --sa-red: #de3831;
+  --sa-blue: #001489;
+
+  --surface: #ffffff;
+  --surface-soft: #f8faf8;
+
+  --border: #dbe5dd;
+  --border-strong: #c8d5cb;
+
+  --text-main: #1f2937;
+  --text-soft: #6b7280;
+
+  --shadow:
+    0 10px 30px rgba(0, 119, 73, 0.08);
+
+  --transition: 0.22s ease;
+
+  --accent-gradient:
+    linear-gradient(
+      90deg,
+      var(--sa-green),
+      var(--sa-gold),
+      var(--sa-red)
+    );
+}
 
 /* Layout */
 .app-wrapper {
@@ -6,117 +35,149 @@
 }
 
 .app-card {
-  background: #fff;
-  border: 1px solid #e8e7e3;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
 }
 
+.app-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--accent-gradient);
+}
+
+/* Header */
 .app-header-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 
 /* Typography */
 .app-title {
   margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #111;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--sa-green);
+  letter-spacing: -0.3px;
 }
 
 .app-muted {
   margin: 6px 0 0;
-  color: #666;
+  color: var(--text-soft);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .app-muted-small {
   margin: 6px 0 0;
-  color: #777;
+  color: #94a3b8;
   font-size: 12px;
 }
 
 /* Error */
 .app-error {
-  background: #fef2f2;
-  color: #c0392b;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 16px;
+  background: rgba(222, 56, 49, 0.08);
+  color: #b42318;
+  border: 1px solid rgba(222, 56, 49, 0.18);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
   font-size: 13px;
-}
-
-/* Buttons */
-.app-btn-refresh {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
   font-weight: 600;
 }
 
-.app-btn-primary {
+/* Buttons */
+.app-btn-refresh,
+.app-btn-primary,
+.app-btn-secondary,
+.app-btn-approve,
+.app-btn-reject {
   border: none;
-  background: #111;
-  color: #fff;
-  border-radius: 10px;
-  padding: 10px 16px;
+  border-radius: 14px;
+  padding: 11px 18px;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
+    background var(--transition);
+}
+
+.app-btn-refresh:hover,
+.app-btn-primary:hover,
+.app-btn-secondary:hover,
+.app-btn-approve:hover,
+.app-btn-reject:hover {
+  transform: translateY(-2px);
+}
+
+.app-btn-refresh {
+  background: var(--surface-soft);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+.app-btn-primary {
+  background: var(--sa-green);
+  color: white;
+  box-shadow: 0 10px 24px rgba(0, 119, 73, 0.18);
+}
+
+.app-btn-primary:hover {
+  background: #00613c;
 }
 
 .app-btn-secondary {
-  border: 1px solid #ddd;
-  background: #fff;
-  color: #111;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-weight: 700;
-  cursor: pointer;
+  background: white;
+  color: var(--text-main);
+  border: 1px solid var(--border-strong);
   margin-bottom: 16px;
 }
 
+.app-btn-secondary:hover {
+  background: #f5f7f5;
+}
+
 .app-btn-approve {
-  border: none;
-  background: #1d9e75;
-  color: #fff;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-weight: 700;
-  cursor: pointer;
+  background: var(--sa-green);
+  color: white;
+}
+
+.app-btn-approve:hover {
+  background: #00613c;
 }
 
 .app-btn-reject {
-  border: none;
-  background: #c0392b;
-  color: #fff;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-weight: 700;
-  cursor: pointer;
+  background: var(--sa-red);
+  color: white;
+}
+
+.app-btn-reject:hover {
+  background: #c92f29;
 }
 
 /* Form */
 .app-form {
-  border: 1px solid #eee;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 22px;
-  background: #fafafa;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 24px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
 }
 
 .app-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 
 .app-label {
@@ -124,32 +185,35 @@
   margin-bottom: 6px;
   margin-top: 10px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #444;
+  letter-spacing: 0.7px;
+  color: #475569;
 }
 
-.app-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1.5px solid #ddd;
-  font-size: 14px;
-  background: #fff;
-  outline: none;
-}
-
+.app-input,
 .app-textarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1.5px solid #ddd;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
   font-size: 14px;
-  background: #fff;
+  background: white;
   outline: none;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.app-input:focus,
+.app-textarea:focus {
+  border-color: var(--sa-green);
+  box-shadow:
+    0 0 0 4px rgba(0, 119, 73, 0.12);
+}
+
+.app-textarea {
   resize: vertical;
 }
 
@@ -157,41 +221,48 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 18px;
   flex-wrap: wrap;
 }
 
 /* Gender selector */
 .app-gender-wrap {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .app-gender-btn {
-  padding: 8px 14px;
-  border-radius: 20px;
-  border: 1.5px solid #ddd;
-  background: #fff;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  color: #444;
+  color: #475569;
+  transition: all var(--transition);
+}
+
+.app-gender-btn:hover {
+  transform: translateY(-1px);
 }
 
 .app-gender-btn--active {
-  background: #111;
-  color: #fff;
-  border-color: #111;
+  background: var(--sa-green);
+  color: white;
+  border-color: var(--sa-green);
+  box-shadow:
+    0 8px 18px rgba(0, 119, 73, 0.18);
 }
 
 /* Clinic search */
 .app-search-results {
-  border: 1px solid #e5e5e5;
-  border-radius: 10px;
-  background: #fff;
-  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: white;
+  margin-top: 10px;
   overflow: hidden;
 }
 
@@ -200,41 +271,65 @@
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 10px 12px;
+  gap: 4px;
+  padding: 12px 14px;
   border: none;
-  background: #fff;
+  background: transparent;
   cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #eef2ef;
+  transition: background var(--transition);
+}
+
+.app-search-result-btn:hover {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 119, 73, 0.05),
+      rgba(255, 184, 28, 0.05)
+    );
 }
 
 .app-search-sub {
   font-size: 12px;
-  color: #777;
+  color: var(--text-soft);
 }
 
 .app-selected-clinic {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   font-size: 13px;
-  color: #1d9e75;
+  font-weight: 700;
+  color: var(--sa-green);
 }
 
 /* Application list */
 .app-list {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
+
 .app-list,
 .app-search-results {
   list-style: none;
   margin: 0;
   padding: 0;
 }
+
 .app-application-card {
-  border: 1px solid #e8e8e8;
-  border-radius: 14px;
-  padding: 16px;
-  background: #fff;
+  border-radius: 20px;
+  padding: 18px;
+  background: white;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.app-application-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: var(--accent-gradient);
 }
 
 .app-application-top {
@@ -242,58 +337,79 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .app-app-title {
   margin: 0;
-  font-weight: 700;
-  font-size: 16px;
-  color: #111;
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--text-main);
 }
 
 .app-app-meta {
   margin: 4px 0 0;
   font-size: 13px;
-  color: #666;
+  color: var(--text-soft);
 }
 
 .app-app-body {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
-  color: #333;
+  color: #374151;
 }
 
 /* Status badge */
 .status-badge {
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: capitalize;
+  letter-spacing: 0.3px;
 }
 
 .status-badge--pending {
-  background: #fff8e1;
-  color: #e65100;
-  border: 1px solid #ffe0b2;
+  background: rgba(255, 184, 28, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(255, 184, 28, 0.2);
 }
 
 .status-badge--approved {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
+  background: rgba(0, 119, 73, 0.12);
+  color: #047857;
+  border: 1px solid rgba(0, 119, 73, 0.18);
 }
 
 .status-badge--rejected {
-  background: #fdecea;
-  color: #c62828;
-  border: 1px solid #f5c6cb;
+  background: rgba(222, 56, 49, 0.1);
+  color: #b42318;
+  border: 1px solid rgba(222, 56, 49, 0.16);
 }
 
 .status-badge--unknown {
-  background: #f5f5f5;
-  color: #555;
-  border: 1px solid #ddd;
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .app-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-form-actions {
+    justify-content: stretch;
+  }
+
+  .app-form-actions button {
+    width: 100%;
+  }
 }

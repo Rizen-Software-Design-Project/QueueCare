@@ -32,13 +32,13 @@ vi.mock("react-router-dom", async () => {
 });
 
 vi.mock("./PatientDashboard", () => ({
-    default: ({ profile }) => <div data-testid="patient-dashboard">{profile.role}</div>,
+    default: ({ profile }) => <section data-testid="patient-dashboard">{profile.role}</section>,
 }));
 vi.mock("./StaffDashboard", () => ({
-    default: ({ profile }) => <div data-testid="staff-dashboard">{profile.role}</div>,
+    default: ({ profile }) => <section data-testid="staff-dashboard">{profile.role}</section>,
 }));
 vi.mock("./AdminDashboard", () => ({
-    default: ({ profile }) => <div data-testid="admin-dashboard">{profile.role}</div>,
+    default: ({ profile }) => <section data-testid="admin-dashboard">{profile.role}</section>,
 }));
 
 import Dashboard from "./Dashboard";

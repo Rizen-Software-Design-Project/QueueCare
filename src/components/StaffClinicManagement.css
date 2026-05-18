@@ -11,11 +11,13 @@
   padding: 18px 28px;
   background: #145214;
   color: #fff;
+  border-radius: 0 0 10px 10px;
 }
 
 .staff-dash-header h1 {
   margin: 0;
   font-size: 1.5rem;
+  color: #145214;
 }
 
 .staff-back-btn {

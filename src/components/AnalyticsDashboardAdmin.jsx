@@ -29,7 +29,7 @@ const STATUS_STYLES = {
 }
 
 function Skeleton({ className = '' }) {
-  return <div aria-hidden="true" className={`animate-pulse bg-slate-100 rounded-lg ${className}`} />
+  return <section aria-hidden="true" className={`animate-pulse bg-slate-100 rounded-lg ${className}`} />
 }
 
 function StatCard({ label, value, sub, accent = false }) {
@@ -86,7 +86,7 @@ function DownloadIcon() {
 function FacilityFilter({ facilities, value, onChange }) {
   return (
     <label className="flex items-center gap-2 text-xs text-slate-600">
-      <span className="sr-only">Filter by facility</span>
+      <section className="sr-only">Filter by facility</section>
       <select
         value={value ?? ''}
         onChange={e => onChange(e.target.value ? Number(e.target.value) : null)}
@@ -115,7 +115,7 @@ function DateRange({ start, end, onStart, onEnd }) {
         className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600
                    bg-white focus:outline-none focus:ring-2 focus:ring-teal-400"
       />
-      <span className="text-slate-300 text-xs" aria-hidden="true"> to </span>
+      <section className="text-slate-300 text-xs" aria-hidden="true"> to </section>
       <label className="sr-only" htmlFor="date-end">End date</label>
       <input
         id="date-end"
@@ -251,10 +251,10 @@ function NoShowReport({ facilities }) {
   return (
     <section className="space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
+        <section className="flex flex-wrap items-center gap-3">
           <FacilityFilter facilities={facilities} value={facilityId} onChange={setFacilityId} />
           <DateRange start={start} end={end} onStart={setStart} onEnd={setEnd} />
-        </div>
+        </section>
         <ExportBar
           disabled={loading || !data.length}
           onCSV={() => exportCSV(chartData, 'noshows')}
@@ -278,7 +278,7 @@ function NoShowReport({ facilities }) {
           role="alert"
           className="flex items-start gap-3 px-4 py-3 rounded-xl bg-rose-50 border border-rose-100 text-sm text-rose-700"
         >
-          <span aria-hidden="true" className="mt-0.5 shrink-0">⚠️</span>
+          <section aria-hidden="true" className="mt-0.5 shrink-0">⚠️</section>
           <p>
             Your no-show rate is above 20%. Consider enabling appointment reminder
             notifications for patients 24 hours before their slot.
@@ -490,7 +490,7 @@ export default function AnalyticsDashboard() {
   const facilities = useFacilities()
 
   return (
-    <div className="analytics-dashboard">
+    <section className="analytics-dashboard">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
         {/* Page header */}
@@ -505,7 +505,7 @@ export default function AnalyticsDashboard() {
         <nav aria-label="Analytics sections" className="mb-7">
           <ul
             role="tablist"
-            className="flex gap-1 bg-white border border-slate-200 rounded-xl p-1 w-fit shadow-sm list-none m-0"
+            className="flex flex-row items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 px-2 w-fit shadow-sm list-none m-0"
           >
             {TABS.map((tab, i) => (
               <li key={tab} role="presentation">
@@ -529,30 +529,30 @@ export default function AnalyticsDashboard() {
         </nav>
 
         {/* Tab panels */}
-        <div
+        <section
           id="tabpanel-0"
           role="tabpanel"
           aria-labelledby="tab-0"
           hidden={activeTab !== 0}
         >
           <WaitTimesReport facilities={facilities} />
-        </div>
-        <div
+        </section>
+        <section
           id="tabpanel-1"
           role="tabpanel"
           aria-labelledby="tab-1"
           hidden={activeTab !== 1}
         >
           <NoShowReport facilities={facilities} />
-        </div>
-        <div
+        </section>
+        <section
           id="tabpanel-2"
           role="tabpanel"
           aria-labelledby="tab-2"
           hidden={activeTab !== 2}
         >
           <CustomViewReport facilities={facilities} />
-        </div>
+        </section>
       </main>
 
       <AIAssistant
@@ -561,6 +561,6 @@ export default function AnalyticsDashboard() {
           pageContext: 'analytics - ' + TABS[activeTab],
         }}
       />
-    </div>
+    </section>
   )
 }

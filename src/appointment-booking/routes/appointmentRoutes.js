@@ -62,11 +62,11 @@ const emailHtml = (patientName, facilityName, facilityAddress, slotDate, slotTim
         : `Your appointment has been booked successfully.`;
 
     return `
-    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-        <div style="background: #0F6E56; padding: 24px;">
+    <section style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <section style="background: #0F6E56; padding: 24px;">
             <h2 style="color: #ffffff; margin: 0;">${icon} ${heading}</h2>
-        </div>
-        <div style="padding: 24px;">
+        </section>
+        <section style="padding: 24px;">
             <p>Hi ${patientName},</p>
             <p>${intro}</p>
             <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
@@ -99,8 +99,8 @@ const emailHtml = (patientName, facilityName, facilityAddress, slotDate, slotTim
             </table>
             <p style="color: #555;">Please arrive 5–10 minutes early.</p>
             <p style="color: #aaa; font-size: 12px;">— QueueCare Team</p>
-        </div>
-    </div>`;
+        </section>
+    </section>`;
 };
 
 
@@ -847,17 +847,17 @@ const queueStatusEmailHtml = (patientName, status, facilityName, position) => {
     const cfg = configs[status] || configs.waiting;
 
     return `
-    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-        <div style="background: ${cfg.color}; padding: 24px;">
+    <section style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <section style="background: ${cfg.color}; padding: 24px;">
             <h2 style="color: #ffffff; margin: 0;">${cfg.icon} ${cfg.heading}</h2>
-        </div>
-        <div style="padding: 24px;">
+        </section>
+        <section style="padding: 24px;">
             <p>Hi ${patientName},</p>
             <p>${cfg.message}</p>
             <p style="color: #555;">📍 ${facilityName}</p>
             <p style="color: #aaa; font-size: 12px;">— QueueCare Team</p>
-        </div>
-    </div>`;
+        </section>
+    </section>`;
 };
 
 const sendQueueStatusEmail = async (req, res) => {

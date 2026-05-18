@@ -264,10 +264,10 @@ export default function BookAppointment({ clinicId, onBack, onDone }) {
               <h5>Operating hours</h5>
               <dl className="booking-hours-list">
                 {formatHours(clinicDetails.operating_hours).map(({ day, text }) => (
-                  <div key={day} className="booking-hour-row">
+                  <section key={day} className="booking-hour-row">
                     <dt>{day.charAt(0).toUpperCase() + day.slice(1)}</dt>
                     <dd>{text}</dd>
-                  </div>
+                  </section>
                 ))}
               </dl>
             </section>

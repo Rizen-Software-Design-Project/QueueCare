@@ -378,33 +378,33 @@ export default function Applications({
             {/* Name */}
             <fieldset className="app-grid-2">
               <legend className="sr-only">Full name</legend>
-              <div>
+              <section>
                 <label className="app-label" htmlFor="field-name">First Name</label>
                 <input id="field-name" className="app-input" value={form.name} onChange={set("name")} placeholder="Jane" />
-              </div>
-              <div>
+              </section>
+              <section>
                 <label className="app-label" htmlFor="field-surname">Surname</label>
                 <input id="field-surname" className="app-input" value={form.surname} onChange={set("surname")} placeholder="Dlamini" />
-              </div>
+              </section>
             </fieldset>
 
             {/* Contact */}
             <fieldset className="app-grid-2">
               <legend className="sr-only">Contact details</legend>
-              <div>
+              <section>
                 <label className="app-label" htmlFor="field-email">Email</label>
                 <input id="field-email" className="app-input" type="email" value={form.email} onChange={set("email")} placeholder="jane@example.com" />
-              </div>
-              <div>
+              </section>
+              <section>
                 <label className="app-label" htmlFor="field-phone">Phone Number</label>
                 <input id="field-phone" className="app-input" value={form.phone_number} onChange={set("phone_number")} placeholder="0821234567" />
-              </div>
+              </section>
             </fieldset>
 
             {/* Gender */}
             <fieldset>
               <legend className="app-label">Gender</legend>
-              <div className="app-gender-wrap">
+              <section className="app-gender-wrap">
                 {["male", "female", "other"].map((g) => (
                   <button
                     key={g}
@@ -416,13 +416,13 @@ export default function Applications({
                     {g.charAt(0).toUpperCase() + g.slice(1)}
                   </button>
                 ))}
-              </div>
+              </section>
             </fieldset>
 
             {/* ID + employee number */}
             <fieldset className="app-grid-2">
               <legend className="sr-only">Identity and employment</legend>
-              <div>
+              <section>
                 <label className="app-label" htmlFor="field-id">SA ID Number</label>
                 <input
                   id="field-id"
@@ -432,21 +432,21 @@ export default function Applications({
                   placeholder="13 digit ID number"
                   maxLength={13}
                 />
-              </div>
-              <div>
+              </section>
+              <section>
                 <label className="app-label" htmlFor="field-emp">Employee Number</label>
                 <input id="field-emp" className="app-input" value={form.professional_id} onChange={set("professional_id")} placeholder="Employee number" />
-              </div>
+              </section>
             </fieldset>
 
             {/* License */}
-            <div>
-              <label className="app-label" htmlFor="field-license">License Number <span className="app-muted">(optional)</span></label>
+            <section>
+              <label className="app-label" htmlFor="field-license">License Number <section className="app-muted">(optional)</section></label>
               <input id="field-license" className="app-input" value={form.license_number} onChange={set("license_number")} placeholder="Professional license" />
-            </div>
+            </section>
 
             {/* Clinic search */}
-            <div>
+            <section>
               <label className="app-label" htmlFor="field-clinic">Clinic</label>
               <input
                 id="field-clinic"
@@ -469,7 +469,7 @@ export default function Applications({
                         onClick={() => { setSelectedClinic(c); setClinicQuery(c.name); setClinicResults([]); }}
                       >
                         <strong>{c.name}</strong>
-                        <span className="app-search-sub">{c.district || "—"}, {c.province || "—"}</span>
+                        <section className="app-search-sub">{c.district || "—"}, {c.province || "—"}</section>
                       </button>
                     </li>
                   ))}
@@ -480,10 +480,10 @@ export default function Applications({
               {selectedClinic && (
                 <p className="app-selected-clinic">Selected: <strong>{selectedClinic.name}</strong></p>
               )}
-            </div>
+            </section>
 
             {/* CV */}
-            <div>
+            <section>
               <label className="app-label" htmlFor="field-cv">Upload CV</label>
               <input
                 id="field-cv"
@@ -495,10 +495,10 @@ export default function Applications({
               {cvFile && (
                 <p className="app-muted-small">Selected file: {cvFile.name}</p>
               )}
-            </div>
+            </section>
 
             {/* Motivation */}
-            <div>
+            <section>
               <label className="app-label" htmlFor="field-motivation">Motivation</label>
               <textarea
                 id="field-motivation"
@@ -508,9 +508,9 @@ export default function Applications({
                 onChange={set("motivation")}
                 placeholder="Why are you applying for this role?"
               />
-            </div>
+            </section>
 
-            <div className="app-form-actions">
+            <section className="app-form-actions">
               <button
                 type="submit"
                 className="app-btn-primary"
@@ -518,7 +518,7 @@ export default function Applications({
               >
                 {submitting ? "Submitting…" : "Submit Application"}
               </button>
-            </div>
+            </section>
           </form>
         </article>
       </main>
@@ -588,13 +588,13 @@ export default function Applications({
                       ["Reviewed",        formatDateTime(app.reviewed_at)],
                     ].map(([label, val]) => (
                       <section key={label}>
-                        <dt>{label}</dt>
+                        <dt><strong>{label}</strong></dt>
                         <dd>{val || "—"}</dd>
                       </section>
                     ))}
                     {app.cv_url && (
                       <section>
-                        <dt>CV</dt>
+                        <dt><strong>CV</strong></dt>
                         <dd><a href={app.cv_url} target="_blank" rel="noreferrer">View CV</a></dd>
                       </section>
                     )}

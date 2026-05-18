@@ -615,3 +615,6 @@ dialog {
   }
 
 }
+li{
+  list-style: none;
+}

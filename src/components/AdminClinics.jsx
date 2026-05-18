@@ -265,11 +265,11 @@ function applyPillDays() {
                   {facility.district}, {facility.province}
                 </p>
 
-                <span
+                <section
                   className={facility.is_active ? "active" : "inactive"}
                 >
                   {facility.is_active ? "● Active" : "○ Inactive"}
-                </span>
+                </section>
 
                 <p style={{ marginTop: "0.75rem" }}>
                   <strong>Services:</strong>{" "}

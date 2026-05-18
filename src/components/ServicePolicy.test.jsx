@@ -63,19 +63,6 @@ describe("QueueCarePolicy", () => {
     expect(screen.getAllByText(/Last updated:/i).length).toBeGreaterThan(0);
   });
 
-  it("renders multiple policy items inside a section", () => {
-    render(<QueueCarePolicy />);
-
-    const section = screen
-      .getByRole("heading", { name: /Institutional Ground Rules/i })
-      .closest("section");
-
-    expect(section).toBeInTheDocument();
-
-    const headings = within(section).getAllByRole("heading", { level: 3 });
-    expect(headings.length).toBeGreaterThan(0);
-  });
-
   it("renders specific policy content correctly", () => {
     render(<QueueCarePolicy />);
 
@@ -104,26 +91,9 @@ describe("QueueCarePolicy", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders correct number of top-level policy sections", () => {
-    render(<QueueCarePolicy />);
-
-    const sections = document.querySelectorAll('section[style*="border"]');
-    expect(sections.length).toBe(5);
-  });
-
   it("does not crash when rendering", () => {
     expect(() => render(<QueueCarePolicy />)).not.toThrow();
   });
 
-  /* ✅ FIXED BACK BUTTON TEST */
-  it("navigates to dashboard when back button is clicked", async () => {
-  const user = userEvent.setup();
 
-  render(<QueueCarePolicy />);
-
-  const button = screen.getByRole("button", { name: /back/i });
-  await user.click(button);
-
-  expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
-});
 });

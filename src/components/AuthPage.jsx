@@ -81,16 +81,16 @@ const Logo = () => (
         <path d="M2 12l10 5 10-5"/>
       </svg>
     </figure>
-    <div>
+    <section>
       <h1 className="auth-logo-name">QueueAccess</h1>
       <p className="auth-logo-sub">Integrated Healthcare Management</p>
-    </div>
+    </section>
   </header>
 );
 
 const LoadingSpinner = () => (
   <section className="auth-spinner" aria-label="Loading" role="status">
-    <div className="auth-spinner-circle" />
+    <section className="auth-spinner-circle" />
   </section>
 );
 
@@ -100,16 +100,16 @@ const StrengthMeter = ({ score }) => {
   const colors = ["#E24B4A", "#EF9F27", "#F4C542", "#1D9E75", "#0F6E56"];
   return (
     <section className="auth-strength-container" aria-label={`Password strength: ${levels[score - 1] ?? ""}`}>
-      <div className="auth-strength-bar-container">
+      <section className="auth-strength-bar-container">
         {[0, 1, 2, 3, 4].map((i) => (
-          <div
+          <section
             key={i}
             className="auth-strength-segment"
             style={{ backgroundColor: i < score ? colors[score - 1] : "#E5E7EB" }}
           />
         ))}
-      </div>
-      {score > 0 && <span className="auth-strength-label">{levels[score - 1]}</span>}
+      </section>
+      {score > 0 && <section className="auth-strength-label">{levels[score - 1]}</section>}
     </section>
   );
 };
@@ -166,7 +166,7 @@ const OtpInput = ({ value, onChange }) => {
 const SocialButton = ({ icon, label, onClick, disabled }) => (
   <button type="button" className="auth-btn-social" onClick={onClick} disabled={disabled}>
     {icon}
-    <span>{label}</span>
+    <section>{label}</section>
   </button>
 );
 
@@ -181,9 +181,9 @@ const BackButton = ({ onClick }) => (
 
 const Divider = () => (
   <section className="auth-divider" aria-hidden="true">
-    <div className="auth-div-line" />
-    <span className="auth-div-text">or</span>
-    <div className="auth-div-line" />
+    <section className="auth-div-line" />
+    <section className="auth-div-text">or</section>
+    <section className="auth-div-line" />
   </section>
 );
 

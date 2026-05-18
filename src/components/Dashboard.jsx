@@ -105,8 +105,8 @@ export default function Dashboard() {
   if (profile.role === "admin")   return <AdminDashboard   profile={profile} />;
 
   return (
-    <div className="db-splash">
+    <section className="db-splash">
       <p>Unknown role: {profile.role}. Please contact support.</p>
-    </div>
+    </section>
   );
 }

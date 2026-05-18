@@ -274,14 +274,77 @@ export default function StaffDashboard({ profile: initialProfile }) {
       case "appointment-history":
         return <StaffHistoryView facilityId={facilityId} />;
 
-      case "notifications":
-        return (
-          <NotificationsPanel
-            notifications={notifications}
-            unreadCount={unreadCount}
-            onMarkAllRead={markAllRead}
-          />
-        );
+        case "notifications":
+  return (
+    <section className="db-section db-notifications">
+
+      <section className="db-notifications-header">
+        <section>
+          <h2 className="db-notifications-title">
+            Notifications
+          </h2>
+
+          <p className="db-notifications-count">
+            {unreadCount} unread
+          </p>
+        </section>
+
+        {unreadCount > 0 && (
+          <button
+            className="db-notifications-readall"
+            onClick={markAllRead}
+          >
+            Mark all as read
+          </button>
+        )}
+      </section>
+
+      {notifications.length === 0 ? (
+        <section className="db-notifications-empty">
+          <h3>No notifications yet</h3>
+
+          <p>
+            You're all caught up.
+          </p>
+        </section>
+      ) : (
+        <section className="db-notification-list">
+          {notifications.map((notification) => (
+            <article
+              key={notification.id}
+              className={`db-notification-card ${
+                !notification.is_read
+                  ? "db-notification-unread"
+                  : ""
+              }`}
+            >
+              <section className="db-notification-icon">
+                🔔
+              </section>
+
+              <section className="db-notification-content">
+                <h3 className="db-notification-title">
+                  {notification.title || "Notification"}
+                </h3>
+
+                <p className="db-notification-message">
+                  {notification.message}
+                </p>
+
+                <time className="db-notification-time">
+                  {new Date(
+                    notification.sent_at
+                  ).toLocaleString()}
+                </time>
+              </section>
+            </article>
+          ))}
+        </section>
+      )}
+    </section>
+  );
+    
+  
         case "staff-queue":
           return (
             <StaffClinicManagement
@@ -316,7 +379,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="db-root">
+    <section className="db-root">
       <aside
         className={`db-sidebar ${sidebarOpen ? "open" : ""}`}
         aria-label="Staff dashboard sidebar"
@@ -327,7 +390,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
             aria-hidden="true"
           />
 
-          <span>QueueCare</span>
+          <section>QueueCare</section>
         </header>
 
         <nav
@@ -354,9 +417,9 @@ export default function StaffDashboard({ profile: initialProfile }) {
                     activeTab === item.id ? "page" : undefined
                   }
                 >
-                  <span aria-hidden="true">{item.icon}</span>
+                  <section aria-hidden="true">{item.icon}</section>
 
-                  <span>{item.label}</span>
+                  <section>{item.label}</section>
                 </button>
               </li>
             ))}
@@ -370,7 +433,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
           >
             <FiLogOut aria-hidden="true" />
 
-            <span>Logout</span>
+            <section>Logout</section>
           </button>
         </footer>
       </aside>
@@ -422,6 +485,6 @@ export default function StaffDashboard({ profile: initialProfile }) {
           pageContext: activeTab,
         }}
       />
-    </div>
+    </section>
   );
 }

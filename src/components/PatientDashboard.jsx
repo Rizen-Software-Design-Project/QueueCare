@@ -308,22 +308,92 @@ export default function PatientDashboard({ profile: initialProfile }) {
         return (
             <>
             <OverviewPanel {...sharedProps} />
-            <div className="db-card" style={{ marginTop: 20 }}>
+            <article className="db-card" style={{ marginTop: 20 }}>
                 <p style={{ color: "#6b7280", marginBottom: 16 }}>Quick Actions</p>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <footer style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button className="db-btn db-btn-reschedule" onClick={() => goTo("appointments")}>
                     My Appointments
                 </button>
                 <button className="db-btn db-btn-reschedule" onClick={() => goTo("find-clinic")}>
                     Find a Clinic
                 </button>
-                </div>
-            </div>
+                </footer>
+            </article>
             </>
         );
       case "appointments":  return <PatientHistoryView appointments={appointments} onReschedule={openReschedule} onCancel={cancelAppointment} />;
       case "queue":         return <PatientQueuePanel queueData={queueData} slotDate={sharedProps.slotDate} slotTime={sharedProps.slotTime} />;
-      case "notifications": return <NotificationsPanel notifications={notifications} unreadCount={unreadCount} onMarkAllRead={markAllRead} />;
+        case "notifications":
+  return (
+    <section className="db-section db-notifications">
+
+      <section className="db-notifications-header">
+        <section>
+          <h2 className="db-notifications-title">
+            Notifications
+          </h2>
+
+          <p className="db-notifications-count">
+            {unreadCount} unread
+          </p>
+        </section>
+
+        {unreadCount > 0 && (
+          <button
+            className="db-notifications-readall"
+            onClick={markAllRead}
+          >
+            Mark all as read
+          </button>
+        )}
+      </section>
+
+      {notifications.length === 0 ? (
+        <section className="db-notifications-empty">
+          <h3>No notifications yet</h3>
+
+          <p>
+            You're all caught up.
+          </p>
+        </section>
+      ) : (
+        <section className="db-notification-list">
+          {notifications.map((notification) => (
+            <article
+              key={notification.id}
+              className={`db-notification-card ${
+                !notification.is_read
+                  ? "db-notification-unread"
+                  : ""
+              }`}
+            >
+              <section className="db-notification-icon">
+                🔔
+              </section>
+
+              <section className="db-notification-content">
+                <h3 className="db-notification-title">
+                  {notification.title || "Notification"}
+                </h3>
+
+                <p className="db-notification-message">
+                  {notification.message}
+                </p>
+
+                <time className="db-notification-time">
+                  {new Date(
+                    notification.sent_at
+                  ).toLocaleString()}
+                </time>
+              </section>
+            </article>
+          ))}
+        </section>
+      )}
+    </section>
+  );
+    
+  
       case "find-clinic": return <ClinicSearch onBook={(id) => { setBookingClinicId(id); setActiveTab("book"); }} />;
       case "book": return <BookAppointment 
           clinicId={bookingClinicId} 
@@ -332,15 +402,15 @@ export default function PatientDashboard({ profile: initialProfile }) {
         />;
       case "profile":     return <ProfilePage profile={profile} />;
       case "policy":        return <ServicePolicy />;
-      default:              return <div className="db-section"><h2>{activeTab}</h2></div>;
+      default:              return <section className="db-section"><h2>{activeTab}</h2></section>;
     }
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="db-root">
+    <section className="db-root">
       <aside className={`db-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div className="db-sidebar-brand"><FaStethoscope style={{ color: "white" }} /> QueueCare</div>
+        <header className="db-sidebar-brand"><FaStethoscope style={{ color: "white" }} /> QueueCare</header>
         <nav className="db-nav">
           {PATIENT_NAV.map((item) => (
             <button key={item.id} className={`db-nav-item ${activeTab === item.id ? "db-nav-active" : ""}`} onClick={() => goTo(item.id)}>
@@ -348,64 +418,66 @@ export default function PatientDashboard({ profile: initialProfile }) {
             </button>
           ))}
         </nav>
+        <footer>
         <button className="db-sidebar-logout" onClick={handleLogout}><FiLogOut /> Logout</button>
+        </footer>
       </aside>
 
-      <div className="db-main">
+      <section className="db-main">
         <header className="db-topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <section style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button className="db-hamburger" /* v8 ignore next */ onClick={() => setSidebarOpen((v) => !v)}>☰</button>
-            <span>{PATIENT_NAV.find((n) => n.id === activeTab)?.label || "Dashboard"}</span>
-          </div>
-          <div>Hi, {profile.name || "User"}</div>
+            <b>{PATIENT_NAV.find((n) => n.id === activeTab)?.label || "Dashboard"}</b>
+          </section>
+          <p>Hi, {profile.name || "User"}</p>
         </header>
 
         {/* Reminder banner */}
         {/* v8 ignore start */
         reminderBanner && (
-          <div role="alert" style={{ background: reminderBanner.minutes <= 5 ? "#fdecea" : "#fff8e1", borderBottom: `3px solid ${reminderBanner.minutes <= 5 ? "#c62828" : "#e65100"}`, color: reminderBanner.minutes <= 5 ? "#c62828" : "#7a3900", padding: "13px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14, fontWeight: 500, gap: 12 }}>
-            <span>
-              {reminderBanner.minutes <= 5 ? "🚨" : "⏰"} Your appointment at <strong>{reminderBanner.clinic}</strong> is in <strong>{reminderBanner.minutes} minutes</strong> <span style={{ opacity: 0.8 }}>({reminderBanner.time})</span>
-            </span>
+          <aside role="alert" style={{ background: reminderBanner.minutes <= 5 ? "#fdecea" : "#fff8e1", borderBottom: `3px solid ${reminderBanner.minutes <= 5 ? "#c62828" : "#e65100"}`, color: reminderBanner.minutes <= 5 ? "#c62828" : "#7a3900", padding: "13px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14, fontWeight: 500, gap: 12 }}>
+            <em>
+              {reminderBanner.minutes <= 5 ? "🚨" : "⏰"} Your appointment at <strong>{reminderBanner.clinic}</strong> is in <strong>{reminderBanner.minutes} minutes</strong> <small style={{ opacity: 0.8 }}>({reminderBanner.time})</small>
+            </em>
             <button onClick={() => setReminderBanner(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "inherit", opacity: 0.7 }}>×</button>
-          </div>
+          </aside>
         ) /* v8 ignore stop */}
 
         <main className="db-content">{renderContent()}</main>
-      </div>
+      </section>
 
       {/* Reschedule modal */}
       {/* v8 ignore start */
       rescheduleAppt && (
-        <div className="db-modal-overlay" onClick={() => setRescheduleAppt(null)}>
-          <div className="db-modal" onClick={(e) => e.stopPropagation()}>
+        <aside className="db-modal-overlay" onClick={() => setRescheduleAppt(null)}>
+          <section className="db-modal" onClick={(e) => e.stopPropagation()}>
             <h3>Reschedule Appointment</h3>
             <p>Current: {formatDate(rescheduleAppt.appointment_slots?.slot_date)} at {formatTime(rescheduleAppt.appointment_slots?.slot_time)}</p>
             {rescheduleLoading && <p>Loading available slots…</p>}
             {!rescheduleLoading && rescheduleSlots.length === 0 && <p className="db-empty">No other available slots for this clinic.</p>}
             {!rescheduleLoading && rescheduleSlots.length > 0 && (
-              <div className="db-reschedule-slots">
+              <ul className="db-reschedule-slots">
                 {rescheduleSlots.map((slot) => {
                   const isSelected = rescheduleSlotId === slot.id;
                   const spotsLeft  = (slot.total_capacity || 1) - (slot.booked_count || 0);
                   return (
-                    <div key={slot.id} className={`db-reschedule-slot ${isSelected ? "db-reschedule-selected" : ""}`} onClick={() => setRescheduleSlotId(slot.id)}>
-                      <span><FiCalendar /> {formatDate(slot.slot_date)}</span>
-                      <span><FiClock /> {formatTime(slot.slot_time)}</span>
-                      <span>{slot.duration_minutes} min</span>
-                      <span>{spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left</span>
-                      {isSelected && <span className="db-check">✔</span>}
-                    </div>
+                    <li key={slot.id} className={`db-reschedule-slot ${isSelected ? "db-reschedule-selected" : ""}`} onClick={() => setRescheduleSlotId(slot.id)}>
+                      <b><FiCalendar /> {formatDate(slot.slot_date)}</b>
+                      <b><FiClock /> {formatTime(slot.slot_time)}</b>
+                      <b>{slot.duration_minutes} min</b>
+                      <b>{spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left</b>
+                      {isSelected && <i className="db-check">✔</i>}
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             )}
-            <div className="db-modal-actions">
+            <footer className="db-modal-actions">
               <button className="db-btn db-btn-reschedule" disabled={!rescheduleSlotId || rescheduleLoading} onClick={confirmReschedule}>{rescheduleLoading ? "Saving…" : "Confirm Reschedule"}</button>
               <button className="db-btn db-btn-secondary" onClick={() => setRescheduleAppt(null)}>Cancel</button>
-            </div>
-          </div>
-        </div>
+            </footer>
+          </section>
+        </aside>
       ) /* v8 ignore stop */}
 
       <AIAssistant
@@ -415,6 +487,6 @@ export default function PatientDashboard({ profile: initialProfile }) {
           pageContext: activeTab,
         }}
       />
-    </div>
+    </section>
   );
 }

@@ -28,16 +28,16 @@ export default function ProfilePage({ profile: propProfile, onBack }) {
   }, [profile]);
 
   if (!profile) return (
-    <div className="profile-root">
-      <div className="profile-card">
-        <div className="profile-skeleton">
-          <div className="skel-avatar" />
-          <div className="skel-line" style={{ width: "60%" }} />
-          <div className="skel-line" style={{ width: "80%" }} />
-          <div className="skel-line" style={{ width: "40%" }} />
-        </div>
-      </div>
-    </div>
+    <section className="profile-root">
+      <section className="profile-card">
+        <section className="profile-skeleton">
+          <section className="skel-avatar" />
+          <section className="skel-line" style={{ width: "60%" }} />
+          <section className="skel-line" style={{ width: "80%" }} />
+          <section className="skel-line" style={{ width: "40%" }} />
+        </section>
+      </section>
+    </section>
   );
 
   async function handleSave() {
@@ -50,25 +50,25 @@ export default function ProfilePage({ profile: propProfile, onBack }) {
   const role = profile?.role || "patient";
 
   return (
-    <div className="profile-root">
-      <div className="profile-card">
-        <div className="profile-header">
+    <section className="profile-root">
+      <section className="profile-card">
+        <section className="profile-header">
           <h2>My Profile</h2>
           {onBack && <button className="profile-back" onClick={onBack}>← Back</button>}
-        </div>
+        </section>
 
-        <div className="profile-avatar">{profile?.name?.[0]}</div>
+        <section className="profile-avatar">{profile?.name?.[0]}</section>
 
-        <div className="profile-fields">
+        <section className="profile-fields">
           <Field label="First Name"    value={form.name}         disabled={!editMode} onChange={(v) => setForm({ ...form, name: v })} />
           <Field label="Surname"       value={form.surname}      disabled={!editMode} onChange={(v) => setForm({ ...form, surname: v })} />
           <Field label="Phone"         value={form.phone_number} disabled={!editMode} onChange={(v) => setForm({ ...form, phone_number: v })} />
           <Field label="Date of Birth" value={form.dob}          disabled={!editMode} onChange={(v) => setForm({ ...form, dob: v })} type="date" />
-          <div className="profile-static"><label>Email</label><span>{profile.email}</span></div>
-          <div className="profile-static"><label>Role</label><span>{role}</span></div>
-        </div>
+          <section className="profile-static"><label>Email</label><section>{profile.email}</section></section>
+          <section className="profile-static"><label>Role</label><section>{role}</section></section>
+        </section>
 
-        <div className="profile-actions">
+        <section className="profile-actions">
           {!editMode ? (
             <button onClick={() => setEditMode(true)}>Edit Profile</button>
           ) : (
@@ -77,17 +77,17 @@ export default function ProfilePage({ profile: propProfile, onBack }) {
               <button onClick={() => setEditMode(false)}>Cancel</button>
             </>
           )}
-        </div>
-      </div>
-    </div>
+        </section>
+      </section>
+    </section>
   );
 }
 
 function Field({ label, value, onChange, disabled, type = "text" }) {
   return (
-    <div className="profile-field">
+    <section className="profile-field">
       <label>{label}</label>
       <input type={type} value={value || ""} disabled={disabled} onChange={(e) => onChange(e.target.value)} />
-    </div>
+    </section>
   );
 }

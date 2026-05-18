@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
 vi.mock("./AIAssistant", () => ({
-  default: () => <div data-testid="ai-assistant" />,
+  default: () => <section data-testid="ai-assistant" />,
 }));
 
 vi.mock("../queueApi", () => ({
@@ -46,7 +46,8 @@ const DEFAULT_PROPS = {
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
-const TODAY = new Date().toISOString().split("T")[0];
+const now = new Date();
+const TODAY = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
 const makeAppointment = (overrides = {}) => ({
   id:          "appt-1",
