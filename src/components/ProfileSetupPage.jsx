@@ -38,7 +38,7 @@ function isValidEmail(email) {
 }
 
 function isValidSAPhone(phone) {
-  return /^0[6-8][0-9]{8}$/.test(phone);
+  return /^0[6-8][0-9]{8}$/.test(phone) || /^\+27[6-8][0-9]{8}$/.test(phone);
 }
 
 
@@ -183,11 +183,15 @@ if (cleanEmail && !isValidEmail(cleanEmail)) {
   return;
 }
 
-if (cleanPhone && !isValidSAPhone(cleanPhone)) {
+// Normalise +27 → 0 before validating, or use the updated regex above
+const phoneForValidation = cleanPhone.startsWith("+27")
+  ? "0" + cleanPhone.slice(3)
+  : cleanPhone;
+
+if (phoneForValidation && !isValidSAPhone(phoneForValidation)) {
   setError("Enter a valid South African phone number, e.g. 0821234567.");
   return;
 }
-
 const dob = dobFromSAId(cleanIdNumber);
 
 if (!dob) {
