@@ -3,8 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import StaffClinicManagement from "./StaffClinicManagement";
 import userEvent from "@testing-library/user-event";
 
-// ─── Mocks ───────────────────────────────────────────────────────────────────
-
+// Mocks
 vi.mock("./AIAssistant", () => ({
   default: () => <section data-testid="ai-assistant" />,
 }));
@@ -35,8 +34,7 @@ global.fetch = vi.fn(() =>
   Promise.resolve({ ok: true, json: () => Promise.resolve({}) })
 );
 
-// ─── Default props ────────────────────────────────────────────────────────────
-
+// Default props
 const DEFAULT_PROPS = {
   facilityId:     "fac-1",
   facilityName:   "Soweto Clinic",
@@ -44,8 +42,7 @@ const DEFAULT_PROPS = {
   providerUserId: "fb-staff-uid",
 };
 
-// ─── Fixtures ────────────────────────────────────────────────────────────────
-
+// Fixtures
 const now = new Date();
 const TODAY = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
@@ -105,8 +102,7 @@ const makeQueueEntry = (overrides = {}) => ({
   ...overrides,
 });
 
-// ─── Setup helpers ────────────────────────────────────────────────────────────
-
+// Setup helpers
 function seedAppointments(appointments = [makeAppointment()]) {
   mockQuery.limit.mockResolvedValueOnce({ data: appointments, error: null });
 }
@@ -152,16 +148,14 @@ beforeEach(async () => {
   viewFullQueue.mockResolvedValue({ data: [], error: null });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Null facility state", () => {
+// describe("Null facility state", () => {
   it("renders without crashing when facilityId is null", async () => {
     await renderAndWait({ ...DEFAULT_PROPS, facilityId: null });
     expect(screen.getByText(/staff dashboard/i)).toBeVisible();
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Appointments table - data loading", () => {
+// describe("Appointments table - data loading", () => {
   it("shows appointment with missing profile gracefully", async () => {
     seedAppointments([
       makeAppointment({ profiles: null, patient_id: "abc12345678" }),
@@ -243,8 +237,7 @@ describe("Appointments table - data loading", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Appointments table - upcoming view edge cases", () => {
+// describe("Appointments table - upcoming view edge cases", () => {
   it("does not show cancelled appointments in upcoming view", async () => {
     seedAppointments([
       makeAppointment({
@@ -294,8 +287,7 @@ describe("Appointments table - upcoming view edge cases", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Reschedule modal - slot selection and submission", () => {
+// describe("Reschedule modal - slot selection and submission", () => {
   it("shows available slots in reschedule dropdown", async () => {
     seedAppointments([makeAppointment({ status: "booked", slot_id: "slot-1" })]);
     seedSlots([
@@ -390,8 +382,7 @@ describe("Reschedule modal - slot selection and submission", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Live patient queue - extended", () => {
+// describe("Live patient queue - extended", () => {
   it("renders queue entry with appointment as array", async () => {
     const { viewFullQueue } = await import("../queueApi");
     viewFullQueue.mockResolvedValue({
@@ -595,8 +586,7 @@ describe("Live patient queue - extended", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Create appointment slots - extended", () => {
+// describe("Create appointment slots - extended", () => {
   it("removes a time block when Remove is clicked", async () => {
     const user = await renderAndWait();
     await user.click(screen.getByRole("button", { name: "+" }));
@@ -694,8 +684,7 @@ describe("Create appointment slots - extended", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Available slots table - extended", () => {
+// describe("Available slots table - extended", () => {
   it("shows slots loading state then clears it", async () => {
     mockQuery.order
       .mockReturnValueOnce(mockQuery)
@@ -812,8 +801,7 @@ describe("Available slots table - extended", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Edit slot - extended", () => {
+// describe("Edit slot - extended", () => {
   it("shows error when update RPC returns data.error", async () => {
     mockRpc.mockResolvedValue({ data: { error: "Slot conflict" }, error: null });
     seedSlots([makeSlot()]);
@@ -867,8 +855,7 @@ describe("Edit slot - extended", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Helper / utility coverage", () => {
+// describe("Helper / utility coverage", () => {
   it("renders facility name from props", async () => {
     await renderAndWait();
     expect(screen.getByText(/soweto clinic/i)).toBeVisible();

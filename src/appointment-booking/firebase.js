@@ -1,10 +1,9 @@
-// MUST BE FIRST
-//self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
+
 
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-// ADD THESE TWO IMPORTS
+
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -23,14 +22,4 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const googleAuthProvider = new GoogleAuthProvider();
-
-// INITIALIZE APP CHECK HERE
-// Use your SITE KEY (starts with 6L...)
-/**if (typeof window !== "undefined") {
-  initializeAppCheck(app, {
-    provider: new ReCaptchaEnterpriseProvider('6LevZK0sAAAAAFp8P8cD3czJhKuMESnrwoomhnKr'), 
-    isTokenAutoRefreshEnabled: true
-  });
-}**/
-
 export { auth, googleAuthProvider };

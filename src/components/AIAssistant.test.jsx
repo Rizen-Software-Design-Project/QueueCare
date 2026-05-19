@@ -2,8 +2,8 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 
-/* ---------------- MOCK FETCH ---------------- */
-// fetch is used directly (no supabase), so we mock globalThis.fetch
+
+// fetch is used directly with zero or rather no supabase, so we mock globalThis.fetch
 beforeEach(() => {
   globalThis.fetch = vi.fn();
   // jsdom doesn't implement scrollIntoView — mock it to prevent crashes
@@ -14,20 +14,18 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/* ---------------- COMPONENT ---------------- */
 import AIAssistant from "./AIAssistant";
 
-/* ---------------- HELPERS ---------------- */
 const defaultContext = { role: "patient", profile: { name: "Alice" } };
 
-// Make fetch resolve with a standard AI reply
+
 function mockFetchReply(reply = "Here is my answer.") {
   globalThis.fetch.mockResolvedValue({
     json: async () => ({ reply }),
   });
 }
 
-// Make fetch reject (network failure)
+// Make fetch reject i.e network failure
 function mockFetchError() {
   globalThis.fetch.mockRejectedValue(new Error("Network failure"));
 }
@@ -38,10 +36,9 @@ async function openChat(user, context = defaultContext) {
   await user.click(screen.getByRole("button", { name: /open ai assistant/i }));
 }
 
-/* ---------------- TESTS ---------------- */
 describe("AIAssistant", () => {
 
-  // ── Trigger button ─────────────────────────────────────────
+  //Trigger button
 
   it("renders the trigger button closed by default", () => {
     render(<AIAssistant context={defaultContext} />);
@@ -69,8 +66,6 @@ describe("AIAssistant", () => {
     await user.click(screen.getByRole("button", { name: /✕/i }));
     expect(screen.queryByPlaceholderText("Ask anything…")).not.toBeInTheDocument();
   });
-
-  // ── Greeting & role labels ─────────────────────────────────
 
   it("shows the patient greeting with the user's name on first open", async () => {
     const user = userEvent.setup();
@@ -110,7 +105,7 @@ describe("AIAssistant", () => {
     expect(screen.getByText(/Queue, patients & clinic operations/)).toBeInTheDocument();
   });
 
-  // ── Suggestion chips ───────────────────────────────────────
+  //Suggestion from chat interface.
 
   it("renders patient suggestion chips on first open", async () => {
     const user = userEvent.setup();
@@ -149,11 +144,11 @@ describe("AIAssistant", () => {
       expect(screen.getByText("Here you go!")).toBeInTheDocument();
     });
 
-    // Chips container should no longer be present (messages.length > 1)
+    // containers for suggestions should no longer be present messages.length > 1.
     expect(screen.queryByText("Find clinics near Johannesburg")).not.toBeInTheDocument();
   });
 
-  // ── Sending messages ───────────────────────────────────────
+  //Sending messages
 
   it("send button is disabled when input is empty", async () => {
     const user = userEvent.setup();
@@ -223,7 +218,7 @@ describe("AIAssistant", () => {
     await waitFor(() => expect(screen.getByText("Queue reply.")).toBeInTheDocument());
   });
 
-  // ── Loading state ──────────────────────────────────────────
+  //Loading state
 
   it("shows the typing indicator while waiting for a reply", async () => {
     // Keep fetch pending so we can observe the loading state
@@ -237,8 +232,6 @@ describe("AIAssistant", () => {
     await user.click(screen.getByRole("button", { name: /send/i }));
 
     expect(document.querySelector(".ai-typing")).toBeInTheDocument();
-
-    // Unblock fetch so React can clean up
     resolve({ json: async () => ({ reply: "Pong" }) });
   });
 
@@ -270,7 +263,7 @@ describe("AIAssistant", () => {
     expect(document.querySelector(".ai-typing")).not.toBeInTheDocument();
   });
 
-  // ── API payload ────────────────────────────────────────────
+  //API payload
 
   it("sends the correct context and message history to the API", async () => {
     mockFetchReply("OK");
@@ -313,7 +306,7 @@ describe("AIAssistant", () => {
     expect(body.messages.filter(m => m.role === "user").length).toBeGreaterThanOrEqual(2);
   });
 
-  // ── Error handling ─────────────────────────────────────────
+  //Error handling
 
   it("shows a connection error message when fetch throws", async () => {
     mockFetchError();
@@ -356,7 +349,7 @@ describe("AIAssistant", () => {
     });
   });
 
-  // ── Unread dot ─────────────────────────────────────────────
+  //Unread dot
 
   it("does not show the unread dot initially", () => {
     render(<AIAssistant context={defaultContext} />);
@@ -365,7 +358,7 @@ describe("AIAssistant", () => {
 
   it("clears the unread dot when the chat is opened", async () => {
     // Simulate a reply arriving while closed — we just set hasNew via the
-    // internal path: open → send → close → reply arrives (we can't easily
+    // internal path: open to send to close to reply arrives (we can't easily
     // do this without timing hacks, so we test the inverse: opening clears it)
     const user = userEvent.setup();
     render(<AIAssistant context={defaultContext} />);
@@ -375,7 +368,7 @@ describe("AIAssistant", () => {
     expect(document.querySelector(".ai-unread-dot")).not.toBeInTheDocument();
   });
 
-  // ── Greeting persistence ───────────────────────────────────
+  //Greeting persistence
 
   it("does not reset the greeting when the window is closed and reopened", async () => {
     mockFetchReply("My reply.");
@@ -395,7 +388,7 @@ describe("AIAssistant", () => {
     expect(screen.getByText("My reply.")).toBeInTheDocument();
   });
 
-  // ── Unknown role fallback ──────────────────────────────────
+  //Unknown role fallback
 
   it("falls back to patient chips for an unknown role", async () => {
     const user = userEvent.setup();

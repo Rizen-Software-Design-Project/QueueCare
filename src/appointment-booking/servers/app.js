@@ -18,7 +18,7 @@ import errorHandler from '../middleware/errorHandler.js';
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Here we define three rate limiters to protect the API from being abused or flooded with requests
+// Here we define three rate limiters to protect the API from being abused or flooded with requests. I just thought it  would be cool to include it.
 const isTest = process.env.NODE_ENV === 'test';
 
 const globalLimiter = rateLimit({

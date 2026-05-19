@@ -28,7 +28,7 @@ export default function AdminDashboard({ profile: initialProfile }) {
 
 
 
-// Load all notifications for the admin and set up ways to mark them as read or delete them
+// Load all notifications for the admin and set up ways to mark them as read or delete them if needed.
   useEffect(() => {
     supabase
       .from("notifications")

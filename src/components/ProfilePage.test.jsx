@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import ProfilePage from "./ProfilePage";
 
-// ── Supabase mock ─────────────────────────────────────────────────────────────
+// Supabase mock
 const mockUpdate = vi.fn().mockReturnThis();
 const mockEq     = vi.fn().mockResolvedValue({ error: null });
 
@@ -18,14 +18,14 @@ vi.mock("#lib/supabase", () => ({
     },
 }));
 
-// ── react-router-dom mock ─────────────────────────────────────────────────────
+// react-router-dom mock
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual("react-router-dom");
     return { ...actual, useNavigate: () => mockNavigate };
 });
 
-// ── Shared test profile ───────────────────────────────────────────────────────
+// Shared test profile
 const mockProfile = {
     id:           "profile-123",
     name:         "John",
@@ -43,7 +43,7 @@ function renderProfile({ profile = mockProfile, ...rest } = {}) {
     );
 }
 
-// ── View mode ─────────────────────────────────────────────────────────────────
+// View mode
 describe("ProfilePage – view mode", () => {
     beforeEach(() => renderProfile({ onBack: vi.fn() }));
 
@@ -89,7 +89,7 @@ describe("ProfilePage – view mode", () => {
     });
 });
 
-// ── Edit mode ─────────────────────────────────────────────────────────────────
+// Edit mode
 describe("ProfilePage – edit mode", () => {
     beforeEach(async () => {
         renderProfile();
@@ -133,7 +133,7 @@ describe("ProfilePage – edit mode", () => {
     });
 });
 
-// ── Cancel ────────────────────────────────────────────────────────────────────
+// Cancel
 describe("ProfilePage – cancel edit", () => {
     beforeEach(async () => {
         renderProfile();
@@ -152,7 +152,7 @@ describe("ProfilePage – cancel edit", () => {
     });
 });
 
-// ── Save ──────────────────────────────────────────────────────────────────────
+// Save
 describe("ProfilePage – save profile", () => {
     it("calls supabase update with the edited form values", async () => {
         renderProfile();
@@ -182,7 +182,7 @@ describe("ProfilePage – save profile", () => {
     });
 });
 
-// ── Back navigation ───────────────────────────────────────────────────────────
+// Back navigation
 describe("ProfilePage – back button", () => {
     it("calls onBack when Back is clicked", async () => {
         const mockOnBack = vi.fn();
@@ -192,7 +192,7 @@ describe("ProfilePage – back button", () => {
     });
 });
 
-// ── No profile (skeleton) ─────────────────────────────────────────────────────
+// No profile (skeleton)
 describe("ProfilePage – no profile prop", () => {
     it("renders a skeleton loader when profile is null and no location state/localStorage", () => {
         // Ensure localStorage is empty

@@ -5,7 +5,7 @@ import { FaHospital } from "react-icons/fa";
 import "./AdminClinics.css"
 
 
-// These are all the dropdown options the admin can choose from (provinces, services, etc)
+// These are all the dropdown options the admin can choose from provinces, services, etc...;D
 const districtsByProvince = {
   "Eastern Cape": ["Alfred Nzo", "Amathole", "Buffalo City", "Chris Hani", "Joe Gqabi", "Nelson Mandela Bay", "OR Tambo", "Sarah Baartman"],
   "Free State": ["Fezile Dabi", "Lejweleputswa", "Mangaung", "Thabo Mofutsanyana", "Xhariep"],

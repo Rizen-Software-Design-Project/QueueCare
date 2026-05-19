@@ -75,7 +75,7 @@ vi.mock("#hooks/useAnalytics", () => ({
 }));
 
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 function getVisiblePanel() {
     const panels = document.querySelectorAll('[role="tabpanel"]');
     return [...panels].find((p) => !p.hidden);
@@ -109,7 +109,7 @@ async function renderStaff(facilityName = "Soweto Clinic") {
 }
 
 
-// ── Navigation helpers ────────────────────────────────────────────────────────
+// Navigation helpers
 async function navigateToWaitTimesTab() {
     const user = await renderStaff();
     await waitFor(() => expect(screen.getByText(/overall avg wait/i)).toBeVisible());
@@ -160,7 +160,7 @@ async function navigateToCustomViewLoading() {
 }
 
 
-// ── Shared assertion blocks ───────────────────────────────────────────────────
+// Shared assertion blocks
 function openAnalyticsHeader() {
     it("renders the Analytics heading", () => {
         expect(screen.getByRole("heading", { name: /^analytics$/i })).toBeVisible();
@@ -398,7 +398,7 @@ beforeEach(() => {
 });
 
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
+//Tests
 describe("Analytics Staff - facility resolution - loading state", () => {
     it("shows 'Loading facility…' before Supabase resolves", () => {
         localStorage.setItem("userIdentity", JSON.stringify({ auth_provider: "google", provider_user_id: "uid-1" }));

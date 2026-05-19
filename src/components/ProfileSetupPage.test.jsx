@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import ProfileSetupPage from "./ProfileSetupPage";
 
 
-// *****THE COMMENTS ARE NECESSARY*****
+// THE COMMENTS ARE NECESSARY
 //mocks
 //opening pages
 //back button clicked

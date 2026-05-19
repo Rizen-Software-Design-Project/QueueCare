@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap');
 
-/* ── Accessibility ───────────────────────────────────────── */
+/* Accessibility */
 
 .sr-only {
   position: absolute;
@@ -15,7 +15,7 @@
 }
 
 
-/* ── Loading / error states ──────────────────────────────── */
+/* Loading / error states */
 
 .wi-loading,
 .wi-facility-error {
@@ -32,7 +32,7 @@
   color: #C62828;
 }
 
-/* ── Layout ──────────────────────────────────────────────── */
+/* Layout */
 
 .wi-card-full {
   grid-column: 1 / -1;
@@ -52,7 +52,7 @@
 }
 
 
-/* ── Tabs Navigation ─────────────────────────────────────── */
+/* Tabs Navigation */
 
 .wi-tabs {
   display: flex;
@@ -127,7 +127,7 @@
   background: var(--primary, #1B5E20);
 }
 
-/* ── Descriptions & headings ─────────────────────────────── */
+/* Descriptions & headings */
 
 .wi-tab-desc {
   margin-bottom: 20px;
@@ -152,7 +152,7 @@
   font-weight: 600;
 }
 
-/* ── Search section ──────────────────────────────────────── */
+/* Search section */
 
 .wi-search-section {
   margin-bottom: 28px;
@@ -240,7 +240,7 @@
   line-height: 1.5;
 }
 
-/* ── Profile card ────────────────────────────────────────── */
+/* Profile card */
 
 .wi-profile-card {
   margin-bottom: 28px;
@@ -289,7 +289,7 @@
   line-height: 1.5;
 }
 
-/* ── Forms ───────────────────────────────────────────────── */
+/* Forms */
 
 .staff-dash-header{
   background-color:white;
@@ -369,7 +369,7 @@
   transform: translateX(-2px);
 }
 
-/* ── Messages ────────────────────────────────────────────── */
+/* Messages */
 
 .wi-no-slots-msg {
   padding: 12px 14px;
@@ -385,7 +385,7 @@
   line-height: 1.5;
 }
 
-/* ── Buttons ─────────────────────────────────────────────── */
+/* Buttons */
 
 .wi-checkin-btn,
 .wi-submit-btn {
@@ -448,7 +448,7 @@
   cursor: not-allowed;
 }
 
-/* ── Splash / loading spinner ───────────────────────────── */
+/* Splash / loading spinner */
 
 .wi-splash {
   display: flex;
@@ -483,7 +483,7 @@
   }
 }
 
-/* ── Responsive ─────────────────────────────────────────── */
+/* Responsive */
 
 @media (max-width: 768px) {
 

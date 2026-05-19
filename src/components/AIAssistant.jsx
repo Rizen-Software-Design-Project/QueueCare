@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './AIAssistant.css';
 
-// The AI chat server address - uses local in development or the live Azure one in production
+// The AI chat server address - uses local in development or the live Azure one in production. This is just for us not to mess things up AZURE was a pain
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   'https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net';

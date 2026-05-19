@@ -1,6 +1,6 @@
-/* ── ProfileSetupPage.css ─────────────────────────────────────────────────── */
+/* ProfileSetupPage.css */
 
-/* ── Keyframes ────────────────────────────────────────────────────────────── */
+/* Keyframes */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -10,7 +10,7 @@
   100% { transform: scale(1);   opacity: 1; }
 }
 
-/* ── Root layout ──────────────────────────────────────────────────────────── */
+/* Root layout */
 .psp-root {
   min-height: 100vh;
   display: flex;
@@ -24,7 +24,7 @@
   overflow: hidden;
 }
 
-/* ── Background blobs ─────────────────────────────────────────────────────── */
+/* Background blobs */
 .psp-bg-gradient {
   position: absolute;
   top: -30%;
@@ -49,7 +49,7 @@
   z-index: 0;
 }
 
-/* ── Logo ─────────────────────────────────────────────────────────────────── */
+/* Logo */
 .psp-logo {
   display: flex;
   align-items: center;
@@ -89,7 +89,7 @@
   letter-spacing: 0.3px;
 }
 
-/* ── Card ─────────────────────────────────────────────────────────────────── */
+/* Card */
 .psp-card {
   width: 100%;
   max-width: 480px;
@@ -112,7 +112,7 @@
   }
 }
 
-/* ── Typography ───────────────────────────────────────────────────────────── */
+/* Typography */
 .psp-title {
   margin: 0 0 8px;
   font-size: 28px;
@@ -136,7 +136,7 @@
   font-weight: 400;
 }
 
-/* ── Form controls ────────────────────────────────────────────────────────── */
+/* Form controls */
 .psp-label {
   display: block;
   font-size: 12px;
@@ -197,7 +197,7 @@
   margin-bottom: 4px;
 }
 
-/* ── Gender pills ─────────────────────────────────────────────────────────── */
+/* Gender pills */
 .psp-pill-group {
   display: flex;
   gap: 12px;
@@ -230,7 +230,7 @@
   box-shadow: 0 4px 12px rgba(27, 94, 32, 0.25);
 }
 
-/* ── Buttons ──────────────────────────────────────────────────────────────── */
+/* Buttons */
 .psp-btn-primary {
   display: flex;
   align-items: center;
@@ -280,7 +280,7 @@
   color: #1b5e20;
 }
 
-/* ── Error ────────────────────────────────────────────────────────────────── */
+/* Error */
 .psp-error {
   margin: 16px 0 20px;
   font-size: 13px;
@@ -295,7 +295,7 @@
   font-weight: 500;
 }
 
-/* ── Progress dots ────────────────────────────────────────────────────────── */
+/* Progress dots */
 .psp-dots {
   display: flex;
   gap: 10px;
@@ -309,7 +309,7 @@
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ── Strength bar ─────────────────────────────────────────────────────────── */
+/* Strength bar */
 .psp-strength-bar {
   display: flex;
   gap: 6px;
@@ -324,7 +324,7 @@
   transition: background-color 0.2s ease;
 }
 
-/* ── Loading spinner ──────────────────────────────────────────────────────── */
+/* Loading spinner */
 .psp-spinner {
   display: inline-block;
   width: 18px;
@@ -340,7 +340,7 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* ── Success icon ─────────────────────────────────────────────────────────── */
+/* Success icon */
 .psp-success-icon {
   font-size: 52px;
   color: #1b5e20;
@@ -350,7 +350,7 @@
   animation: pulse 0.6s ease-out;
 }
 
-/* ── Focus reset ──────────────────────────────────────────────────────────── */
+/* Focus reset */
 input:focus,
 textarea:focus,
 button:focus {

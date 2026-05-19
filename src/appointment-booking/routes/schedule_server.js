@@ -5,7 +5,7 @@ const router = express.Router();
 
 const DAYS = ["Mon", "Tues", "Wed", "Thurs", "Fri", "Sat", "Sun"];
 
-// database functions
+// database functions where we interact with the schedule table in supabase, we have functions to read, upsert, update and delete schedule data for staff members. The schedule data is structured in a way that each staff member has a row for each day of the week with their working hours and whether they are off that day or not. The API endpoints then call these functions to perform the necessary operations based on the incoming requests from the frontend.
 
 async function read(staff_id) {
   if (!staff_id) return { success: false, error: "staff_id is required." };

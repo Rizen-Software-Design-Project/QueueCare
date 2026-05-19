@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import BookAppointment from "./BookAppointment";
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
+//  Mocks
 
 let firebaseUserCallback = { uid: "firebase-user-1" };
 
@@ -31,8 +31,7 @@ vi.mock("#lib/supabase", () => ({
 
 global.fetch = vi.fn();
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
-
+// Fixtures
 const FUTURE_DATE = "2099-12-31";
 
 const mockSlot = {
@@ -71,8 +70,7 @@ const mockFacility = {
   },
 };
 
-// ─── Default mock setup ───────────────────────────────────────────────────────
-
+// Default mock setup
 function setupDefaultMocks({
   slots = [mockSlot],
   existingBookings = [],
@@ -122,13 +120,11 @@ function setupDefaultMocks({
   });
 }
 
-// ─── Shared callback mocks ────────────────────────────────────────────────────
-
+// Shared callback mocks
 let mockOnBack;
 let mockOnDone;
 
-// ─── Render helpers ───────────────────────────────────────────────────────────
-
+// Render helpers
 function renderComponent(clinicId = "1") {
   return render(
     <BookAppointment
@@ -152,8 +148,7 @@ async function selectSlotAndReason(user, reason = "Flu symptoms") {
   return { textarea };
 }
 
-// ─── beforeEach ───────────────────────────────────────────────────────────────
-
+// beforeEach
 beforeEach(() => {
   vi.clearAllMocks();
   firebaseUserCallback = { uid: "firebase-user-1" };
@@ -162,11 +157,8 @@ beforeEach(() => {
   setupDefaultMocks();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Rendering & clinic info
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Rendering & clinic info", () => {
+// // Rendering & clinic info
+// describe("Rendering & clinic info", () => {
   it("renders the clinic name from the database", async () => {
     renderComponent();
     expect(
@@ -210,11 +202,8 @@ describe("Rendering & clinic info", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Authentication & profile errors
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Authentication & profile errors", () => {
+// // Authentication & profile errors
+// describe("Authentication & profile errors", () => {
   it("shows error when patient profile is not found", async () => {
     firebaseUserCallback = null;
     vi.mocked(
@@ -251,11 +240,8 @@ describe("Authentication & profile errors", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Clinic ID validation — calls onBack for invalid / missing IDs
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Clinic ID validation", () => {
+// // Clinic ID validation — calls onBack for invalid / missing IDs
+// describe("Clinic ID validation", () => {
   it("calls onBack when clinicId prop is undefined", async () => {
     render(<BookAppointment onBack={mockOnBack} onDone={mockOnDone} />);
     await waitFor(() => {
@@ -326,11 +312,8 @@ describe("Clinic ID validation", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Slot filtering
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Slot filtering", () => {
+// // Slot filtering
+// describe("Slot filtering", () => {
   it("hides slots that are in the past", async () => {
     const pastSlot = { ...mockSlot, id: 20, slot_date: "2000-01-01", slot_time: "09:00:00" };
     setupDefaultMocks({ slots: [pastSlot] });
@@ -383,11 +366,8 @@ describe("Slot filtering", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Slot selection
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Slot selection", () => {
+// // Slot selection
+// describe("Slot selection", () => {
   it("shows 'Selected' indicator after clicking a slot", async () => {
     const user = userEvent.setup();
     await renderAndWaitForSlots();
@@ -401,11 +381,8 @@ describe("Slot selection", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reason input & suggestion chips
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Reason input & suggestion chips", () => {
+// // Reason input & suggestion chips
+// describe("Reason input & suggestion chips", () => {
   it("allows typing a reason directly", async () => {
     const user = userEvent.setup();
     renderComponent();
@@ -465,11 +442,8 @@ describe("Reason input & suggestion chips", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Booking validation
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Booking validation", () => {
+// // Booking validation
+// describe("Booking validation", () => {
   it("Confirm Booking button is disabled when no slot is selected", async () => {
     renderComponent();
     await screen.findByText(/09:00/i);
@@ -494,11 +468,8 @@ describe("Booking validation", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Booking API
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Booking API", () => {
+// // Booking API
+// describe("Booking API", () => {
   it("shows loading state while booking is in progress", async () => {
     const user = userEvent.setup();
 
@@ -625,11 +596,8 @@ describe("Booking API", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Navigation
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Navigation", () => {
+// // Navigation
+// describe("Navigation", () => {
   it("back button calls onBack prop", async () => {
     const user = userEvent.setup();
     renderComponent();
