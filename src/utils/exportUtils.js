@@ -1,16 +1,7 @@
-// utils/exportUtils.js
-// CSV and PDF export for QueueCare analytics reports.
-//
-// PDF dependency — install before use:
-//   npm install jspdf jspdf-autotable
+// This file has two helper functions for downloading data as a spreadsheet (CSV) or a PDF.
+// You need to install jsPDF first: run 'npm install jspdf jspdf-autotable'
 
-// ─────────────────────────────────────────────
-// exportCSV
-// Converts an array of flat objects to a downloadable CSV file.
-//
-// @param {Object[]} data     — rows to export
-// @param {string}   filename — base filename (date is appended)
-// ─────────────────────────────────────────────
+// exportCSV - takes a list of data rows and lets the user download them as a spreadsheet file
 export function exportCSV(data, filename = 'report') {
   if (!data?.length) return
 
@@ -40,27 +31,17 @@ export function exportCSV(data, filename = 'report') {
   URL.revokeObjectURL(url)
 }
 
-// ─────────────────────────────────────────────
-// exportPDF
-// Generates a PDF report using jsPDF + autoTable.
-// Dynamically imported to avoid Next.js SSR issues.
-//
-// @param {Object[]} data      — rows to export
-// @param {Object}   options
-//   title    {string}                    — report heading
-//   columns  {Array<{header, dataKey}>}  — column definitions
-//   filename {string}                    — base filename
-// ─────────────────────────────────────────────
+// exportPDF - takes a list of data rows and creates a downloadable PDF report with a table and title
 export async function exportPDF(data, { title = 'Analytics Report', columns, filename = 'report' } = {}) {
   if (!data?.length) return
 
-  // Dynamic imports — safe for Next.js (client-only)
+  // Load the PDF libraries only when we need them - this keeps the app fast
   const { default: jsPDF }    = await import('jspdf')
   const { default: autoTable } = await import('jspdf-autotable')
 
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
 
-  // ── Header ──
+  // Write the QueueCare title and report name at the top of the PDF
   doc.setFontSize(18)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(15, 23, 42)   // slate-900
@@ -75,12 +56,12 @@ export async function exportPDF(data, { title = 'Analytics Report', columns, fil
   doc.setTextColor(148, 163, 184) // slate-400
   doc.text(`Generated ${new Date().toLocaleString()}`, 14, 30)
 
-  // ── Horizontal rule ──
+  // Draw a thin horizontal line under the header
   doc.setDrawColor(226, 232, 240) // slate-200
   doc.setLineWidth(0.3)
   doc.line(14, 33, 283, 33)
 
-  // ── Table ──
+  // Draw the main data table in the PDF
   const cols = columns ?? Object.keys(data[0]).map(k => ({ header: k, dataKey: k }))
 
   autoTable(doc, {
@@ -106,7 +87,7 @@ export async function exportPDF(data, { title = 'Analytics Report', columns, fil
     margin: { left: 14, right: 14 },
   })
 
-  // ── Footer ──
+  // Write a small page number at the bottom of every page
   const pageCount = doc.internal.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
@@ -119,7 +100,7 @@ export async function exportPDF(data, { title = 'Analytics Report', columns, fil
     )
   }
 
-    // ── Open PDF safely in browser and download ──
+    // Show the finished PDF in a new browser tab and also start downloading it
   const pdfBlob = doc.output('blob')
   const pdfUrl = URL.createObjectURL(pdfBlob)
 
@@ -140,9 +121,7 @@ export async function exportPDF(data, { title = 'Analytics Report', columns, fil
   }, 10000)
 }
 
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
+// Small helper - returns today's date as a string (e.g. 2025-07-20)
 function today() {
   return new Date().toISOString().split('T')[0]
 }

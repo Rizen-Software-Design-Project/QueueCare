@@ -4,7 +4,7 @@ import "./Clinic_search.css";
 import { FiGrid, FiCreditCard, FiMap, FiSearch, FiClock, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiLogOut, FiMapPin} from "react-icons/fi";
 import { FaHospital } from "react-icons/fa";
 
-// ================= HARDCODED DISTRICTS =================
+// A list of all the districts in South Africa, grouped by province, so users can filter clinics by location
 const districtsByProvince = {
   "Eastern Cape": ["Alfred Nzo", "Amathole", "Buffalo City", "Chris Hani", "Joe Gqabi", "Nelson Mandela Bay", "OR Tambo", "Sarah Baartman"],
   "Free State": ["Fezile Dabi", "Lejweleputswa", "Mangaung", "Thabo Mofutsanyana", "Xhariep"],
@@ -25,7 +25,7 @@ const SERVICE_OPTIONS = [
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
-// ================= HELPERS =================
+// Small helper functions used throughout this file
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -71,7 +71,7 @@ export default function ClinicSearch({ onBook }) {
 
   const availableDistricts = province && districtsByProvince[province] ? districtsByProvince[province] : allDistricts;
 
-  // ================= MAP INIT =================
+  // Load Google Maps on the page so we can show clinics on an interactive map
   useEffect(() => {
     const scriptId = "google-maps-script";
     if (!document.getElementById(scriptId)) {
@@ -105,7 +105,7 @@ export default function ClinicSearch({ onBook }) {
     }
   }, []);
 
-  // ================= MAP MARKERS =================
+  // Put a marker pin on the map for each clinic that was found
   const updateMapMarkers = useCallback((displayedClinics) => {
     const map = mapInstanceRef.current;
     if (!map || !window.google) return;
@@ -150,7 +150,7 @@ export default function ClinicSearch({ onBook }) {
     }
   }, [userLocation]);
 
-  // ================= SEARCH CLINICS =================
+  // Search for clinics in the database using whatever filters the user picked
   const searchClinics = useCallback(async (name, prov, dist, service) => {
     setStatus({ type: "loading", message: "🔍 Searching clinics..." });
     setClinics([]);
@@ -208,7 +208,7 @@ export default function ClinicSearch({ onBook }) {
     }
   }, [userLocation, updateMapMarkers]);
 
-  // ================= NEARBY CLINICS =================
+  // Find clinics near the user's current location using their GPS coordinates
   const performNearbySearch = useCallback(async (loc) => {
     const r = parseFloat(radius);
     setStatus({ type: "loading", message: `📡 Searching clinics within ${r} km...` });
@@ -281,7 +281,7 @@ export default function ClinicSearch({ onBook }) {
     <main className="cs-wrapper">
       <h2><FaHospital aria-hidden="true" /> South African Clinics</h2>
 
-      {/* Main filter row */}
+      {/* Dropdowns and search box for filtering clinics by province, district, or name */}
       <search>
         <fieldset className="filter-row">
           <legend className="sr-only">Search filters</legend>
@@ -327,7 +327,7 @@ export default function ClinicSearch({ onBook }) {
           </section>
         </fieldset>
 
-        {/* Nearby row */}
+        {/* Button to find clinics near the user's GPS location */}
         <section className="nearby-row">
           <section className="filter-group-inline">
             <button id="nearMeBtn" onClick={findNearbyClinics}><FiMapPin aria-hidden="true" /> Clinics Near Me</button>
@@ -343,10 +343,10 @@ export default function ClinicSearch({ onBook }) {
         </section>
       </search>
 
-      {/* Status message */}
+      {/* A loading or error message while searching */}
       <p role="status" className={status.type}>{status.message}</p>
 
-      {/* Clinic cards */}
+      {/* The list of clinic cards showing names, addresses, and services */}
       <ul className="clinic-list">
         {clinics.map((clinic) => {
           const distanceText = clinic.distance !== null && clinic.distance !== undefined
@@ -396,7 +396,7 @@ export default function ClinicSearch({ onBook }) {
         })}
       </ul>
 
-      {/* Map */}
+      {/* The interactive Google Map showing clinic locations as pins */}
       <figure id="map" ref={mapRef} aria-label="Clinic locations map" />
     </main>
   );

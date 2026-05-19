@@ -64,7 +64,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
   const [rescheduleSlotId, setRescheduleSlotId] = useState(null);
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
 
-  // ── Initial data load ─────────────────────────────────────────────────────
+  // Load everything the patient needs when the dashboard first opens
   useEffect(() => {
     async function load() {
       const [{ data: appts }, { data: queueEntries }, { data: notif }] = await Promise.all([
@@ -95,7 +95,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
       setNotifications(notif || []);
       setUnreadCount((notif || []).filter((n) => !n.is_read).length);
 
-      // Send daily reminder email (once per session)
+      // Send a reminder email to the patient about today's appointments (only sent once per login)
       const reminderKey = `reminders_sent_${profile.id}_${new Date().toISOString().slice(0, 10)}`;
       if (!sessionStorage.getItem(reminderKey)) {
         sessionStorage.setItem(reminderKey, "true");
@@ -106,7 +106,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
         }).catch((err) => console.warn("Reminder email failed:", err.message));
       }
 
-      // Initial queue fetch
+      // Check if the patient is already in a queue at a clinic
       const soonest = getSoonestActiveAppointment(appts || []);
       if (soonest) {
         const contact    = profile.email || profile.phone_number;
@@ -121,7 +121,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
     load();
   }, [profile.id]);
 
-  // ── Queue polling ─────────────────────────────────────────────────────────
+  // Keep checking the queue every 30 seconds so the patient always sees their real position
   useEffect(() => {
     const contact    = profile.email || profile.phone_number;
     const activeAppt = getSoonestActiveAppointment(appointments);
@@ -142,7 +142,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
     /* v8 ignore stop */
   }, [profile, appointments]);
 
-  // ── In-app appointment reminders ──────────────────────────────────────────
+  // Show a reminder pop-up on screen if the patient has an appointment coming up soon
   const today        = new Date().toISOString().split("T")[0];
   const upcomingAppts = appointments.filter(
     (a) => a.status === "booked" && a.appointment_slots?.slot_date >= today
@@ -184,7 +184,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
     /* v8 ignore stop */
   }, [upcomingAppts]);
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  // Things the patient can do - like leaving the queue or logging out
   async function handleLogout() {
     await Promise.allSettled([supabase.auth.signOut(), signOut(auth)]);
     localStorage.removeItem("userIdentity");
@@ -274,7 +274,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
   }
   /* v8 ignore stop */
 
-  // ── Derived ───────────────────────────────────────────────────────────────
+  // Calculate some useful numbers from the data we already loaded
   const bookedAppt       = getSoonestActiveAppointment(appointments);
   const activeQueue      = queueData?.data || null;
   const isAppointmentToday = bookedAppt?.appointment_slots?.slot_date === today;
@@ -282,7 +282,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
   const lastClinic = appointments.find(
   (a) => a.appointment_slots?.facility_id && a.appointment_slots?.facilities?.name)?.appointment_slots ?? null;
 
-  // ── Content ───────────────────────────────────────────────────────────────
+  // Decide which section to show based on which menu tab the patient clicked
   function goTo(id) {
   
   setSidebarOpen(false);
@@ -406,7 +406,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
     }
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // Put the full patient dashboard on screen
   return (
     <section className="db-root">
       <aside className={`db-sidebar ${sidebarOpen ? "open" : ""}`}>
@@ -432,7 +432,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
           <p>Hi, {profile.name || "User"}</p>
         </header>
 
-        {/* Reminder banner */}
+        {/* Small banner at the top reminding the patient about an upcoming appointment */}
         {/* v8 ignore start */
         reminderBanner && (
           <aside role="alert" style={{ background: reminderBanner.minutes <= 5 ? "#fdecea" : "#fff8e1", borderBottom: `3px solid ${reminderBanner.minutes <= 5 ? "#c62828" : "#e65100"}`, color: reminderBanner.minutes <= 5 ? "#c62828" : "#7a3900", padding: "13px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 14, fontWeight: 500, gap: 12 }}>
@@ -446,7 +446,7 @@ export default function PatientDashboard({ profile: initialProfile }) {
         <main className="db-content">{renderContent()}</main>
       </section>
 
-      {/* Reschedule modal */}
+      {/* A popup window that opens when the patient wants to reschedule their appointment */}
       {/* v8 ignore start */
       rescheduleAppt && (
         <aside className="db-modal-overlay" onClick={() => setRescheduleAppt(null)}>

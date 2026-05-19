@@ -18,8 +18,8 @@ const API_BASE =
   process.env.VITE_API_BASE ||
   'https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net';
 
-// Here we define all the tools we give to GPT so it knows what actions it can take on behalf of the user──────────
-
+// Here we define all the tools we give to GPT so it knows what actions it can take on behalf of the user
+// This was actual easy to implement as it is a method I am using in coding one of my projects. I would love to refer to it as RAG but its not.
 const PATIENT_TOOLS = [
   {
     type: 'function',

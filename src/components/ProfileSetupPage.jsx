@@ -1,7 +1,4 @@
-/**
- * ProfileSetupPage.jsx – redesigned with #1B5E20 primary color
- * All original logic preserved, UI/UX completely overhauled.
- */
+// This page lets new users fill in their personal details the first time they sign up.
 
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -13,7 +10,7 @@ import Applications from "./Applications";
 const API_BASE = import.meta.env.VITE_API_BASE || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
 
 
-// ── Utilities ─────────────────────────────────────────────────────────────────
+// Small helper functions used in this file
 async function sha256Hex(value) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -58,7 +55,7 @@ function getAgeFromDob(dob) {
   if (!birthdayPassed) age--;
   return age;
 }
-// ── Shared micro-components ───────────────────────────────────────────────────
+// Tiny reusable pieces of the form UI - like text boxes and drop-downs
 function Err({ msg }) {
   if (!msg) return null;
   return (
@@ -127,7 +124,7 @@ function LoadingSpinner() {
   );
 }
 
-// ── ProfileStep ───────────────────────────────────────────────────────────────
+// The form step where the user fills in their name, date of birth, contact details, etc.
 function ProfileStep({ identity, selectedRole, onComplete }) {
   const [firstName, setFirstName] = useState(identity?.name    || "");
   const [surname,   setSurname]   = useState(identity?.surname  || "");
@@ -183,7 +180,8 @@ if (cleanEmail && !isValidEmail(cleanEmail)) {
   return;
 }
 
-// Normalise +27 → 0 before validating, or use the updated regex above
+// Convert South African phone numbers starting with +27 to start with 0 before checking them
+// This makes sure +27 821234567 and 0821234567 are treated as the same number
 const phoneForValidation = cleanPhone.startsWith("+27")
   ? "0" + cleanPhone.slice(3)
   : cleanPhone;
@@ -213,7 +211,7 @@ if (getAgeFromDob(dob) < 13) {
     const hashed = await sha256Hex(cleanIdNumber).catch(() => null);
     if (!hashed) { setError("Could not hash ID. Please try again."); setLoading(false); return; }
 
-    // Duplicate ID check
+    // Check if another user already has this ID number - no two people should share the same ID
     const { data: existingId } = await supabase
       .from("profiles").select("id, auth_provider, provider_user_id")
       .eq("id_number", hashed).maybeSingle();
@@ -378,7 +376,7 @@ if (getAgeFromDob(dob) < 13) {
   );
 }
 
-// ── AdminOnboardingStep ───────────────────────────────────────────────────────
+// The form step shown to admin users when they first set up their account
 function AdminOnboardingStep({ adminProfile, onSubmit, onBack }) {
   const [professionalId, setProfessionalId] = useState("");
   const [licenseNumber,  setLicenseNumber]  = useState("");
@@ -576,7 +574,7 @@ const uploadedCvUrl = publicUrlData.publicUrl;
   );
 }
 
-// ── ProfileSetupPage ──────────────────────────────────────────────────────────
+// The main profile setup page - walks the user through filling in their details step by step
 export default function ProfileSetupPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -616,7 +614,7 @@ export default function ProfileSetupPage() {
       <figure className="psp-bg-gradient" />
       <figure className="psp-bg-blob" />
 
-      {/* Logo */}
+      {/* The QueueCare logo shown at the top of the setup form */}
       <header className="psp-logo">
         <figure className="psp-logo-mark">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="1.8">

@@ -1,9 +1,9 @@
-// MUST BE FIRST
-//self.FIREBASE_APPCHECK_DEBUG_TOKEN = true; 
+// Firebase handles logins for this app — Google sign-in, phone OTP, etc.
+// These are the settings that connect our app to our specific Firebase project.
 
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-// ADD THESE TWO IMPORTS
+// ReCaptchaEnterpriseProvider is imported in case we ever turn on App Check (bot protection)
 import { ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 const firebaseConfig = {
@@ -22,8 +22,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleAuthProvider = new GoogleAuthProvider();
 
-// INITIALIZE APP CHECK HERE
-// Use your SITE KEY (starts with 6L...)
+// App Check is turned off for now — it adds bot protection but needs extra setup.
+// To enable it, uncomment the block below and replace the site key with yours.
 /**if (typeof window !== "undefined") {
   initializeAppCheck(app, {
     provider: new ReCaptchaEnterpriseProvider('6LevZK0sAAAAAFp8P8cD3czJhKuMESnrwoomhnKr'), 

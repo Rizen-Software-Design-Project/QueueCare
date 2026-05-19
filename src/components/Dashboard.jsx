@@ -1,5 +1,5 @@
-// Dashboard.jsx — auth router only
-// Loads profile, then renders the correct role dashboard.
+// This is the "traffic cop" of the app.
+// It checks who is logged in and then sends them to the right dashboard (patient, staff, or admin).
 
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -45,7 +45,7 @@ export default function Dashboard() {
 
       const { authProvider, providerUserId } = identity;
 
-      // Persist identity for components that read from localStorage
+      // Save who the logged-in user is in the browser's local storage so other pages can read it later
       localStorage.setItem(
         "userIdentity",
         JSON.stringify({ auth_provider: authProvider, provider_user_id: providerUserId })
@@ -61,7 +61,7 @@ export default function Dashboard() {
       if (cancelled) return;
 
       if (!prof) {
-        // Check for pending application
+        // User has no profile yet — check if they submitted an application that is still being reviewed
         const { data: app } = await supabase
           .from("role_applications")
           .select("requested_role, status")

@@ -1,7 +1,4 @@
-/**
- * AuthPage.jsx – redesigned modern authentication flow
- * All original logic preserved, UI/UX completely overhauled.
- */
+// This is the login and sign-up page. Users pick their role, then log in with email, phone, or Google.
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "#lib/supabase";
@@ -22,7 +19,7 @@ const googleAuthProvider = new GoogleAuthProvider();
 googleAuthProvider.addScope("email");
 googleAuthProvider.addScope("profile");
 
-// ── Utilities ────────────────────────────────────────────────────────────────
+// Small helper functions that the login page uses
 function strengthScore(pw) {
   let s = 0;
   if (pw.length >= 8)           s++;
@@ -42,7 +39,7 @@ function normaliseSAPhone(raw) {
 
 export { strengthScore, normaliseSAPhone };
 
-// ── Routing helpers ───────────────────────────────────────────────────────────
+// Figure out where to send the user after they log in based on their role
 async function fetchProfile(identity) {
   const { data } = await supabase
     .from("profiles")
@@ -71,7 +68,7 @@ function isProfileComplete(profile) {
 
 export { isProfileComplete };
 
-// ── Reusable UI Components ────────────────────────────────────────────────────
+// Small reusable bits of the login form like text boxes and buttons
 const Logo = () => (
   <header className="auth-logo">
     <figure className="auth-logo-mark">
@@ -190,7 +187,7 @@ const Divider = () => (
 const ErrorMessage = ({ msg }) =>
   msg ? <p role="alert" className="auth-error">⚠️ {msg}</p> : null;
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// The main login and sign-up page
 export default function AuthPage() {
   const navigate = useNavigate();
 
@@ -199,7 +196,7 @@ export default function AuthPage() {
   const [error, setError]               = useState("");
   const [loading, setLoading]           = useState(false);
 
-  // Email state
+  // These variables hold what the user is typing in the email boxes
   const [loginEmail, setLoginEmail]   = useState("");
   const [loginPw, setLoginPw]         = useState("");
   const [isNewEmail, setIsNewEmail]   = useState(false);
@@ -207,7 +204,7 @@ export default function AuthPage() {
   const [confirmPw, setConfirmPw]     = useState("");
   const [emailOtp, setEmailOtp]       = useState(Array(6).fill(""));
 
-  // Phone state
+  // These variables hold what the user is typing in the phone boxes
   const [phone, setPhone]             = useState("");
   const [phoneOtp, setPhoneOtp]       = useState(Array(6).fill(""));
   const [resendTimer, setResendTimer] = useState(0);
@@ -231,7 +228,7 @@ export default function AuthPage() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
-  // ── Central routing decision ───────────────────────────────────────────────
+  // After login, figure out which page to send the user to based on their role
   async function routeAfterLogin(identity) {
     localStorage.setItem("userIdentity", JSON.stringify(identity));
 
@@ -276,7 +273,7 @@ export default function AuthPage() {
     });
   }
 
-  // ── Email / password ──────────────────────────────────────────────────────
+  // Handle logging in or signing up with email and password
   async function handleEmailSubmit(e) {
     e.preventDefault();
     setError("");
@@ -326,7 +323,7 @@ export default function AuthPage() {
     });
   }
 
-  // ── Phone / OTP ───────────────────────────────────────────────────────────
+  // Handle logging in with a phone number and a one-time PIN sent by SMS
   async function handlePhoneSubmit(e) {
     e?.preventDefault();
     setError("");
@@ -385,7 +382,7 @@ export default function AuthPage() {
     }
   }
 
-  // ── Social login ──────────────────────────────────────────────────────────
+  // Handle logging in with Google or Facebook
   async function handleSocialLogin(provider) {
     setError("");
     if (!selectedRole) { setError("Choose an account type first."); go("role-select"); return; }
@@ -409,14 +406,14 @@ export default function AuthPage() {
     }
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // Draw the login page on screen
   return (
     <section className="auth-root">
       <Logo />
 
       <main className="auth-card">
 
-        {/* Role select */}
+        {/* Dropdown for the user to choose if they are a patient, staff, or admin */}
         {page === "role-select" && (
           <section className="auth-section">
             <ErrorMessage msg={error} />
@@ -430,7 +427,7 @@ export default function AuthPage() {
           </section>
         )}
 
-        {/* Login method picker */}
+        {/* Tabs for picking how to log in - email, phone, or social */}
         {page === "home" && (
           <section className="auth-section">
             <BackButton onClick={() => go("role-select")} />
@@ -462,7 +459,7 @@ export default function AuthPage() {
           </section>
         )}
 
-        {/* Email sign-in / sign-up */}
+        {/* The email and password login form */}
         {page === "email" && (
           <section className="auth-section">
             <BackButton onClick={() => go("home")} />
@@ -531,7 +528,7 @@ export default function AuthPage() {
           </section>
         )}
 
-        {/* Email OTP */}
+        {/* Box where the user types in the code sent to their email */}
         {page === "email-otp" && (
           <section className="auth-section">
             <BackButton onClick={() => go("email")} />
@@ -548,7 +545,7 @@ export default function AuthPage() {
           </section>
         )}
 
-        {/* Phone number entry */}
+        {/* Box where the user types in their phone number */}
         {page === "phone" && (
           <section className="auth-section">
             <BackButton onClick={() => go("home")} />
@@ -578,7 +575,7 @@ export default function AuthPage() {
           </section>
         )}
 
-        {/* Phone OTP */}
+        {/* Box where the user types in the code sent to their phone */}
         {page === "phone-otp" && (
           <section className="auth-section">
             <BackButton onClick={() => go("phone")} />
@@ -600,7 +597,7 @@ export default function AuthPage() {
           </section>
         )}
 
-        {/* Pending screens */}
+        {/* Shown when the application is pending or rejected */}
         {page === "application-pending" && (
           <section className="auth-section">
             <h2 className="auth-title">Application submitted</h2>
@@ -629,7 +626,7 @@ export default function AuthPage() {
   );
 }
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
+// Simple SVG icons used on the login page
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

@@ -28,7 +28,7 @@ export default function AdminDashboard({ profile: initialProfile }) {
 
 
 
- /*=========== Notifications Fetching & Actions ==========*/
+// Load all notifications for the admin and set up ways to mark them as read or delete them
   useEffect(() => {
     supabase
       .from("notifications")
@@ -43,7 +43,7 @@ export default function AdminDashboard({ profile: initialProfile }) {
       });
   }, [profile.id]);
 
-  // Actions
+  // Things the admin can click on - like dismissing a notification or switching tabs
   async function handleLogout() {
     await Promise.allSettled([supabase.auth.signOut(), signOut(auth)]);
     localStorage.removeItem("userIdentity");
@@ -57,7 +57,7 @@ export default function AdminDashboard({ profile: initialProfile }) {
   }
 
 
-   /*=========== Content ==========*/
+  // Decide which section to show based on which tab the admin clicked
   function renderContent() {
     const navState = {
     admin: profile,
@@ -260,7 +260,7 @@ export default function AdminDashboard({ profile: initialProfile }) {
 }
 }
 
-  /*=========== Render the content ==========*/
+  // Put the whole admin dashboard on screen
   return (
   <main className="db-root">
     <aside

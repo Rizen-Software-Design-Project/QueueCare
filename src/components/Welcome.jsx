@@ -23,7 +23,7 @@ function Welcome() {
   return (
     <main className="Welcome_page">
 
-      {/* ── NAVBAR ── */}
+      {/* The top navigation bar with the app name and Sign In / Sign Up buttons */}
       <header>
         <nav className="navbar">
           <h1 className="navbar_logo">
@@ -44,7 +44,7 @@ function Welcome() {
         </nav>
       </header>
 
-      {/* ── HERO ── */}
+      {/* The big intro section at the top of the home page */}
       <section className="Home">
 
         <figure className="home_background">
@@ -117,7 +117,7 @@ function Welcome() {
         </article>
       </section>
 
-      {/* ── ABOUT ── */}
+      {/* The section that explains what QueueCare is and how it helps patients */}
       <section className="About">
 
         <p className="about_label">Our Story</p>
@@ -203,7 +203,7 @@ function Welcome() {
         </section>
       </section>
 
-      {/* ── SERVICES ── */}
+      {/* The section listing all the services QueueCare offers */}
       <section className="Services">
 
         <article className="services_content">
@@ -318,7 +318,7 @@ function Welcome() {
         </article>
       </section>
 
-      {/* ── CONTACT ── */}
+      {/* The section with contact information */}
       <section className="Contact">
 
         <section className="contact_content">
@@ -488,7 +488,7 @@ function Welcome() {
         </section>
       </section>
 
-      {/* ── FOOTER ── */}
+      {/* The footer at the very bottom of the page */}
       <footer className="footer">
 
         <section className="footer-content">
