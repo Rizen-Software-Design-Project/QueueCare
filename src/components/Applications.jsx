@@ -548,12 +548,20 @@ export default function Applications({
               <li key={app.id}>
                 <article className="app-application-card">
                   <header className="app-application-top">
-                    <section>
-                      <p className="app-app-title">
-                        {`${app.name || ""} ${app.surname || ""}`.trim() || "Unnamed Applicant"}
-                      </p>
-                      <p className="app-app-meta">Requested role: <strong>{app.requested_role || "—"}</strong></p>
-                    </section>
+                    <div className="app-applicant-info">
+                      <div className="app-applicant-avatar" aria-hidden="true">
+                        {(app.name?.[0] || "?")}{(app.surname?.[0] || "")}
+                      </div>
+                      <div>
+                        <p className="app-app-title">
+                          {`${app.name || ""} ${app.surname || ""}`.trim() || "Unnamed Applicant"}
+                        </p>
+                        <p className="app-app-meta">
+                          Role: <strong>{app.requested_role || "—"}</strong>
+                          {" · "}Submitted {formatDateTime(app.submitted_at)}
+                        </p>
+                      </div>
+                    </div>
                     <StatusBadge status={app.status} />
                   </header>
 
@@ -569,25 +577,34 @@ export default function Applications({
                       ["Phone",           app.phone_number],
                       ["Clinic",          app.clinic_name],
                       ["License",         app.license_number],
-                      ["Motivation",      app.motivation],
                       ["Submitted",       formatDateTime(app.submitted_at)],
                       ["Reviewed",        formatDateTime(app.reviewed_at)],
                     ].map(([label, val]) => (
                       <section key={label}>
-                        <dt><strong>{label}</strong></dt>
+                        <dt>{label}</dt>
                         <dd>{val || "—"}</dd>
                       </section>
                     ))}
+                    {app.motivation && (
+                      <section className="app-field-full">
+                        <dt>Motivation</dt>
+                        <dd>{app.motivation}</dd>
+                      </section>
+                    )}
                     {app.cv_url && (
-                      <section>
-                        <dt><strong>CV</strong></dt>
-                        <dd><a href={app.cv_url} target="_blank" rel="noreferrer">View CV</a></dd>
+                      <section className="app-field-full">
+                        <dt>CV</dt>
+                        <dd>
+                          <a className="app-cv-link" href={app.cv_url} target="_blank" rel="noreferrer">
+                            View submitted CV
+                          </a>
+                        </dd>
                       </section>
                     )}
                   </dl>
 
                   {app.status === "pending" && (
-                    <footer className="app-form-actions">
+                    <footer className="app-review-footer">
                       <button
                         className="app-btn-reject"
                         disabled={reviewingId === app.id}

@@ -1,10 +1,12 @@
 .staff-dash {
   min-height: 100vh;
-  background: #f5f6fa;
+  background: #fbfbfb;
   font-family: Arial, sans-serif;
+  overflow-x: hidden;
 }
 
-.staff-dash-header {
+.staff-dash-header hgroup {
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -17,7 +19,7 @@
 .staff-dash-header h1 {
   margin: 0;
   font-size: 1.5rem;
-  color: #145214;
+  color:  #ffffff;
 }
 
 .staff-back-btn {
@@ -33,7 +35,25 @@
 .staff-back-btn:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+.staff-badge-no_show {
+  background: #fff3e0;
+  color: #e65100;
+}
 
+.staff-badge-confirmed {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.staff-badge-waiting {
+  background: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.staff-badge-called {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
 .staff-dash-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -41,12 +61,6 @@
   padding: 28px;
   max-width: 1100px;
   margin: 0 auto;
-}
-
-@media (max-width: 768px) {
-  .staff-dash-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .staff-card {
@@ -60,6 +74,15 @@
   margin: 0 0 16px;
   font-size: 1.15rem;
   color: #145214;
+}
+
+.staff-card section {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.staff-card header {
+  flex-wrap: wrap;
 }
 
 .staff-form {
@@ -133,6 +156,7 @@
 
 .staff-table {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
   margin-top: 14px;
   font-size: 0.88rem;
@@ -153,6 +177,19 @@
 
 .staff-table tr:hover {
   background: #f9fbff;
+}
+.staff-table button:not(.staff-status-btn):not(.staff-action-btn) {
+  background: #145214;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.staff-table button:hover {
+  background: #16a34a;
 }
 
 .staff-badge {
@@ -179,6 +216,17 @@
   color: #1565c0;
 }
 
+.staff-action-btn {
+  background: #145214;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 .staff-action-btn:hover {
   background: #16a34a;
@@ -189,19 +237,13 @@
   cursor: not-allowed;
 }
 
-.staff-table button {
-  background: #145214;
-  color: white;
-  border: none;
-  padding: 4px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
+.staff-action-btn[title="Expand create slots"],
+.staff-action-btn[title="Collapse create slots"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.staff-table button:hover {
-  background: #16a34a;
-}
 .slot-quick-card {
   background: #f9fbff;
   border: 1px solid #eeeeee;
@@ -259,6 +301,7 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
+
 .slot-blocks {
   display: grid;
   gap: 12px;
@@ -267,7 +310,7 @@
 
 .slot-block-row {
   display: grid;
-  grid-template-columns: 
+  grid-template-columns:
     minmax(120px, 1.3fr)
     minmax(90px, 0.8fr)
     minmax(90px, 0.8fr)
@@ -279,17 +322,7 @@
   align-items: end;
   overflow-x: auto;
 }
-.staff-action-btn {
-  background: #145214;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 6px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
+
 .slot-block-row.disabled {
   opacity: 0.65;
   background: #f5f6fa;
@@ -302,6 +335,7 @@
   gap: 6px !important;
   white-space: nowrap;
 }
+
 .slot-date-filter {
   padding: 8px 10px;
   border: 1px solid #ccc;
@@ -314,15 +348,101 @@
   border-color: #1976d2;
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
 }
-.staff-action-btn[title="Expand create slots"],
-.staff-action-btn[title="Collapse create slots"] {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.staff-status-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.15s, transform 0.15s;
 }
+
+.staff-status-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.staff-status-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.staff-status-btn[data-status="confirmed"] {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+
+.staff-status-btn[data-status="complete"] {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+}
+
+.staff-status-btn[data-status="cancelled"] {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+}
+
+.staff-status-btn[data-status="no_show"] {
+  background: #ffedd5 !important;
+  color: #c2410c !important;
+}
+
+.staff-status-btn[data-status="booked"] {
+  background: #f3e8ff !important;
+  color: #7e22ce !important;
+}
+
+.staff-status-btn:hover {
+  background: #e2e8f0;
+}
+
+.staff-status-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+
 @media (max-width: 1000px) {
   .slot-block-row {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .slot-batch-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .staff-dash-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 16px 18px;
+  }
+
+  .staff-dash-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .staff-card {
+    padding: 16px;
+  }
+
+  .slot-block-row {
+    grid-template-columns: 1fr 1fr;
+    overflow-x: visible;
+  }
+
+  menu {
+    flex-wrap: wrap;
   }
 }
 
@@ -330,14 +450,7 @@
   .slot-block-row {
     grid-template-columns: 1fr;
   }
-}
-@media (max-width: 900px) {
-  .slot-batch-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
 
-@media (max-width: 600px) {
   .slot-batch-grid {
     grid-template-columns: 1fr;
   }

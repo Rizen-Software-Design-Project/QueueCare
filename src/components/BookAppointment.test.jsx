@@ -158,7 +158,7 @@ beforeEach(() => {
 });
 
 // // Rendering & clinic info
-// describe("Rendering & clinic info", () => {
+ describe("Rendering & clinic info", () => {
   it("renders the clinic name from the database", async () => {
     renderComponent();
     expect(
@@ -203,7 +203,7 @@ beforeEach(() => {
 });
 
 // // Authentication & profile errors
-// describe("Authentication & profile errors", () => {
+ describe("Authentication & profile errors", () => {
   it("shows error when patient profile is not found", async () => {
     firebaseUserCallback = null;
     vi.mocked(
@@ -241,7 +241,7 @@ beforeEach(() => {
 });
 
 // // Clinic ID validation — calls onBack for invalid / missing IDs
-// describe("Clinic ID validation", () => {
+ describe("Clinic ID validation", () => {
   it("calls onBack when clinicId prop is undefined", async () => {
     render(<BookAppointment onBack={mockOnBack} onDone={mockOnDone} />);
     await waitFor(() => {
@@ -313,7 +313,7 @@ beforeEach(() => {
 });
 
 // // Slot filtering
-// describe("Slot filtering", () => {
+ describe("Slot filtering", () => {
   it("hides slots that are in the past", async () => {
     const pastSlot = { ...mockSlot, id: 20, slot_date: "2000-01-01", slot_time: "09:00:00" };
     setupDefaultMocks({ slots: [pastSlot] });
@@ -367,7 +367,7 @@ beforeEach(() => {
 });
 
 // // Slot selection
-// describe("Slot selection", () => {
+ describe("Slot selection", () => {
   it("shows 'Selected' indicator after clicking a slot", async () => {
     const user = userEvent.setup();
     await renderAndWaitForSlots();
@@ -382,7 +382,7 @@ beforeEach(() => {
 });
 
 // // Reason input & suggestion chips
-// describe("Reason input & suggestion chips", () => {
+ describe("Reason input & suggestion chips", () => {
   it("allows typing a reason directly", async () => {
     const user = userEvent.setup();
     renderComponent();
@@ -443,7 +443,7 @@ beforeEach(() => {
 });
 
 // // Booking validation
-// describe("Booking validation", () => {
+ describe("Booking validation", () => {
   it("Confirm Booking button is disabled when no slot is selected", async () => {
     renderComponent();
     await screen.findByText(/09:00/i);
@@ -469,7 +469,7 @@ beforeEach(() => {
 });
 
 // // Booking API
-// describe("Booking API", () => {
+ describe("Booking API", () => {
   it("shows loading state while booking is in progress", async () => {
     const user = userEvent.setup();
 
@@ -597,7 +597,7 @@ beforeEach(() => {
 });
 
 // // Navigation
-// describe("Navigation", () => {
+ describe("Navigation", () => {
   it("back button calls onBack prop", async () => {
     const user = userEvent.setup();
     renderComponent();

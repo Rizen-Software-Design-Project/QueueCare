@@ -444,10 +444,12 @@ export default function WalkIn({
 
             <form
               onSubmit={handleSearch}
-              className="wi-search-row"
+              className="wi-search-section"
             >
               <label className="wi-search-label">
                 Patient email or phone number
+              </label>
+              <section className="wi-search-row">
                 <input
                   type="text"
                   value={contact}
@@ -458,7 +460,7 @@ export default function WalkIn({
                   required
                   className="wi-search-input"
                 />
-              </label>
+              
 
               <button
                 type="submit"
@@ -470,6 +472,7 @@ export default function WalkIn({
                   ? "Searching…"
                   : "Find"}
               </button>
+              </section>
             </form>
 
             {searchMsg.text && (

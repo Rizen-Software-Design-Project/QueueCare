@@ -86,7 +86,7 @@ beforeEach(() => {
 });
 
 // // Loading state
-// describe("Dashboard loading state", () => {
+ describe("Dashboard loading state", () => {
     it("shows the loading spinner before auth resolves", () => {
         // Never call the callback so loading stays true
         mockOnAuthStateChanged.mockReturnValue(vi.fn());
@@ -103,7 +103,7 @@ beforeEach(() => {
 });
 
 // // Unauthenticated
-// describe("Dashboard unauthenticated user", () => {
+ describe("Dashboard unauthenticated user", () => {
     it("redirects to /signin when no Firebase or Supabase session exists", async () => {
         fireAuthChange(null);
         mockSupabaseGetUser.mockResolvedValue({ data: { user: null } });
@@ -117,7 +117,7 @@ beforeEach(() => {
 });
 
 // // Firebase authenticated user
-// describe("Dashboard – Firebase authenticated user", () => {
+ describe("Dashboard – Firebase authenticated user", () => {
     const firebaseUser = { uid: "fb-uid-123" };
 
     it("stores Firebase identity in localStorage after auth", async () => {
@@ -180,7 +180,7 @@ beforeEach(() => {
 });
 
 // // Supabase authenticated user (no Firebase session)
-// describe("Dashboard – Supabase authenticated user", () => {
+ describe("Dashboard – Supabase authenticated user", () => {
     const supabaseUser = { id: "sb-uid-456" };
 
     beforeEach(() => {
@@ -243,7 +243,7 @@ beforeEach(() => {
 });
 
 // // Profile not found — role_applications fallback
-// describe("Dashboard – profile not found (role_applications fallback)", () => {
+ describe("Dashboard – profile not found (role_applications fallback)", () => {
     const firebaseUser = { uid: "fb-uid-789" };
 
     it("redirects with pending message when application is pending", async () => {

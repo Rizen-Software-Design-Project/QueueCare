@@ -349,7 +349,7 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
       <header className="staff-dash-header">
         <hgroup>
           <h1>{queueOnly ? "Live Patient Queue" : "Staff Dashboard"}</h1>
-          {facilityName && <p style={{ margin: 0, fontSize: 14, color: "#ccc" }}>📍 {facilityName}</p>}
+          {facilityName && <p style={{ margin: 0, fontSize: 14, color: "#f4ffe9" }}>📍 {facilityName}</p>}
         </hgroup>
       </header>
 
@@ -393,7 +393,7 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                             <menu style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                               <button type="button" className="staff-action-btn" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => openRescheduleModal(a)}>Reschedule</button>
                               {STATUS_OPTIONS.filter((s) => s !== a.status).map((s) => (
-                                <button key={s} className="staff-back-btn" style={{ fontSize: 11, padding: "3px 8px" }} disabled={updatingId === a.id} onClick={() => updateStatus(a.id, s)}>
+                                <button key={s} className="staff-status-btn" data-status={s} disabled={updatingId === a.id} onClick={() => updateStatus(a.id, s)}>
                                   {updatingId === a.id ? "..." : s}
                                 </button>
                               ))}
@@ -471,7 +471,7 @@ export default function StaffClinicManagement({ facilityId, facilityName, authPr
                             {status !== "completed" && (
                               <menu style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                                 {QUEUE_STATUS_OPTIONS.filter((o) => o.value !== status).map((option) => (
-                                  <button key={option.value} className="staff-back-btn" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => handleQueueStatusUpdate(contact, option.value)}>{option.label}</button>
+                                  <button key={option.value} className="staff-status-btn" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => handleQueueStatusUpdate(contact, option.value)}>{option.label}</button>
                                 ))}
                                 <button className="staff-back-btn" style={{ fontSize: 11, padding: "3px 8px", background: "#dc2626", color: "white" }} onClick={() => handleRemoveFromQueue(contact)}>Remove</button>
                               </menu>

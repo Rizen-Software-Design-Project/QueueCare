@@ -118,7 +118,7 @@ beforeEach(() => {
   mockQuery.limit.mockResolvedValue({ data: [], error: null });
 });
 
-// describe("Sidebar", () => {
+ describe("Sidebar", () => {
   beforeEach(() => {
     render(<StaffDashboard profile={mockStaffProfile} />);
   });
@@ -148,7 +148,7 @@ beforeEach(() => {
   });
 });
 
-// describe("Clicked Overview", () => {
+ describe("Clicked Overview", () => {
   beforeEach(async () => {
     mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
 
@@ -227,7 +227,7 @@ beforeEach(() => {
   });
 });
 
-// describe("Clicked Overview - facility card", () => {
+ describe("Clicked Overview - facility card", () => {
   it("shows the assigned facility name and district", async () => {
     const { supabase } = await import("#lib/supabase");
     supabase.from.mockImplementation((table) => {
@@ -322,7 +322,7 @@ describe("Nav items - tab switching", () => {
   });
 });
 
-// describe("Clicked Notifications", () => {
+ describe("Clicked Notifications", () => {
   beforeEach(async () => {
     const user = userEvent.setup();
     render(<StaffDashboard profile={mockStaffProfile} />);
@@ -360,7 +360,7 @@ describe("Clicked Profile", () => {
   });
 });
 
-// describe("Logout", () => {
+ describe("Logout", () => {
   let originalLocalStorage;
 
   beforeEach(() => {
@@ -428,7 +428,7 @@ describe("Clicked Profile", () => {
   });
 });
 
-// describe("Sidebar hamburger", () => {
+ describe("Sidebar hamburger", () => {
   it("toggles sidebar open class when hamburger is clicked", async () => {
     const user = userEvent.setup();
     render(<StaffDashboard profile={mockStaffProfile} />);
@@ -448,7 +448,7 @@ describe("Clicked Profile", () => {
   });
 });
 
-// describe("Local storage setup", () => {
+ describe("Local storage setup", () => {
   let originalLocalStorage;
 
   beforeEach(() => {
@@ -496,7 +496,7 @@ describe("Clicked Profile", () => {
   });
 });
 
-// describe("Clicked Service Policy", () => {
+ describe("Clicked Service Policy", () => {
   it("renders Service Policy content when nav item is clicked", async () => {
     const user = userEvent.setup();
     render(<StaffDashboard profile={mockStaffProfile} />);

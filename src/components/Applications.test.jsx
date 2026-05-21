@@ -753,7 +753,7 @@ describe("Review mode - CV link renders", () => {
     await navigateToReviewMode([pendingApplication]);
 
     await waitFor(() => {
-      const cvLink = screen.getByRole("link", { name: /View CV/i });
+      const cvLink = screen.getByRole("link", { name: /View submitted CV/i });
       expect(cvLink).toBeVisible();
       expect(cvLink).toHaveAttribute("href", "https://storage.example.com/cv.pdf");
     });
