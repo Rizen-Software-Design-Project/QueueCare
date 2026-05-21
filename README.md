@@ -32,7 +32,7 @@ npm install
 
 ### 4. Get the `.env` File
 
-The app requires environment variables that are not committed to the repository for security reasons.
+The app requires environment variables that are not committed to the repository for security reasons, as it contains sensitive API keys and credentials.
 
 Contact the project leader to receive the `.env` file:
 
