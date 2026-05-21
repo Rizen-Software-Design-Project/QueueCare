@@ -4,13 +4,13 @@ import AdminDashboard from "./AdminDashboard";
 import userEvent from "@testing-library/user-event";
 
 
-//jump-mocks
-//jump-overview
-//jump-notifications
-//jump-profile
+// mocks
+// overview
+// notifications
+// profile
 
 
-//jump-mocks
+// mocks
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual("react-router-dom");
@@ -118,7 +118,7 @@ describe("Sidebar", () => {
 });
 
 
-//jump-overview
+// overview
 describe("Clicked Overview", () => {
     beforeEach(async () => {
         mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
@@ -255,7 +255,7 @@ describe("Nav items that render sub-panels", () => {
 });
 
 
-//jump-notifications
+// notifications
 describe("Clicked Notifications", () => {
     beforeEach(async () => {
         mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
@@ -277,7 +277,7 @@ describe("Clicked Notifications", () => {
 });
 
 
-//jump-profile
+// profile
 describe("Clicked Profile", () => {
     it("renders Profile panel inline when Profile nav button is clicked", async () => {
         const user = userEvent.setup();

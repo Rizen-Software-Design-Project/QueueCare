@@ -20,8 +20,7 @@ import AuthPage from "./AuthPage";
 import { signInWithPopup, signInWithPhoneNumber } from "firebase/auth";
 
 
-// ── Mocks (mirrors the existing mock block) ───────────────────────────────────
-
+// Mocks (mirrors the existing mock block)
 vi.mock("firebase/auth", () => {
   class GoogleAuthProvider { constructor() { this.addScope = vi.fn(); } }
   class FacebookAuthProvider { constructor() { this.addScope = vi.fn(); } }
@@ -90,8 +89,7 @@ vi.mock("@supabase/supabase-js", () => ({
 }));
 
 
-// ── Shared navigation helpers ─────────────────────────────────────────────────
-
+// Shared navigation helpers
 async function selectRole(role) {
   const user = userEvent.setup();
   await user.click(screen.getByRole("button", { name: new RegExp(role, "i") }));
@@ -151,8 +149,7 @@ afterEach(() => {
 });
 
 
-// ── 1. Role-select guard ──────────────────────────────────────────────────────
-
+// 1. Role-select guard
 describe("Role-select guard", () => {
   it("shows an error and redirects to role-select when no role is chosen before social login", async () => {
     // signInWithPopup should NOT have been called yet
@@ -183,8 +180,7 @@ describe("Role-select guard", () => {
 });
 
 
-// ── 2. Email validation errors ────────────────────────────────────────────────
-
+// 2. Email validation errors
 describe("Email sign-in — validation errors", () => {
   it("shows an error when submitting with an empty email", async () => {
     // userEvent.click on a submit button respects jsdom's HTML5 constraint
@@ -235,8 +231,7 @@ describe("Email sign-in — validation errors", () => {
 });
 
 
-// ── 3. Email create-account — validation errors ───────────────────────────────
-
+// 3. Email create-account — validation errors
 describe("Email create account — validation errors", () => {
   it("shows an error when password is shorter than 8 characters", async () => {
     const user = await navigateToEmailCreateAccount();
@@ -276,8 +271,7 @@ describe("Email create account — validation errors", () => {
 });
 
 
-// ── 4. Email OTP — validation errors ─────────────────────────────────────────
-
+// 4. Email OTP — validation errors
 describe("Email OTP — validation errors", () => {
   it("shows an error when fewer than 6 digits are entered", async () => {
     const user = await navigateToEmailOtp();
@@ -311,8 +305,7 @@ describe("Email OTP — validation errors", () => {
 });
 
 
-// ── 5. OTP input — keyboard and paste interactions ────────────────────────────
-
+// 5. OTP input — keyboard and paste interactions
 describe("OTP input — keyboard behaviour", () => {
   it("advances focus to the next box after a digit is entered", async () => {
     const user = await navigateToEmailOtp();
@@ -356,8 +349,7 @@ describe("OTP input — keyboard behaviour", () => {
 });
 
 
-// ── 6. Phone validation errors ────────────────────────────────────────────────
-
+// 6. Phone validation errors
 describe("Phone sign-in — validation errors", () => {
   it("shows an error for an invalid phone number", async () => {
     const user = await navigateToPhoneSignIn();
@@ -381,8 +373,7 @@ describe("Phone sign-in — validation errors", () => {
 });
 
 
-// ── 7. Resend OTP timer gating ────────────────────────────────────────────────
-
+// 7. Resend OTP timer gating
 describe("Phone OTP page — resend timer", () => {
   it("disables the Resend OTP button while the timer is counting down", async () => {
     signInWithPhoneNumber.mockResolvedValueOnce({});
@@ -403,8 +394,7 @@ describe("Phone OTP page — resend timer", () => {
 });
 
 
-// ── 8. Social login — error path ──────────────────────────────────────────────
-
+// 8. Social login — error path
 describe("Social login — error handling", () => {
   it("shows an error message when Google sign-in popup is dismissed/fails", async () => {
     signInWithPopup.mockRejectedValueOnce(new Error("popup-closed-by-user"));
@@ -430,8 +420,7 @@ describe("Social login — error handling", () => {
 });
 
 
-// ── 9. Pending / rejected application screens ─────────────────────────────────
-
+// 9. Pending / rejected application screens
 describe("Application-pending screen (staff)", () => {
   beforeEach(async () => {
     // Mock Supabase to return a pending staff application
@@ -526,8 +515,7 @@ describe("Rejected application", () => {
 });
 
 
-// ── 10. Role-mismatch rejection ───────────────────────────────────────────────
-
+// 10. Role-mismatch rejection
 describe("Role mismatch", () => {
   it("shows an error when the profile role differs from the chosen role", async () => {
     // Profile says "admin", user logged in as "patient".
@@ -594,8 +582,7 @@ describe("Role mismatch", () => {
 });
 
 
-// ── 11. StrengthMeter visual output ──────────────────────────────────────────
-
+// 11. StrengthMeter visual output
 describe("StrengthMeter renders appropriate label per score", () => {
   const labels = ["Very weak", "Weak", "Fair", "Good", "Strong"];
 
@@ -643,8 +630,7 @@ describe("StrengthMeter renders appropriate label per score", () => {
 });
 
 
-// ── 12. Navigation — error clears on page transition ─────────────────────────
-
+// 12. Navigation — error clears on page transition
 describe("Error messages clear when navigating between pages", () => {
   it("clears a sign-in error when the user goes back to the home page", async () => {
     // Use a valid-format email + wrong credentials so Supabase returns an error.
@@ -702,8 +688,7 @@ describe("Error messages clear when navigating between pages", () => {
 });
 
 
-// ── 13. MediAccess branding ───────────────────────────────────────────────────
-
+// 13. MediAccess branding
 describe("Branding", () => {
   it("shows the MediAccess name on every page", async () => {
     render(<AuthPage />);
@@ -722,7 +707,7 @@ describe("Branding", () => {
 });
 
 
-// ── 14. routeAfterLogin — navigate("/dashboard") ──────────────────────────────
+// 14. routeAfterLogin — navigate("/dashboard")
 //
 // These tests exercise the branch: profile exists AND isProfileComplete(profile)
 // → navigate("/dashboard"). They also confirm localStorage.setItem is called
@@ -800,7 +785,7 @@ describe("routeAfterLogin — navigate to /dashboard via social login", () => {
 });
 
 
-// ── 15. routeAfterLogin — navigate("/profile-setup") ─────────────────────────
+// 15. routeAfterLogin — navigate("/profile-setup")
 //
 // Exercises the final branch: no profile (new user) → navigate("/profile-setup").
 
@@ -854,7 +839,7 @@ describe("routeAfterLogin — navigate to /profile-setup for new users", () => {
 });
 
 
-// ── 16. getUser returns null — error edge cases ───────────────────────────────
+// 16. getUser returns null — error edge cases
 //
 // In both handleEmailSubmit and handleEmailOtp, after a successful auth call
 // the component calls supabase.auth.getUser(). If getUser returns no user
@@ -896,8 +881,7 @@ describe("Email OTP — getUser returns null", () => {
 });
 
 
-// ── 17. Phone OTP — fewer than 6 digits ──────────────────────────────────────
-
+// 17. Phone OTP — fewer than 6 digits
 describe("Phone OTP — fewer than 6 digits entered", () => {
   it("shows 'Enter all 6 digits.' without calling confirm", async () => {
     const mockConfirm = vi.fn();

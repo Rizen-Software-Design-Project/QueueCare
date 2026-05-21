@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import WalkIn from "./Walkin";
 import userEvent from "@testing-library/user-event";
 
-/* ---------------- MOCKS ---------------- */
+// MOCKS
 
 const mockNavigate = vi.fn();
 
@@ -24,7 +24,7 @@ vi.mock("#lib/supabase", () => ({
 
 global.fetch = vi.fn();
 
-/* ---------------- MOCK DATA ---------------- */
+// MOCK DATA
 
 const now = new Date();
 const TODAY = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -55,7 +55,7 @@ const mockPatientProfile = {
   phone_number: "0820000000",
 };
 
-/* ---------------- HELPERS ---------------- */
+// HELPERS
 
 
 function seedSlots(slots = [mockTodaySlot, mockFutureSlot]) {
@@ -111,14 +111,14 @@ async function searchForPatient(user, found = true) {
   }
 }
 
-/* ---------------- SETUP ---------------- */
+// SETUP
 
 beforeEach(() => {
   vi.clearAllMocks();
   seedSlots();
 });
 
-/* ---------------- BASIC RENDER ---------------- */
+// BASIC RENDER
 
 describe("Page structure", () => {
  
@@ -139,7 +139,7 @@ describe("Page structure", () => {
   });
 });
 
-/* ---------------- SEARCH ---------------- */
+// SEARCH
 
 describe("Patient search", () => {
   it("shows error if patient not found", async () => {
@@ -162,7 +162,7 @@ describe("Patient search", () => {
   });
 });
 
-/* ---------------- QUEUE TAB ---------------- */
+// QUEUE TAB
 
 describe("Queue Today", () => {
   it("is default tab", () => {
@@ -202,7 +202,7 @@ describe("Queue Today", () => {
   });
 });
 
-/* ---------------- BOOK TAB ---------------- */
+// BOOK TAB
 
 describe("Book Future Appointment", () => {
   it("shows future slots only", async () => {
@@ -239,7 +239,7 @@ describe("Book Future Appointment", () => {
   });
 });
 
-/* ---------------- CHECK-IN ---------------- */
+// CHECK-IN
 
 describe("Check In", () => {
   async function setup() {
@@ -285,7 +285,7 @@ describe("Check In", () => {
   });
 });
 
-/* ---------------- TAB SWITCH ---------------- */
+// TAB SWITCH
 
 describe("Tab switching", () => {
   it("clears success message on tab change", async () => {

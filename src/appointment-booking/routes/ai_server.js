@@ -14,11 +14,12 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "test-key",
 });
 
-const API_BASE =
-  process.env.VITE_API_BASE ||
-  'https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net';
+const API_BASE = process.env.VITE_API_BASE || 'https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net';
 
-// Here we define all the tools we give to GPT so it knows what actions it can take on behalf of the user──────────
+// Here we define all the tools we give to GPT so it knows what actions it can take on behalf of the user
+// This was actual easy to implement as it is a method I am using in coding one of my projects. I would love to refer to it as RAG but its not.
+// Most of these objects may look similar but what makes tham differ are the names of the functiions,  the description or contect the AI has to take onand the values ior params the AI needs in order to execute those funcs
+// Please Do not abuse this feature AI credits are expensive 😭 and if it does not work and you are keen to test it please email me at 2825328@students.wits.ac.za so I can buy the credits
 
 const PATIENT_TOOLS = [
   {

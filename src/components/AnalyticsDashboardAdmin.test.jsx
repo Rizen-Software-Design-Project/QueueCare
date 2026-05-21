@@ -6,7 +6,7 @@ import AnalyticsDashboardAdmin from "./AnalyticsDashboardAdmin";
 
 //mocks
 //opening pages
-//navigate to page ...
+//navigate to page...,
 //tests(describes)
 
 
@@ -118,7 +118,8 @@ const defaultCustomData = [
 ];
 
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+
+
 // All three tab panels are always in the DOM (hidden attr toggles visibility).
 // Use getByRole("tabpanel", { hidden: false }) or query within the visible panel.
 function getVisiblePanel() {
@@ -351,7 +352,7 @@ function openCustomViewEmptyState() {
 }
 
 
-//navigate to page ...
+//navigate to pag
 async function navigateToWaitTimesTab() {
     const user = userEvent.setup();
     render(<AnalyticsDashboardAdmin />);

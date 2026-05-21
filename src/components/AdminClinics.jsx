@@ -5,7 +5,7 @@ import { FaHospital } from "react-icons/fa";
 import "./AdminClinics.css"
 
 
-/*==============DATA===============*/ 
+// These are all the dropdown options the admin can choose from provinces, services, etc...;D
 const districtsByProvince = {
   "Eastern Cape": ["Alfred Nzo", "Amathole", "Buffalo City", "Chris Hani", "Joe Gqabi", "Nelson Mandela Bay", "OR Tambo", "Sarah Baartman"],
   "Free State": ["Fezile Dabi", "Lejweleputswa", "Mangaung", "Thabo Mofutsanyana", "Xhariep"],
@@ -53,7 +53,7 @@ function normalizeOperatingHours(hours) {
 }
 
 
-/*==============Component===============*/ 
+// This is the main Clinics page where the admin can search, view, and edit clinic info
 export default function AdminClinics() {
   const [nameSearch, setNameSearch] = useState("");
   const [province, setProvince] = useState("");
@@ -80,7 +80,7 @@ export default function AdminClinics() {
   const [pillClosed,  setPillClosed]  = useState(false);
 
 
-  /*==============Clinic search functionality===============*/ 
+  // Search for clinics by name, province, or district - updates the list as you type
   async function applyFilters() {
     setStatus({ type: "loading", message: "🔍 Searching..." });
     try {
@@ -117,7 +117,7 @@ export default function AdminClinics() {
     setStatus({ type: "info", message: "Filters cleared" });
   }
 
-  /*==============EDIT===============*/ 
+  // These functions let the admin change a clinic's name, address, or list of services
   function openEditModal(facility) {
     setEditingFacility({
       ...facility,
@@ -198,7 +198,7 @@ function applyPillDays() {
     setEditingFacility(null);
   }
 
-  /*==============UI===============*/ 
+  // Draw the clinic search box and the list of results on screen
   return (
   <>
     <main className="admin-module">

@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 
-// ── Hoisted mocks ─────────────────────────────────────────────────────────────
+// Hoisted mocks
 const mockOnAuthStateChanged = vi.hoisted(() => vi.fn());
 const mockSupabaseFrom       = vi.hoisted(() => vi.fn());
 const mockSupabaseGetUser    = vi.hoisted(() => vi.fn());
@@ -43,7 +43,7 @@ vi.mock("./AdminDashboard", () => ({
 
 import Dashboard from "./Dashboard";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Helpers
 function fireAuthChange(firebaseUser) {
     mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
         cb(firebaseUser);
@@ -71,7 +71,7 @@ async function renderDashboard() {
     );
 }
 
-// ── Global reset ──────────────────────────────────────────────────────────────
+// Global reset
 beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -85,10 +85,8 @@ beforeEach(() => {
     });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Loading state
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Dashboard loading state", () => {
+// // Loading state
+// describe("Dashboard loading state", () => {
     it("shows the loading spinner before auth resolves", () => {
         // Never call the callback so loading stays true
         mockOnAuthStateChanged.mockReturnValue(vi.fn());
@@ -104,10 +102,8 @@ describe("Dashboard loading state", () => {
     });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Unauthenticated
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Dashboard unauthenticated user", () => {
+// // Unauthenticated
+// describe("Dashboard unauthenticated user", () => {
     it("redirects to /signin when no Firebase or Supabase session exists", async () => {
         fireAuthChange(null);
         mockSupabaseGetUser.mockResolvedValue({ data: { user: null } });
@@ -120,10 +116,8 @@ describe("Dashboard unauthenticated user", () => {
     });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Firebase authenticated user
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Dashboard – Firebase authenticated user", () => {
+// // Firebase authenticated user
+// describe("Dashboard – Firebase authenticated user", () => {
     const firebaseUser = { uid: "fb-uid-123" };
 
     it("stores Firebase identity in localStorage after auth", async () => {
@@ -185,10 +179,8 @@ describe("Dashboard – Firebase authenticated user", () => {
     });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Supabase authenticated user (no Firebase session)
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Dashboard – Supabase authenticated user", () => {
+// // Supabase authenticated user (no Firebase session)
+// describe("Dashboard – Supabase authenticated user", () => {
     const supabaseUser = { id: "sb-uid-456" };
 
     beforeEach(() => {
@@ -250,10 +242,8 @@ describe("Dashboard – Supabase authenticated user", () => {
     });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Profile not found — role_applications fallback
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Dashboard – profile not found (role_applications fallback)", () => {
+// // Profile not found — role_applications fallback
+// describe("Dashboard – profile not found (role_applications fallback)", () => {
     const firebaseUser = { uid: "fb-uid-789" };
 
     it("redirects with pending message when application is pending", async () => {

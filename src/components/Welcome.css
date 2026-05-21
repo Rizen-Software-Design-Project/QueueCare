@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap');
 
-/* ── RESET & BASE ─────────────────────────────────────────── */
+/* RESET & BASE */
 
 *,
 *::before,
@@ -61,7 +61,7 @@ hr {
   overflow-x: hidden;
 }
 
-/* ── SHARED UTILITIES ─────────────────────────────────────── */
+/* SHARED UTILITIES */
 
 .section_label,
 .about_label {
@@ -102,7 +102,7 @@ button:hover .btn_icon {
   transform: translateX(3px);
 }
 
-/* ── NAVBAR ─────────────────────────────────────────────── */
+/* NAVBAR */
 
 .navbar {
   position: sticky;
@@ -201,7 +201,7 @@ button:hover .btn_icon {
   transform: translateY(-1px);
 }
 
-/* ── HERO ───────────────────────────────────────────────── */
+/* HERO */
 
 .Home {
   position: relative;
@@ -419,7 +419,7 @@ button:hover .btn_icon {
   color: rgba(255, 255, 255, 0.65);
 }
 
-/* ── ABOUT ──────────────────────────────────────────────── */
+/* ABOUT */
 
 .About {
   padding: 6rem 3.5rem;
@@ -557,7 +557,7 @@ button:hover .btn_icon {
   color: #888;
 }
 
-/* ── SERVICES ───────────────────────────────────────────── */
+/* SERVICES */
 
 .Services {
   padding: 6rem 3.5rem;
@@ -685,7 +685,7 @@ button:hover .btn_icon {
   color: rgba(255, 255, 255, 0.75);
 }
 
-/* ── CONTACT ────────────────────────────────────────────── */
+/* CONTACT */
 
 .Contact {
   padding: 6rem 3.5rem;
@@ -918,7 +918,7 @@ a.contact_info_value:hover {
   transform: translateY(-1px);
 }
 
-/* ── FOOTER ─────────────────────────────────────────────── */
+/* FOOTER */
 
 .footer {
   padding: 4rem 3.5rem 2.5rem;
@@ -1040,7 +1040,7 @@ a.contact_info_value:hover {
   color: #555;
 }
 
-/* ── RESPONSIVE ─────────────────────────────────────────── */
+/* RESPONSIVE */
 
 @media (max-width: 1024px) {
   .about_content {

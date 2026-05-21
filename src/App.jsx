@@ -22,7 +22,7 @@ import "./App.css";
 
 function App() {
   return (
-    <BrowserRouter>  {/* remove basename if you want to deploy to azure */}
+    <BrowserRouter>  {/* BrowserRouter lets the app swap pages without a full reload — like clicking links in a real browser */}
       <Routes>
         <Route path="/"              element={<Welcome />} />
         <Route path="/signin"        element={<AuthPage />} />

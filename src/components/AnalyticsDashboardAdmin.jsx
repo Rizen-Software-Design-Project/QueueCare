@@ -383,7 +383,7 @@ function CustomViewReport({ facilities }) {
 
   return (
     <section className="space-y-5">
-      {/* Filters */}
+      {/* Search and filter controls for narrowing down the data */}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <fieldset className="flex flex-wrap items-center gap-3 border-0 p-0 m-0">
           <legend className="sr-only">Filter appointments</legend>
@@ -432,7 +432,7 @@ function CustomViewReport({ facilities }) {
         />
       </header>
 
-      {/* Table */}
+      {/* The table showing analytics data rows */}
       <section className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <header className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
           <h3 className="text-sm font-semibold text-slate-700">Appointments</h3>
@@ -493,7 +493,7 @@ export default function AnalyticsDashboard() {
     <section className="analytics-dashboard">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-        {/* Page header */}
+        {/* The title and description at the top of the analytics page */}
         <header className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Analytics</h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -501,7 +501,7 @@ export default function AnalyticsDashboard() {
           </p>
         </header>
 
-        {/* Tab bar */}
+        {/* Tabs for switching between different analytics views */}
         <nav aria-label="Analytics sections" className="mb-7">
           <ul
             role="tablist"
@@ -528,7 +528,7 @@ export default function AnalyticsDashboard() {
           </ul>
         </nav>
 
-        {/* Tab panels */}
+        {/* The content area that changes when you click a tab */}
         <section
           id="tabpanel-0"
           role="tabpanel"

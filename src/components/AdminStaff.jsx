@@ -4,13 +4,13 @@ import { FiUser, FiMapPin, FiTrash2, FiUsers, FiChevronLeft } from "react-icons/
 import { FaHospital } from "react-icons/fa";
 import "./AdminClinics.css";
 
-// Fall back to the hardcoded Azure URL when VITE_API_BASE isn't set (e.g. running locally without a .env file)
+// The backend server address - uses the local one in development or the live Azure one in production
 const API_BASE = import.meta.env.VITE_API_BASE
   || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
 
 const STAFF_ROLES = ["doctor", "nurse", "receptionist", "admin"];
 
-// Province → district mapping used to cascade the district dropdown when the user picks a province
+// A map of provinces to their districts so the district dropdown updates when you pick a province
 const districtsByProvince = {
   "Eastern Cape": ["Alfred Nzo","Amathole","Buffalo City","Chris Hani","Joe Gqabi","Nelson Mandela Bay","OR Tambo","Sarah Baartman"],
   "Free State": ["Fezile Dabi","Lejweleputswa","Mangaung","Thabo Mofutsanyana","Xhariep"],
@@ -23,40 +23,40 @@ const districtsByProvince = {
   "Western Cape": ["Cape Winelands","Central Karoo","City of Cape Town","Eden","Overberg","West Coast"],
 };
 
-// Pre-computed flat list for when no province filter is active
+// All districts in a flat list, used when no province filter is selected
 const allDistricts = [...new Set(Object.values(districtsByProvince).flat())].sort();
 
 export default function AdminStaff() {
-  // Admin identity lives in localStorage so we can pass it to RPCs that enforce row-level permissions
+  // Get the admin's ID from the browser - we need it to make certain database calls
   const identity = JSON.parse(localStorage.getItem("userIdentity") || "{}");
 
-  // Clinic search filters and results
+  // What the admin has typed in the search box and the matching clinics found so far
   const [nameSearch, setNameSearch]       = useState("");
   const [province, setProvince]           = useState("");
   const [district, setDistrict]           = useState("");
   const [clinics, setClinics]             = useState([]);
   const [clinicsStatus, setClinicsStatus] = useState({ type: "info", message: "Search for a clinic to get started." });
 
-  // Which clinic the user has drilled into, plus that clinic's staff list
+  // Which clinic the admin clicked on to view in detail, plus all the staff at that clinic
   const [selectedClinic, setSelectedClinic] = useState(null);
   const [clinicStaff, setClinicStaff]       = useState([]);
   const [staffLoading, setStaffLoading]     = useState(true);
   const [loadError, setLoadError]           = useState(null);
   const [staffSearch, setStaffSearch]       = useState("");
 
-  // Assign / reassign modal state
+  // Controls the popup window for assigning or moving a staff member to a clinic
   const [allFacilities, setAllFacilities] = useState([]);
   const [assigningTo, setAssigningTo]     = useState(null);
   const [form, setForm]                   = useState({ facility_id: "", role: "" });
   const [saving, setSaving]               = useState(false);
   const [actionStatus, setActionStatus]   = useState({ type: "", message: "" });
 
-  // Narrow the district dropdown to match the selected province; show all districts when none is chosen
+  // Update the district dropdown to only show districts in the chosen province
   const availableDistricts = useMemo(() =>
     province && districtsByProvince[province] ? districtsByProvince[province] : allDistricts,
   [province]);
 
-  // Load all staff and the full facility list in parallel on mount so the global staff table is ready without waiting for a search
+  // Load all staff and all clinics at the same time when the page opens so nothing needs to wait
   useEffect(() => {
     (async () => {
       try {
@@ -76,7 +76,7 @@ export default function AdminStaff() {
     })();
   }, []);
 
-  // Hits the Supabase REST endpoint directly because the JS client doesn't expose the combined filter params that search_clinics_admin expects
+  // Search for clinics using the database - we call the API directly here because the filter is complex
   async function searchClinics() {
     setClinicsStatus({ type: "loading", message: "Searching..." });
     try {
@@ -115,7 +115,7 @@ export default function AdminStaff() {
     setClinicsStatus({ type: "info", message: "Search for a clinic to get started." });
   }
 
-  // Filter the already-loaded staff list client-side rather than making a second network call
+  // Filter the list of staff using the search text - no need to hit the database again
   async function selectClinic(clinic) {
     setSelectedClinic(clinic);
     setClinicStaff([]);
@@ -145,7 +145,7 @@ export default function AdminStaff() {
     setActionStatus({ type: "", message: "" });
   }
 
-  // Pre-fill the modal with the member's current facility and role so the admin only needs to change what's different
+  // Fill in the popup form with the staff member's current clinic and role so the admin only changes what needs changing
   function openAssign(member) {
     setAssigningTo(member);
     setForm({
@@ -175,7 +175,7 @@ export default function AdminStaff() {
     }
 
     if (!selectedClinic) {
-      // Global view — update the member's row in place without removing them from the list
+      // Staff is in the global view - update their row in the list without removing them
       setClinicStaff(prev => prev.map(s =>
         s.profile_id === assigningTo.profile_id
           ? { ...s, staff_role: form.role, facility_id: parseInt(form.facility_id) }
@@ -188,11 +188,11 @@ export default function AdminStaff() {
     const movedElsewhere = parseInt(form.facility_id) !== selectedClinic.id;
 
     if (movedElsewhere) {
-      // Member transferred to a different clinic — drop them from the current list
+      // Staff was moved to a different clinic, so remove them from the current list
       setClinicStaff(prev => prev.filter(s => s.profile_id !== assigningTo.profile_id));
       setActionStatus({ type: "success", message: `${assigningTo.name} moved to ${allFacilities.find(f => f.id === parseInt(form.facility_id))?.name || "new clinic"}.` });
     } else {
-      // Same clinic, role change only — update in place
+      // Staff stayed at the same clinic but their role changed - update their card
       setClinicStaff(prev => prev.map(s =>
         s.profile_id === assigningTo.profile_id
           ? { ...s, staff_role: form.role }
@@ -201,7 +201,7 @@ export default function AdminStaff() {
       setActionStatus({ type: "success", message: `${assigningTo.name}'s role updated to ${form.role}.` });
     }
 
-    // Fire-and-forget — a failed notification email should never block the assignment from saving
+    // Try to send an email notification but do not stop if it fails - the assignment is saved either way
     if (assigningTo.email) {
       fetch(`${API_BASE}/notify/application/send-email`, {
         method: "POST",
@@ -236,7 +236,7 @@ export default function AdminStaff() {
     setClinicStaff(prev => prev.filter(s => s.profile_id !== member.profile_id));
     setActionStatus({ type: "success", message: `${member.name} removed.` });
 
-    // Same fire-and-forget pattern — removal already succeeded, the email is best-effort
+    // Try to send a removal notification email - if it fails, that is okay, the removal already worked
     if (member.email) {
       fetch(`${API_BASE}/notify/application/send-email`, {
         method: "POST",
@@ -251,7 +251,7 @@ export default function AdminStaff() {
     }
   }
 
-  // Client-side filter so staff results update instantly as the user types without hitting the network
+  // Filter the staff list as the admin types - no database call needed, just filter what we already have
   const visibleStaff = clinicStaff.filter(s =>
     staffSearch.trim() === "" ||
     `${s.name} ${s.surname}`.toLowerCase().includes(staffSearch.toLowerCase())
@@ -261,7 +261,7 @@ export default function AdminStaff() {
     <main className="admin-module">
       <section className="container">
 
-        {/* ── Clinic search + global staff list ── */}
+        {/* Left panel: search for clinics and see the full staff list */}
         {!selectedClinic && (
           <>
             <h2 className="title"><FiUsers /> Staff Management</h2>
@@ -269,7 +269,7 @@ export default function AdminStaff() {
               Find a clinic first, then view and edit its staff.
             </p>
 
-            {/* Wrapping in a form lets the browser handle Enter-to-search natively */}
+            {/* Wrapping in a form means pressing Enter in the search box will trigger the search */}
             <form
               className="filters"
               onSubmit={e => { e.preventDefault(); searchClinics(); }}
@@ -300,7 +300,7 @@ export default function AdminStaff() {
 
             <p className={`status ${clinicsStatus.type}`}>{clinicsStatus.message}</p>
 
-            {/* Clinic search results */}
+            {/* The list of clinics that match what the admin typed */}
             <ul className="grid">
               {clinics.map(clinic => (
                 <li key={clinic.id} className="card" style={{ cursor: "pointer" }} onClick={() => selectClinic(clinic)}>
@@ -321,7 +321,7 @@ export default function AdminStaff() {
               ))}
             </ul>
 
-            {/* Global staff list — loaded on mount, shown below search results */}
+            {/* All staff members - loaded when the page opens, shown below the clinic results */}
             {staffLoading ? (
               <p className="status loading">Loading staff...</p>
             ) : loadError ? (
@@ -357,7 +357,7 @@ export default function AdminStaff() {
           </>
         )}
 
-        {/* ── Clinic drill-down: staff for a specific clinic ── */}
+        {/* Right panel: shows all staff at the clinic the admin clicked on */}
         {selectedClinic && (
           <>
             <header style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1rem" }}>
@@ -376,7 +376,7 @@ export default function AdminStaff() {
               <p className={`status ${actionStatus.type}`}>{actionStatus.message}</p>
             )}
 
-            {/* Local staff filter — scoped to this clinic view only, no network call needed */}
+            {/* Search box to filter staff within this specific clinic - no network call needed */}
             <input
               className="input"
               placeholder="👤 Filter staff by name..."
@@ -415,10 +415,10 @@ export default function AdminStaff() {
           </>
         )}
 
-        {/* ── Assign / reassign modal ── */}
+        {/* Popup window for assigning or moving a staff member to a clinic */}
         {assigningTo && (
           <section className="modal-overlay" onClick={() => setAssigningTo(null)}>
-            {/* stopPropagation prevents clicks inside the modal from closing it via the overlay handler */}
+            {/* Clicking inside the popup should not close it - only the X button should */}
             <article className="modal" onClick={e => e.stopPropagation()}>
               <h3>Assign {assigningTo.name} {assigningTo.surname}</h3>
 

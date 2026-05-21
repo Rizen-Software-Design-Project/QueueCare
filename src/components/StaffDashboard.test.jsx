@@ -5,8 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { StaffHistoryView } from "./AppointmentHistory";
 
 
-// ─── Mocks ───────────────────────────────────────────────────────────────────
-
+// Mocks
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
@@ -74,8 +73,7 @@ vi.mock("./AIAssistant", () => ({
   default: () => <section data-testid="ai-assistant" />,
 }));
 
-// ─── Fixtures ────────────────────────────────────────────────────────────────
-
+// Fixtures
 const mockStaffProfile = {
   id:               "staff-123",
   name:             "Jane",
@@ -120,8 +118,7 @@ beforeEach(() => {
   mockQuery.limit.mockResolvedValue({ data: [], error: null });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Sidebar", () => {
+// describe("Sidebar", () => {
   beforeEach(() => {
     render(<StaffDashboard profile={mockStaffProfile} />);
   });
@@ -151,8 +148,7 @@ describe("Sidebar", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Clicked Overview", () => {
+// describe("Clicked Overview", () => {
   beforeEach(async () => {
     mockQuery.limit.mockResolvedValueOnce({ data: [], error: null });
 
@@ -231,8 +227,7 @@ describe("Clicked Overview", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Clicked Overview - facility card", () => {
+// describe("Clicked Overview - facility card", () => {
   it("shows the assigned facility name and district", async () => {
     const { supabase } = await import("#lib/supabase");
     supabase.from.mockImplementation((table) => {
@@ -279,8 +274,7 @@ describe("Clicked Overview - facility card", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Nav items switch tabs inline — they do NOT navigate() to external routes.
+// // Nav items switch tabs inline — they do NOT navigate() to external routes.
 describe("Nav items - tab switching", () => {
   beforeEach(() => {
     render(<StaffDashboard profile={mockStaffProfile} />);
@@ -328,8 +322,7 @@ describe("Nav items - tab switching", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Clicked Notifications", () => {
+// describe("Clicked Notifications", () => {
   beforeEach(async () => {
     const user = userEvent.setup();
     render(<StaffDashboard profile={mockStaffProfile} />);
@@ -348,8 +341,7 @@ describe("Clicked Notifications", () => {
 });
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Profile nav renders ProfilePage inline — it does not call navigate().
+// // Profile nav renders ProfilePage inline — it does not call navigate().
 describe("Clicked Profile", () => {
   it("renders ProfilePage when Profile nav button is clicked", async () => {
     const user = userEvent.setup();
@@ -368,8 +360,7 @@ describe("Clicked Profile", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Logout", () => {
+// describe("Logout", () => {
   let originalLocalStorage;
 
   beforeEach(() => {
@@ -437,8 +428,7 @@ describe("Logout", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Sidebar hamburger", () => {
+// describe("Sidebar hamburger", () => {
   it("toggles sidebar open class when hamburger is clicked", async () => {
     const user = userEvent.setup();
     render(<StaffDashboard profile={mockStaffProfile} />);
@@ -458,8 +448,7 @@ describe("Sidebar hamburger", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Local storage setup", () => {
+// describe("Local storage setup", () => {
   let originalLocalStorage;
 
   beforeEach(() => {
@@ -507,8 +496,7 @@ describe("Local storage setup", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-describe("Clicked Service Policy", () => {
+// describe("Clicked Service Policy", () => {
   it("renders Service Policy content when nav item is clicked", async () => {
     const user = userEvent.setup();
     render(<StaffDashboard profile={mockStaffProfile} />);
@@ -529,10 +517,7 @@ describe("Clicked Service Policy", () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-
-// ─────────────────────────────────────────────────────────────────────────────
+// //
 describe("AppointmentHistory - StaffHistoryView", () => {
   beforeEach(() => {
     vi.clearAllMocks();

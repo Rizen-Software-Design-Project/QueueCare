@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabaseAdmin.js";
 
 const router = express.Router();
 
-// Shared sort helper 
+// Here we have some helper functions that we use in the API endpoints below, they are mostly for formatting data or resolving patient IDs from contact details. These functions help keep our API endpoints cleaner and more focused on handling the request and response logic, while the helpers take care of the data manipulation and retrieval tasks.
 function sortBySlotDateTime(entries) {
   return [...entries].sort((a, b) => {
     const aAppt = Array.isArray(a.appointments) ? a.appointments[0] : a.appointments;
@@ -15,7 +15,7 @@ function sortBySlotDateTime(entries) {
 }
 
 
-// Helper: format minutes into readable string
+// This is a helper function to format the estimated wait time in a human readable format, it takes the total minutes and converts it to a string that shows days, hours and minutes. This is used in the estimated time endpoint to give the patient a better idea of how long they have to wait until their appointment.
 
 function formatMinutes(totalMinutes) {
   if (totalMinutes < 0) return "0m";

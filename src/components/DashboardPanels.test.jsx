@@ -28,8 +28,7 @@ function wrap(ui) {
     return render(<BrowserRouter>{ui}</BrowserRouter>);
 }
 
-// ── Badge ─────────────────────────────────────────────────────────────────────
-
+// Badge
 describe("Badge (DashboardPanels)", () => {
     it("renders booked status", () => {
         render(<Badge status="booked" />);
@@ -47,8 +46,7 @@ describe("Badge (DashboardPanels)", () => {
     });
 });
 
-// ── OverviewPanel ─────────────────────────────────────────────────────────────
-
+// OverviewPanel
 describe("OverviewPanel", () => {
     const baseProps = {
         profile: mockProfile,
@@ -129,8 +127,7 @@ describe("OverviewPanel", () => {
     });
 });
 
-// ── AppointmentsPanel ─────────────────────────────────────────────────────────
-
+// AppointmentsPanel
 describe("AppointmentsPanel", () => {
     it("renders 'No appointments found' when empty", () => {
         render(<AppointmentsPanel appointments={[]} onReschedule={vi.fn()} onCancel={vi.fn()} />);
@@ -190,8 +187,7 @@ describe("AppointmentsPanel", () => {
     });
 });
 
-// ── PatientQueuePanel ─────────────────────────────────────────────────────────
-
+// PatientQueuePanel
 describe("PatientQueuePanel", () => {
     it("renders 'Not in queue.' when no queueData", () => {
         render(<PatientQueuePanel queueData={null} slotDate={null} slotTime={null} />);
@@ -230,8 +226,7 @@ describe("PatientQueuePanel", () => {
     });
 });
 
-// ── NotificationsPanel ────────────────────────────────────────────────────────
-
+// NotificationsPanel
 describe("NotificationsPanel", () => {
     it("renders Notifications heading and Mark all as read button", () => {
         render(<NotificationsPanel notifications={[]} unreadCount={0} onMarkAllRead={vi.fn()} />);
@@ -262,8 +257,7 @@ describe("NotificationsPanel", () => {
     });
 });
 
-// ── ProfilePanel ──────────────────────────────────────────────────────────────
-
+// ProfilePanel
 describe("ProfilePanel", () => {
     const viewProps = {
         profile: mockProfile,

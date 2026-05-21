@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './AIAssistant.css';
 
-// Fall back to the hardcoded Azure URL when the env variable isn't set
+// The AI chat server address - uses local in development or the live Azure one in production. This is just for us not to mess things up AZURE was a pain
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   'https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net';
@@ -66,7 +66,7 @@ export default function AIAssistant({ context }) {
     analytics: 'Charts, insights & exports',
   }[role] || 'Your healthcare assistant';
 
-  // Only greet once — on the first time the user opens the chat window
+  // Show the greeting message the very first time the user opens the chat window
   useEffect(() => {
     if (open) {
       setHasNew(false);
@@ -87,7 +87,7 @@ export default function AIAssistant({ context }) {
     }
   }, [open]);
 
-  // Scroll to the latest message whenever the list or loading state changes
+  // Automatically scroll down to the newest message whenever a new one arrives
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
@@ -129,7 +129,7 @@ export default function AIAssistant({ context }) {
     }
   }
 
-  // Shift+Enter adds a newline; plain Enter submits
+  // If the user presses Shift+Enter, add a new line; if just Enter, send the message
   function handleKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -138,16 +138,16 @@ export default function AIAssistant({ context }) {
   }
 
   return (
-    // aside is the right landmark for a floating assistant — supplementary to the main page content
+    // The chat window floats over the page like a help panel
     <aside className="ai-bubble">
 
       {open && (
         <section className="ai-window">
 
           <header className="ai-header">
-            {/* figure + figcaption is the semantic pattern for an avatar paired with a name/role caption */}
+            {/* The AI assistant's avatar picture and name */}
             <figure className="ai-header-left">
-              {/* <i> follows the icon-element convention; aria-hidden keeps the emoji out of the a11y tree */}
+              {/* The emoji icon for the AI - hidden from screen readers since it is decorative */}
               <i className="ai-avatar" aria-hidden="true">🤖</i>
               <figcaption>
                 <strong className="ai-header-title">{roleLabel}</strong>
@@ -157,9 +157,9 @@ export default function AIAssistant({ context }) {
             <button className="ai-close-btn" onClick={() => setOpen(false)}>✕</button>
           </header>
 
-          {/* Suggestion chips only show on the opening message so they don't clutter an active conversation */}
+          {/* Quick suggestion buttons that appear only at the start so they do not get in the way later */}
           {messages.length === 1 && (
-            // menu is the right element for a list of user-invokable commands/prompts
+            // A list of quick prompts the user can click to start a conversation
             <menu className="ai-suggestions">
               {chips.map(chip => (
                 <li key={chip}>
@@ -174,12 +174,12 @@ export default function AIAssistant({ context }) {
             </menu>
           )}
 
-          {/* ol because message order is chronological — position in the list carries meaning */}
+          {/* The list of all chat messages in the order they were sent */}
           <ol className="ai-messages">
             {messages.map((m, i) => (
               <li key={i} className={`ai-msg ai-msg--${m.role}`}>
                 <p className="ai-msg-bubble">{m.content}</p>
-                {/* <time> is the dedicated HTML element for timestamps */}
+                {/* The time each message was sent */}
                 <time className="ai-msg-time">{formatTime(m.time)}</time>
               </li>
             ))}
@@ -187,7 +187,7 @@ export default function AIAssistant({ context }) {
             {loading && (
               <li className="ai-msg ai-msg--assistant">
                 <p className="ai-typing">
-                  {/* <i> used as a pure styling hook for each animated dot — no meaningful content */}
+                  {/* Animated dots shown while the AI is thinking of a reply */}
                   <i className="ai-typing-dot" />
                   <i className="ai-typing-dot" />
                   <i className="ai-typing-dot" />
@@ -195,11 +195,11 @@ export default function AIAssistant({ context }) {
               </li>
             )}
 
-            {/* Scroll sentinel — must be an li since it's inside an ol; scrollIntoView keeps the latest message in view */}
+            {/* An invisible marker at the bottom of the list - scrolling to it keeps the newest message visible */}
             <li ref={bottomRef} aria-hidden="true" />
           </ol>
 
-          {/* footer because the input is structurally separate from the message list and anchored at the bottom */}
+          {/* The text box and send button at the bottom of the chat window */}
           <footer className="ai-input-area">
             <textarea
               ref={inputRef}
@@ -242,7 +242,7 @@ export default function AIAssistant({ context }) {
             <path d="M8 10h.01M12 10h.01M16 10h.01" strokeWidth="2.5"/>
           </svg>
         )}
-        {/* mark signals something new and relevant is waiting */}
+        {/* A little red dot on the chat button when there is a new reply waiting to be read */}
         {hasNew && <mark className="ai-unread-dot" />}
       </button>
 

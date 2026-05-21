@@ -276,7 +276,7 @@ export default function BookAppointment({ clinicId, onBack, onDone }) {
 
         <p role="status" className={`status ${status.type}`}>{status.message}</p>
 
-        {/* Booking confirmation */}
+        {/* The confirmation screen shown after the patient successfully books an appointment */}
         {booking && (
           <section className="confirmation">
             <h3><FiCheck aria-hidden="true" /> Appointment Confirmed</h3>
@@ -286,7 +286,7 @@ export default function BookAppointment({ clinicId, onBack, onDone }) {
           </section>
         )}
 
-        {/* Slot selection */}
+        {/* The screen where the patient picks a date and time slot for their appointment */}
         {!booking && slots.length > 0 && (
           <>
             <section className="slots">

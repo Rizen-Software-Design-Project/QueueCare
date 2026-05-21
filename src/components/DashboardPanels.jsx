@@ -18,11 +18,11 @@ export function Badge({ status }) {
   );
 }
 
-// ── Queue Status Card ────────────────────────────────────────────────────────
+// A card showing the patient their current place in the waiting queue
 function QueueCard({ queueData, slotDate, slotTime }) {
   if (!queueData || queueData.error) return null;
 
-  // Appointment complete
+  // The patient already had their appointment - show them a done message
   if (queueData.status === "complete" || queueData.status === "completed") {
     return (
       <article className="db-card" style={{ marginTop: 20, textAlign: "center", padding: "24px 16px" }}>
@@ -33,7 +33,7 @@ function QueueCard({ queueData, slotDate, slotTime }) {
     );
   }
 
-  // In consultation
+  // The patient is being seen by the doctor right now
   if (queueData.status === "called" || queueData.status === "In-consultation") {
     return (
       <article className="db-card" style={{ marginTop: 20, textAlign: "center", padding: "24px 16px" }}>
@@ -44,7 +44,7 @@ function QueueCard({ queueData, slotDate, slotTime }) {
     );
   }
 
-  // Normal waiting state
+  // The patient is still waiting - show their queue position and countdown
   return (
     <article className="db-card" style={{ marginTop: 20 }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -110,7 +110,7 @@ function QueueCard({ queueData, slotDate, slotTime }) {
   );
 }
 
-// ── Overview Panel ────────────────────────────────────────────────────────────
+// The Overview tab - shows a summary of the patient's appointments and queue status
 export function OverviewPanel({
   profile, appointments, upcomingAppts = [], activeQueue, unreadCount,
   staffAssignments, latestAssignment, queueData, availability,
@@ -197,7 +197,7 @@ export function OverviewPanel({
   );
 }
 
-// ── Appointments Panel ────────────────────────────────────────────────────────
+// The Appointments tab - shows a list of upcoming and past appointments
 export function AppointmentsPanel({ appointments, onReschedule, onCancel }) {
   return (
     <section className="db-section">
@@ -229,7 +229,7 @@ export function AppointmentsPanel({ appointments, onReschedule, onCancel }) {
   );
 }
 
-// ── Patient Queue Panel ───────────────────────────────────────────────────────
+// The Queue tab - shows the patient their live position in the waiting queue
 export function PatientQueuePanel({ queueData, slotDate, slotTime }) {
   return (
     <section className="db-section">
@@ -243,7 +243,7 @@ export function PatientQueuePanel({ queueData, slotDate, slotTime }) {
   );
 }
 
-// ── Notifications Panel ───────────────────────────────────────────────────────
+// The Notifications tab - shows alerts and messages for the patient
 export function NotificationsPanel({ notifications, unreadCount, onMarkAllRead }) {
   return (
     <section className="db-section">
@@ -280,7 +280,7 @@ export function NotificationsPanel({ notifications, unreadCount, onMarkAllRead }
   );
 }
 
-// ── Profile Panel ─────────────────────────────────────────────────────────────
+// The Profile tab - lets the patient view and edit their personal info
 export function ProfilePanel({
   profile, editProfile, editForm, savingProfile,
   onEdit, onCancel, onSave, onFormChange,

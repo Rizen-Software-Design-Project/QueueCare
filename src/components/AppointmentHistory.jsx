@@ -31,7 +31,7 @@ function statusColor(status) {
   return map[(status ?? "").toLowerCase()] || "#9ca3af";
 }
 
-// ── Patient History View ──────────────────────────────────────────────────────
+// This is the appointments page for patients - it shows upcoming and past appointments in two tabs
 export function PatientHistoryView({ appointments, onReschedule, onCancel }) {
   const [tab, setTab] = useState("upcoming");
 
@@ -113,7 +113,7 @@ export function PatientHistoryView({ appointments, onReschedule, onCancel }) {
   );
 }
 
-// Single appointment card for patient view
+// This is one appointment card the patient sees - it has buttons to reschedule or cancel
 function PatientCard({ appt, isUpcoming, onReschedule, onCancel }) {
   const slot   = appt.appointment_slots;
   const clinic = slot?.facilities;
@@ -161,7 +161,7 @@ function PatientCard({ appt, isUpcoming, onReschedule, onCancel }) {
   );
 }
 
-// ── Staff History View ────────────────────────────────────────────────────────
+// This is the appointments page for staff - they can see all clinic appointments and search by patient name
 export function StaffHistoryView({ facilityId }) {
   const [appointments, setAppointments] = useState([]);
   const [loading,      setLoading]      = useState(true);
@@ -301,7 +301,7 @@ export function StaffHistoryView({ facilityId }) {
   );
 }
 
-// Single appointment card for staff view
+// One appointment card shown to staff - shows the patient's name, contact details, and status
 function StaffCard({ appt }) {
   const slot    = appt.appointment_slots;
   const patient = appt.profiles;

@@ -3,7 +3,7 @@ import { FiGrid, FiCalendar, FiHash, FiBell, FiUser, FiSettings, FiFileText, FiU
 import { FaHospital, FaStackpath } from "react-icons/fa";
 import { FiBarChart2 } from "react-icons/fi";
 
-// ── Navigation configs ────────────────────────────────────────────────────────
+// These are the menu items for each type of user (patient, staff, admin)
 // eslint-disable-next-line react-refresh/only-export-components
 export const PATIENT_NAV = [
   { id: "overview",      icon: <FiGrid />,      label: "Overview" },
@@ -39,7 +39,7 @@ export const ADMIN_NAV = [
 
 export const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
-// ── Status badge ──────────────────────────────────────────────────────────────
+// A small coloured tag that shows the status of an appointment (e.g. Booked, Cancelled)
 const STATUS_COLOR = {
   booked:    { bg: "#e8f5e9", color: "#2E7D32", label: "Booked" },
   cancelled: { bg: "#fdecea", color: "#c62828", label: "Cancelled" },
@@ -53,7 +53,7 @@ export function Badge({ status }) {
   return <section style={{ background: s.bg, color: s.color }} className="db-badge">{s.label}</section>;
 }
 
-// ── Formatters ────────────────────────────────────────────────────────────────
+// These helpers turn raw database values into nice readable dates and times
 export function formatDate(val) {
   if (!val) return "—";
   return new Date(val).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
@@ -70,7 +70,7 @@ export function formatDateTime(val) {
   });
 }
 
-// ── Availability ──────────────────────────────────────────────────────────────
+// Makes sure every day of the week has a valid schedule entry, even if blank
 export function normalizeAvailability(availability) {
   const normalized = {};
   DAYS.forEach((day) => {
@@ -83,7 +83,7 @@ export function normalizeAvailability(availability) {
   return normalized;
 }
 
-// ── Reminder sound (Web Audio API — no audio file needed) ─────────────────────
+// Plays a short beep to alert the patient that their appointment is coming up soon
 /* v8 ignore start */
 export function playReminderSound(urgent = false) {
   try {

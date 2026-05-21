@@ -1,4 +1,4 @@
-/* ── Theme ────────────────────────────────────────────────────────────────── */
+/* Theme */
 :root {
   --green: #10860a;
   --green-dark: #0d6f08;
@@ -35,7 +35,7 @@
   --transition: 0.18s ease;
 }
 
-/* ── Page ─────────────────────────────────────────────────────────────────── */
+/* Page */
 .avail-page {
   min-height: 100vh;
   background: var(--bg);
@@ -44,7 +44,7 @@
   padding-bottom: 60px;
 }
 
-/* ── Header ───────────────────────────────────────────────────────────────── */
+/* Header */
 .avail-header {
   background: var(--green);
   color: #ffffff;
@@ -92,7 +92,7 @@
   flex-wrap: wrap;
 }
 
-/* ── Buttons ──────────────────────────────────────────────────────────────── */
+/* Buttons */
 .btn {
   border: none;
   border-radius: 6px;
@@ -144,7 +144,7 @@
   cursor: not-allowed;
 }
 
-/* ── Schedule Cards ───────────────────────────────────────────────────────── */
+/* Schedule Cards */
 .avail-grid {
   max-width: 900px;
   margin: 32px auto 0;
@@ -207,7 +207,7 @@
   font-weight: 500;
 }
 
-/* ── Status Badges ────────────────────────────────────────────────────────── */
+/* Status Badges */
 .status-badge {
   display: inline-block;
   padding: 4px 11px;
@@ -238,7 +238,7 @@
   color: var(--text-muted);
 }
 
-/* ── Dialog ───────────────────────────────────────────────────────────────── */
+/* Dialog */
 dialog {
   border: none;
   border-radius: var(--radius-lg);
@@ -299,7 +299,7 @@ dialog::backdrop {
   background: var(--surface-soft);
 }
 
-/* ── Quick Fill ───────────────────────────────────────────────────────────── */
+/* Quick Fill */
 .quick-fill-card {
   background: var(--surface-soft);
   border: 1px solid var(--border);
@@ -327,7 +327,7 @@ dialog::backdrop {
   gap: 10px;
 }
 
-/* ── Weekly Editor ────────────────────────────────────────────────────────── */
+/* Weekly Editor */
 .weekly-editor {
   display: grid;
   gap: 12px;
@@ -413,7 +413,7 @@ dialog::backdrop {
   border-color: var(--blue);
 }
 
-/* ── Old Form Rows / Edit Dialog Compatibility ────────────────────────────── */
+/* Old Form Rows / Edit Dialog Compatibility */
 .form-day-section {
   padding: 14px 0;
   border-bottom: 1px solid var(--border);
@@ -460,7 +460,7 @@ dialog::backdrop {
   align-self: flex-end;
 }
 
-/* ── Clear Dialog ─────────────────────────────────────────────────────────── */
+/* Clear Dialog */
 .clear-body {
   padding: 32px 24px;
   text-align: center;
@@ -481,7 +481,7 @@ dialog::backdrop {
   color: var(--text);
 }
 
-/* ── Loading ──────────────────────────────────────────────────────────────── */
+/* Loading */
 .btn-loading {
   position: relative;
   color: transparent !important;
@@ -498,7 +498,7 @@ dialog::backdrop {
   animation: spin 0.6s linear infinite;
 }
 
-/* ── Animations ───────────────────────────────────────────────────────────── */
+/* Animations */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -535,7 +535,7 @@ dialog {
   max-width: 90vw;
   overflow-y: auto;
 }
-/* ── Responsive ───────────────────────────────────────────────────────────── */
+/* Responsive */
 @media (max-width: 850px) {
   .avail-header {
     align-items: flex-start;

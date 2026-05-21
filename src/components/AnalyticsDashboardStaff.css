@@ -1,4 +1,4 @@
-/* ── Page ──────────────────────────────────────────────────────────────────── */
+
 .analytics-page {
   min-height: 100vh;
   background: #f8fafc;
@@ -17,12 +17,12 @@
   margin: 0 auto;
 }
 
-/* ── Header ────────────────────────────────────────────────────────────────── */
+
 .page-header { margin-bottom: 28px; }
 .page-header h1 { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 4px; }
 .page-header p  { font-size: 13px; color: #64748b; margin: 0; }
 
-/* ── Tab bar ───────────────────────────────────────────────────────────────── */
+
 .tab-bar {
   display: flex;
   gap: 4px;
@@ -55,10 +55,11 @@
   box-shadow: 0 1px 4px rgba(20,184,166,.3);
 }
 
-/* ── Section ───────────────────────────────────────────────────────────────── */
 .tab-section { display: flex; flex-direction: column; gap: 20px; }
 
-/* ── Controls ──────────────────────────────────────────────────────────────── */
+
+
+
 .controls {
   display: flex;
   align-items: center;
@@ -90,7 +91,7 @@
 .analytics-page input[type="date"]:focus,
 .analytics-page select:focus { border-color: #14b8a6; }
 
-/* ── Export buttons ────────────────────────────────────────────────────────── */
+
 .export-bar { display: flex; gap: 6px; }
 
 .btn-export {
@@ -120,7 +121,7 @@
 
 .btn-export--pdf:hover:not(:disabled) { background: #1e293b; }
 
-/* ── Stat cards ────────────────────────────────────────────────────────────── */
+
 .stats-grid { display: grid; gap: 14px; }
 .stats-grid--3 { grid-template-columns: repeat(3, 1fr); }
 .stats-grid--4 { grid-template-columns: repeat(4, 1fr); }
@@ -153,7 +154,7 @@
 .stat-value--accent { color: #f43f5e; }
 .stat-sub { font-size: 11px; color: #94a3b8 !important; margin: 4px 0 0 !important; }
 
-/* ── Chart card ────────────────────────────────────────────────────────────── */
+/* Chart card */
 .chart-card {
   background: white;
   border: 1px solid #f1f5f9;
@@ -169,7 +170,7 @@
   margin: 0 0 16px !important;
 }
 
-/* ── Warning ───────────────────────────────────────────────────────────────── */
+/* Warning */
 .warning-banner {
   background: #fff7ed;
   border: 1px solid #fed7aa;
@@ -179,7 +180,7 @@
   color: #9a3412;
 }
 
-/* ── Table card ────────────────────────────────────────────────────────────── */
+/* Table card */
 .table-card {
   background: white;
   border: 1px solid #f1f5f9;
@@ -223,7 +224,7 @@
 .analytics-page tbody tr:last-child td { border-bottom: none; }
 .analytics-page tbody tr:hover td { background: #f8fafc; }
 
-/* ── Badges ────────────────────────────────────────────────────────────────── */
+/* Badges */
 .badge {
   display: inline-block;
   padding: 2px 8px;
@@ -238,7 +239,7 @@
 .badge--no_show   { background: #fff1f2; color: #be123c; }
 .badge--cancelled { background: #f8fafc; color: #64748b; }
 
-/* ── Responsive ────────────────────────────────────────────────────────────── */
+/* Responsive */
 @media (max-width: 900px) {
   .stats-grid--4 { grid-template-columns: repeat(2, 1fr); }
 }

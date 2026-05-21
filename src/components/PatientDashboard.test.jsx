@@ -6,7 +6,7 @@ import QueueCarePolicy from "./ServicePolicy";
 import userEvent from "@testing-library/user-event";
 import { act } from "@testing-library/react";
 
-// ── MOCKS ───────────────────────────────────────────────────────────────────
+// MOCKS
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual("react-router-dom");
@@ -104,7 +104,7 @@ beforeEach(() => {
     mockQuery.update.mockReset().mockReturnThis();
 });
 
-// ── SIDEBAR TESTS ───────────────────────────────────────────────────────────
+// SIDEBAR TESTS
 describe("Sidebar", () => {
     beforeEach(() => {
         render(<PatientDashboard profile={mockProfile} />);
@@ -137,7 +137,7 @@ describe("Sidebar", () => {
     });
 });
 
-// ── OVERVIEW TESTS ──────────────────────────────────────────────────────────
+// OVERVIEW TESTS
 describe("Clicked Overview", () => {
     beforeEach(async () => {
         const user = userEvent.setup();
@@ -413,7 +413,7 @@ describe("Clicked Overview - last visited clinic", () => {
     });
 });
 
-// ── APPOINTMENTS TESTS ───────────────────────────────────────────────────────
+// APPOINTMENTS TESTS
 describe("Clicked Appointments", () => {
     beforeEach(async () => {
         const user = userEvent.setup();
@@ -494,7 +494,7 @@ describe("AppointmentHistory - PatientHistoryView", () => {
     });
 });
 
-// ── QUEUE TESTS ──────────────────────────────────────────────────────────────
+// QUEUE TESTS
 describe("Clicked My Queue", () => {
     beforeEach(async () => {
         const user = userEvent.setup();
@@ -515,8 +515,8 @@ describe("Clicked My Queue", () => {
     });
 });
 
-// ── NOTIFICATIONS TESTS ──────────────────────────────────────────────────────
-// ── NOTIFICATIONS TESTS ──────────────────────────────────────────────────────
+// NOTIFICATIONS TESTS
+// NOTIFICATIONS TESTS
 describe("Notifications Panel - content", () => {
   async function renderAndOpenNotifications(mockNotifs = []) {
     mockQuery.limit.mockResolvedValue({
@@ -625,7 +625,7 @@ describe("Notifications Panel - content", () => {
   });
 });
 
-// ── PROFILE & LOGOUT TESTS ───────────────────────────────────────────────────
+// PROFILE & LOGOUT TESTS
 describe("Clicked Profile", () => {
     it("switches to the Profile panel when Profile nav is clicked", async () => {
         const user = userEvent.setup();

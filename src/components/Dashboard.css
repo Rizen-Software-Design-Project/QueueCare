@@ -40,7 +40,7 @@
   padding: 0;
 }
 
-/* ── SPLASH / LOADING ── */
+/* SPLASH / LOADING */
 .db-splash {
   display: flex;
   flex-direction: column;
@@ -62,7 +62,7 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── ROOT LAYOUT ── */
+/* ROOT LAYOUT */
 .db-root {
   display: flex;
   min-height: 100vh;
@@ -71,7 +71,7 @@
   color: var(--text);
 }
 
-/* ── SIDEBAR ── */
+/* SIDEBAR */
 .db-sidebar {
   width: var(--sidebar-w);
   background: var(--primary);
@@ -203,7 +203,7 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-/* ── SIDEBAR FOOTER ── */
+/* SIDEBAR FOOTER */
 .db-sidebar footer {
   padding: 18px 16px 22px;
   border-top: 1px solid rgba(255,255,255,0.08);
@@ -211,7 +211,7 @@
   background: rgba(0,0,0,0.08);
 }
 
-/* ── LOGOUT BUTTON ── */
+/* LOGOUT BUTTON */
 .db-sidebar-logout {
   width: 100%;
   display: flex;
@@ -290,7 +290,7 @@
   transform: translateY(-1px);
 }
 
-/* ── MAIN AREA ── */
+/* MAIN AREA */
 .db-main {
   margin-left: var(--sidebar-w);
   flex: 1;
@@ -376,7 +376,7 @@
   flex: 1;
 }
 
-/* ── SECTION ── */
+/* SECTION */
 .db-section {
   animation: fadeUp 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1) both;
 }
@@ -395,7 +395,7 @@
   letter-spacing: -0.3px;
 }
 
-/* ── STAT GRID ── */
+/* STAT GRID */
 .db-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -444,7 +444,7 @@
   letter-spacing: 0.6px;
 }
 
-/* ── CARD ── */
+/* CARD */
 .db-card {
   background: var(--white);
   border: 1px solid var(--border);
@@ -467,7 +467,7 @@
   color: var(--primary);
 }
 
-/* ── LIST ROWS ── */
+/* LIST ROWS */
 .db-list-row {
   display: flex;
   align-items: center;
@@ -491,7 +491,7 @@
   padding: 16px 0;
 }
 
-/* ── BADGE ── */
+/* BADGE */
 .db-badge {
   padding: 4px 12px;
   border-radius: 40px;
@@ -501,7 +501,7 @@
   text-transform: capitalize;
 }
 
-/* ── BUTTONS ── */
+/* BUTTONS */
 .db-btn {
   padding: 6px 16px;
   border: none;
@@ -540,7 +540,7 @@
   background: var(--gray-300);
 }
 
-/* ── MODAL ── */
+/* MODAL */
 .db-modal-overlay {
   position: fixed;
   inset: 0;
@@ -609,7 +609,7 @@
   margin-top: 24px;
 }
 
-/* ── RESPONSIVE ── */
+/* RESPONSIVE */
 @media (max-width: 1024px) {
   .db-stat-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -642,9 +642,7 @@
   gap: 20px;
 }
 
-/* ─────────────────────────────
-   HEADER
-   ───────────────────────────── */
+/* HEADER */
 
 .db-notifications-header {
   display: flex;
@@ -695,9 +693,7 @@
   font-weight: 700;
 }
 
-/* ─────────────────────────────
-   MARK READ BUTTON
-   ───────────────────────────── */
+/* MARK READ BUTTON */
 
 .db-notifications-readall {
   border: none;
@@ -733,9 +729,7 @@
     0 8px 18px rgba(27,94,32,0.22);
 }
 
-/* ─────────────────────────────
-   LIST
-   ───────────────────────────── */
+/* LIST */
 
 .db-notification-list {
   display: flex;
@@ -743,9 +737,7 @@
   gap: 16px;
 }
 
-/* ─────────────────────────────
-   CARD
-   ───────────────────────────── */
+/* CARD */
 
 .db-notification-card {
   position: relative;
@@ -800,9 +792,7 @@
   );
 }
 
-/* ─────────────────────────────
-   UNREAD
-   ───────────────────────────── */
+/* UNREAD */
 
 .db-notification-unread {
   background:
@@ -834,9 +824,7 @@
     0 0 0 4px rgba(27,94,32,0.12);
 }
 
-/* ─────────────────────────────
-   ICON
-   ───────────────────────────── */
+/* ICON */
 
 .db-notification-icon {
   width: 48px;
@@ -863,9 +851,7 @@
   font-weight: 700;
 }
 
-/* ─────────────────────────────
-   CONTENT
-   ───────────────────────────── */
+/* CONTENT */
 
 .db-notification-content {
   flex: 1;
@@ -897,9 +883,7 @@
   color: var(--gray-500);
 }
 
-/* ─────────────────────────────
-   EMPTY STATE
-   ───────────────────────────── */
+/* EMPTY STATE */
 
 .db-notifications-empty {
   text-align: center;
@@ -922,9 +906,7 @@
   font-size: 0.92rem;
 }
 
-/* ─────────────────────────────
-   MOBILE
-   ───────────────────────────── */
+/* MOBILE */
 
 @media (max-width: 768px) {
   .db-notifications-header {

@@ -9,7 +9,8 @@ const router = express.Router();
 
 
 
-// We set up the SMTP email transporter here and reuse it throughout this file to send confirmation and reminder emails────────────
+// We set up the SMTP email transporter here and reuse it throughout this file to send confirmation and reminder emails
+// It was a good idea especially for small case use such as this but I think for many constant users its not going 
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,
@@ -20,11 +21,15 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+
+// Here we are just verifying that the transporter works. Experience shows that this is a vital step as some providers eg. Azure have super tight security and 
+// They can be a pain to work with especially when there is MFA luckily our SMTP provider taht we are using which is google is actually free and not so much of a pain.
 transporter.verify()
     .then(() => console.log('SMTP ready'))
     .catch((err) => console.error('SMTP failed:', err.message));
 
 
+// Here we set up all we need to actually send the email to the user
 const getEmailContext = async (patient_id, slot_id, facility_id) => {
     const [profileRes, slotRes, facilityRes] = await Promise.all([
         supabase.from('profiles').select('email, name, surname').eq('id', patient_id).single(),
@@ -53,6 +58,8 @@ const getEmailContext = async (patient_id, slot_id, facility_id) => {
     };
 };
 
+
+// Basixc HTML to send the reminder or booked appointment confirmation. It was Hard to find a way to send text. We wanted to use Twilio but since they offer a Sandbox instead we cannot actually test it live / published so email was it.
 const emailHtml = (patientName, facilityName, facilityAddress, slotDate, slotTime, duration, reason, type = 'confirmation') => {
     const isReminder = type === 'reminder';
     const heading = isReminder ? 'Appointment Reminder' : 'Appointment Confirmed';

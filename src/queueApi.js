@@ -1,12 +1,12 @@
+// This file is the bridge between the website and the backend server.
+// It handles everything queue-related - joining, checking position, and leaving.
 /* v8 ignore next */
 const API_BASE = import.meta.env.VITE_API_BASE || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
 
-//
-// ─────────────────────────────────────────────
-// LIVE QUEUE (virtual_queues)
-// ─────────────────────────────────────────────
-//
- 
+// --- QUEUE FUNCTIONS ---
+// These functions let patients join, check, and leave the waiting queue at a clinic.
+
+
 export async function addToQueue(contactDetails, facilityId) {
   const res = await fetch(`${API_BASE}/queue/add_to_queue`, {
     method: "POST",
@@ -37,7 +37,7 @@ export async function getMyQueue(contactDetails, facilityId) {
   }
 }
 
-// FIX: backend DELETE reads from req.query, not req.body — use query params
+// Removes the patient from the queue — the backend expects the info in the URL, not the request body
 export async function removeFromQueue(contactDetails, facilityId) {
   const res = await fetch(
     `${API_BASE}/queue/remove_queue?contact_details=${encodeURIComponent(contactDetails)}&facility_id=${facilityId}`,
@@ -92,7 +92,8 @@ export async function notifyPatient(email, facilityId) {
   );
   return res.json();
 }
-//Staff Functionality
+// --- STAFF FUNCTIONS ---
+// These functions help staff members manage their work schedule at the clinic.
 export async function getSchedule(staff_id) {
   try {
     const res = await fetch(`${API_BASE}/schedule?staff_id=${staff_id}`);
@@ -108,7 +109,7 @@ async function checkStaff(staff_id) {
     const res = await fetch(`${API_BASE}/get_staff?staff_id=${staff_id}`);
     if (!res.ok) return false;
     const data = await res.json();
-    return data.status === true;  // check the actual payload
+    return data.status === true;  // Log the data being sent so we can debug if something goes wrong
   } catch (err) {
     console.error("Network error:", err.message);
     return false;

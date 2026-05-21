@@ -42,7 +42,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
     message: "",
   });
 
-  // ── Load data ─────────────────────────────────────────────────────────────
+  // Grab all the staff member's info from the database when the page loads
   useEffect(() => {
     async function load() {
       const results = await Promise.all([
@@ -79,7 +79,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
     load();
   }, [profile.id]);
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  // Things the staff member can do - like marking a patient as arrived or logging out
   async function handleLogout() {
     await Promise.allSettled([supabase.auth.signOut(), signOut(auth)]);
 
@@ -151,7 +151,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
     setActiveTab(id);
   }
 
-  // ── Content ───────────────────────────────────────────────────────────────
+  // Decide which section to show based on which menu tab the staff clicked
   function renderContent() {
     switch (activeTab) {
       case "overview":
@@ -377,7 +377,7 @@ export default function StaffDashboard({ profile: initialProfile }) {
     }
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // Put the full staff dashboard on screen
   return (
     <section className="db-root">
       <aside

@@ -1,4 +1,4 @@
-// @vitest-environment node
+
 import { beforeEach, describe, expect, vi, test } from 'vitest';
 import request from 'supertest';
 import app from '../servers/app.js';
@@ -51,7 +51,7 @@ beforeEach(() => {
   vi.resetAllMocks();
 });
 
-// ── GET /appointments/:id ─────────────────────────────────────────────────────
+//GET /appointments/:id, for patients to view details of a specific appointment
 
 describe('GET /appointments/:id', () => {
   test('returns 200 with appointment data', async () => {
@@ -76,7 +76,7 @@ describe('GET /appointments/:id', () => {
   });
 });
 
-// ── GET /appointments/my/:patient_id ──────────────────────────────────────────
+// GET /appointments/my/:patient_id, for patients to view all their appointments
 
 describe('GET /appointments/my/:patient_id', () => {
   test('returns 200 with patient appointments', async () => {
@@ -102,7 +102,7 @@ describe('GET /appointments/my/:patient_id', () => {
   });
 });
 
-// ── POST /appointments/slots/available ──────────────────────────────────────
+// POST /appointments/slots/available,for patients to check available slots at a clinic before booking
 
 describe('POST /appointments/slots/available', () => {
   test('returns 400 when facility_id is missing', async () => {
@@ -154,7 +154,7 @@ describe('POST /appointments/slots/available', () => {
   });
 });
 
-// ── POST /appointments/book ───────────────────────────────────────────────────
+//POST /appointments/book, for patients to book an appointment slot at a clinic
 
 describe('POST /appointments/book', () => {
   const validBooking = { patient_id: 'p1', facility_id: 'f1', slot_id: 's1', reason: 'Checkup' };
@@ -232,7 +232,7 @@ describe('POST /appointments/book', () => {
   });
 });
 
-// ── PATCH /appointments/:appointment_id/cancel ───────────────────────────────
+//PATCH /appointments/:appointment_id/cancel / UPDATE Whose care potato potatoe, for patients to cancel their appointment if they can no longer make it
 
 describe('PATCH /appointments/:appointment_id/cancel', () => {
   test('returns 400 when patient_id is missing', async () => {
@@ -289,7 +289,7 @@ describe('PATCH /appointments/:appointment_id/cancel', () => {
   });
 });
 
-// ── PATCH /appointments/:appointment_id/reschedule ───────────────────────────
+//PATCH /appointments/:appointment_id/reschedule / UPDATE Whose cares potato potatoe, for patients to reschedule their appointment if they can no longer make it at the scheduled time, but only if the new slot they want is available and not fully booked. This is a bit more complex than cancellation because we have to check the new slot's availability and update multiple records in a transaction.
 
 describe('PATCH /appointments/:appointment_id/reschedule', () => {
   test('returns 400 when patient_id is missing', async () => {
@@ -356,7 +356,7 @@ describe('PATCH /appointments/:appointment_id/reschedule', () => {
   });
 });
 
-// ── POST /appointments/queue/walk-in ────────────────────────────────────────
+//POST /appointments/queue/walk-in,  for patients to join the walk-in queue at a clinic. This is separate from booking an appointment because walk-ins don't have a specific slot, they just wait for their turn. We need to check if they're already in the queue and if not, add them to the end of the queue.
 
 describe('POST /appointments/queue/walk-in', () => {
   test('returns 400 when patient_id is missing', async () => {
@@ -408,7 +408,7 @@ describe('POST /appointments/queue/walk-in', () => {
   });
 });
 
-// ── POST /appointments/send-confirmation ──────────────────────────────────────
+//POST /appointments/send-confirmation, for patients to receive a confirmation email after booking an appointment. This endpoint will be called internally after a successful booking, but we can also expose it for testing purposes. We need to fetch the patient's email from their profile, get the appointment details, and send an email using nodemailer. We should also handle cases where the email is missing or the email sending fails.
 
 describe('POST /appointments/send-confirmation', () => {
   test('returns 400 when required fields are missing', async () => {
@@ -464,7 +464,7 @@ describe('POST /appointments/send-confirmation', () => {
   });
 });
 
-// ── POST /appointments/remind ─────────────────────────────────────────────────
+// POST /appointments/remind, for patients to receive a reminder email for upcoming appointments. This endpoint will be called internally, but we can also expose it for testing purposes. We need to fetch the patient's email from their profile, get the appointment details, and send an email using nodemailer. We should also handle cases where the email is missing or the email sending fails.
 
 describe('POST /appointments/remind', () => {
   test('returns 400 when patient_id is missing', async () => {
@@ -540,7 +540,7 @@ describe('POST /appointments/remind', () => {
   });
 });
 
-// ── GET /appointments/staff/appointments ─────────────────────────────────────
+//GET /appointments/staff/appointments, for staff to view all appointments at their facility. We need to filter appointments by facility_id and include patient and slot details. We should also handle pagination in case there are many appointments.
 
 describe('GET /appointments/staff/appointments', () => {
   test('returns 400 when facility_id is missing', async () => {
@@ -573,7 +573,7 @@ describe('GET /appointments/staff/appointments', () => {
   });
 });
 
-// ── PATCH /appointments/staff/appointments/:appointment_id ────────────────────
+// PATCH /appointments/staff/appointments/:appointment_id, for staff to update the status of an appointment. This can be used to confirm, cancel, or mark an appointment as completed. We need to validate the status, check if the appointment exists, and handle any errors that may occur.
 
 describe('PATCH /appointments/staff/appointments/:appointment_id', () => {
   test('returns 400 when status is missing', async () => {
@@ -633,7 +633,7 @@ describe('PATCH /appointments/staff/appointments/:appointment_id', () => {
   });
 });
 
-// ── POST /appointments/staff/slots ───────────────────────────────────────────
+//POST /appointments/staff/slots, for staff to create new appointment slots. We need to validate the input, check for duplicate slots, and handle any errors that may occur.
 
 describe('POST /appointments/staff/slots', () => {
   const validSlot = { facility_id: 1, slot_date: '2026-04-20', slot_time: '09:00', total_capacity: 5, duration_minutes: 30 };
@@ -678,7 +678,7 @@ describe('POST /appointments/staff/slots', () => {
   });
 });
 
-// ── PATCH /appointments/staff/slots/:slot_id ─────────────────────────────────
+//PATCH /appointments/staff/slots/:slot_id, for staff to update an existing appointment slot. We need to validate the input, check if the slot exists, and handle any errors that may occur.
 
 describe('PATCH /appointments/staff/slots/:slot_id', () => {
   test('returns 400 when no fields are provided', async () => {
@@ -716,7 +716,7 @@ describe('PATCH /appointments/staff/slots/:slot_id', () => {
   });
 });
 
-// ── DELETE /appointments/staff/slots/:slot_id ──────────────────────────────────────────────
+//DELETE /appointments/staff/slots/:slot_id, for staff to delete an existing appointment slot. We need to check if the slot has any active bookings, deactivate the slot if possible, and handle any errors that may occur.
 
 describe('DELETE /appointments/staff/slots/:slot_id', () => {
   test('returns 409 when slot has active bookings', async () => {
@@ -752,7 +752,7 @@ describe('DELETE /appointments/staff/slots/:slot_id', () => {
   });
 });
 
-// ── Middleware ─────────────────────────────────────────────────────────────────
+//Middleware, to test that unknown routes return 404 and that the error handler catches unexpected errors and returns a 500 status code with the error message.
 
 describe('Middleware', () => {
   test('returns 404 for unknown routes', async () => {
@@ -778,7 +778,7 @@ describe('Middleware', () => {
   });
 });
 
-// ── GET /health ───────────────────────────────────────────────────────────────
+// GET /health, a simple endpoint to check if the API is running. This can be used for monitoring and health checks. 
 
 describe('GET /health', () => {
   test('returns 200 with status message', async () => {
@@ -788,7 +788,7 @@ describe('GET /health', () => {
   });
 });
 
-// ── POST /appointments/queue/send-status-email ────────────────────────────────
+//POST /appointments/queue/send-status-email, for sending an email to a patient in the walk-in queue when their status changes (e.g., from waiting to called). We need to fetch the patient's email, get the facility name, and send an email using nodemailer. We should also handle cases where the email is missing or the email sending fails.
 
 describe('POST /appointments/queue/send-status-email', () => {
   test('returns 400 when required fields are missing', async () => {
@@ -832,7 +832,7 @@ describe('POST /appointments/queue/send-status-email', () => {
   });
 });
 
-// ── POST /appointments/book-walkin ───────────────────────────────────────────
+//POST /appointments/book-walkin, for booking a walk-in appointment. We need to validate the input, check if the slot exists and belongs to the correct facility, ensure the slot is not full, and handle any errors that may occur.
 
 describe('POST /appointments/book-walkin', () => {
   test('returns 400 when required fields are missing', async () => {
@@ -895,7 +895,7 @@ describe('POST /appointments/book-walkin', () => {
   });
 });
 
-// ── PATCH /appointments/staff/slots — missing branch coverage ─────────────────
+//PATCH /appointments/staff/slots/:slot_id, for staff to update an existing appointment slot. We need to validate the input, check if the slot exists, and handle any errors that may occur.
 
 describe('PATCH /appointments/staff/slots — extra branches', () => {
   test('returns 404 when slot is not found', async () => {
@@ -925,7 +925,7 @@ describe('PATCH /appointments/staff/slots — extra branches', () => {
   });
 });
 
-// ── DELETE /appointments/staff/slots — missing branch coverage ─────────────────
+//DELETE /appointments/staff/slots — missing branch coverage, to test the case where the slot is successfully deactivated but the subsequent update to mark existing appointments as cancelled fails.
 
 describe('DELETE /appointments/staff/slots — extra branches', () => {
   test('returns 400 when facility_id is missing', async () => {

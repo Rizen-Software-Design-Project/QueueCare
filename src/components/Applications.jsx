@@ -1,18 +1,4 @@
-/**
- * Applications.jsx
- *
- * Responsibility: Staff/admin role applications.
- * Used in TWO modes:
- *
- *   mode="apply"   (called from ProfileSetupPage for staff)
- *     Props: identity, selectedRole, onSubmitted, onBack
- *     Shows the staff application form. On submit → writes role_applications row.
- *
- *   mode="review"  (called from Dashboard for admins)
- *     Props: profile, onRoleUpdated
- *     Shows the admin review table with approve / reject actions.
- *     Approving a staff application also creates/updates a staff_assignments row.
- */
+// This page handles two things: staff can apply for a job at a clinic, and admins can review those applications.
 
 import { useEffect, useState } from "react";
 import { supabase } from "#lib/supabase";
@@ -21,7 +7,7 @@ import "./Applications.css";
 const API_BASE = import.meta.env.VITE_API_BASE || "https://queuecare-gubjeae9fqdzekfv.southafricanorth-01.azurewebsites.net";
 
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// Small helper functions used across this file
 function formatDateTime(value) {
   if (!value) return "—";
   return new Date(value).toLocaleString("en-ZA", {
@@ -48,7 +34,7 @@ function dobFromSAId(id) {
   return `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
 }
 
-// ── StatusBadge ──────────────────────────────────────────────────────────────
+// A little coloured badge showing whether an application is pending, approved, or rejected
 function StatusBadge({ status }) {
   const statusClass = ["pending", "approved", "rejected"].includes(status)
     ? `status-badge--${status}`
@@ -61,7 +47,7 @@ function StatusBadge({ status }) {
   );
 }
 
-// ── Main ─────────────────────────────────────────────────────────────────────
+// The main Applications page component
 export default function Applications({
   profile      = null,
   onRoleUpdated,
@@ -107,7 +93,7 @@ export default function Applications({
     if (!isApplyMode) loadData();
   }, [isApplyMode, profile?.id]);
 
-  // ── Data fetching (review mode) ──────────────────────────────────────────
+  // Load all submitted applications from the database so the admin can review them
   async function loadData() {
     if (!profile?.id || !isAdmin) { setLoading(false); return; }
     setLoading(true);
@@ -126,7 +112,7 @@ export default function Applications({
     }
   }
 
-  // ── Clinic search (apply mode) ────────────────────────────────────────────
+  // Let the applicant search for a clinic they want to work at
   async function searchClinics(query) {
     setClinicQuery(query);
     if (!query.trim()) { setClinicResults([]); return; }
@@ -140,7 +126,7 @@ export default function Applications({
     setClinicResults(data || []);
   }
 
-  // ── Apply submit ──────────────────────────────────────────────────────────
+  // Send the application to the database when the form is submitted
   async function handleApplySubmit(e) {
     e.preventDefault();
     setError("");
@@ -232,7 +218,7 @@ export default function Applications({
     if (onSubmitted) onSubmitted();
   }
 
-  // ── Approve (review mode) ─────────────────────────────────────────────────
+  // The admin clicks Approve - this saves the decision and sets up the staff account
   async function approveApplication(application) {
     if (!profile?.id) return;
     setReviewingId(application.id);
@@ -323,7 +309,7 @@ export default function Applications({
     }
   }
 
-  // ── Reject (review mode) ──────────────────────────────────────────────────
+  // The admin clicks Reject - this marks the application as declined
   async function rejectApplication(application) {
     if (!profile?.id) return;
     setReviewingId(application.id);
@@ -358,7 +344,7 @@ export default function Applications({
     }
   }
 
-  // ── Apply mode render ─────────────────────────────────────────────────────
+  // Draw the form that staff fill in to apply for a job
   if (isApplyMode) {
     const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
@@ -375,7 +361,7 @@ export default function Applications({
           {error && <p role="alert" className="app-error">{error}</p>}
 
           <form onSubmit={handleApplySubmit} className="app-form">
-            {/* Name */}
+            {/* The applicant's name fields */}
             <fieldset className="app-grid-2">
               <legend className="sr-only">Full name</legend>
               <section>
@@ -388,7 +374,7 @@ export default function Applications({
               </section>
             </fieldset>
 
-            {/* Contact */}
+            {/* The applicant's email and phone number */}
             <fieldset className="app-grid-2">
               <legend className="sr-only">Contact details</legend>
               <section>
@@ -401,7 +387,7 @@ export default function Applications({
               </section>
             </fieldset>
 
-            {/* Gender */}
+            {/* Gender dropdown */}
             <fieldset>
               <legend className="app-label">Gender</legend>
               <section className="app-gender-wrap">
@@ -419,7 +405,7 @@ export default function Applications({
               </section>
             </fieldset>
 
-            {/* ID + employee number */}
+            {/* ID number and employee number fields */}
             <fieldset className="app-grid-2">
               <legend className="sr-only">Identity and employment</legend>
               <section>
@@ -439,13 +425,13 @@ export default function Applications({
               </section>
             </fieldset>
 
-            {/* License */}
+            {/* The applicant's medical license number */}
             <section>
               <label className="app-label" htmlFor="field-license">License Number <section className="app-muted">(optional)</section></label>
               <input id="field-license" className="app-input" value={form.license_number} onChange={set("license_number")} placeholder="Professional license" />
             </section>
 
-            {/* Clinic search */}
+            {/* Search box for finding the clinic to apply to */}
             <section>
               <label className="app-label" htmlFor="field-clinic">Clinic</label>
               <input
@@ -482,7 +468,7 @@ export default function Applications({
               )}
             </section>
 
-            {/* CV */}
+            {/* Upload a CV document */}
             <section>
               <label className="app-label" htmlFor="field-cv">Upload CV</label>
               <input
@@ -497,7 +483,7 @@ export default function Applications({
               )}
             </section>
 
-            {/* Motivation */}
+            {/* Why the applicant wants to work here */}
             <section>
               <label className="app-label" htmlFor="field-motivation">Motivation</label>
               <textarea
@@ -525,7 +511,7 @@ export default function Applications({
     );
   }
 
-  // ── Review mode render ────────────────────────────────────────────────────
+  // Draw the list of applications the admin needs to approve or reject
   if (!profile) {
     return (
       <main className="app-wrapper">

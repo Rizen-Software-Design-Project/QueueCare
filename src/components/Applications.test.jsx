@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import Applications from "./Applications";
 
 
-// *****THE COMMENTS ARE NECESSARY*****
+// THE COMMENTS ARE NECESSARY
 //mocks
 //opening pages
 //fill and submit
