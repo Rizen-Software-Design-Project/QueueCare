@@ -124,7 +124,33 @@
   display: flex;
   margin-bottom: 8px;
 }
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
 
+.auth-input--icon {
+  padding-right: 42px;
+}
+
+.auth-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.auth-eye-btn:hover {
+  color: #475569;
+}
 .auth-phone-code {
   display: flex;
   align-items: center;

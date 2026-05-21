@@ -209,6 +209,10 @@ export default function AuthPage() {
   const [phoneOtp, setPhoneOtp]       = useState(Array(6).fill(""));
   const [resendTimer, setResendTimer] = useState(0);
 
+  //allow user to see password if they want
+  const [showLoginPw,   setShowLoginPw]   = useState(false);
+  const [showNewPw,     setShowNewPw]     = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const go = useCallback((p) => { setError(""); setPage(p); }, []);
 
   function chooseRole(role) { setSelectedRole(role); setError(""); setPage("home"); }
@@ -479,40 +483,56 @@ export default function AuthPage() {
               />
 
               {!isNewEmail && (
-                <>
-                  <label className="auth-label" htmlFor="login-password">Password</label>
+              <>
+                <label className="auth-label" htmlFor="login-password">Password</label>
+                <section className="auth-input-wrap">
                   <input
                     id="login-password"
-                    className="auth-input"
-                    type="password"
+                    className="auth-input auth-input--icon"
+                    type={showLoginPw ? "text" : "password"}
                     placeholder="Enter your password"
                     value={loginPw}
                     onChange={(e) => setLoginPw(e.target.value)}
                   />
-                </>
+                  <button type="button" className="auth-eye-btn" onClick={() => setShowLoginPw(p => !p)} aria-label={showLoginPw ? "Hide password" : "Show password"}>
+                    {showLoginPw ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </section>
+              </>
               )}
 
               {isNewEmail && (
                 <>
                   <label className="auth-label" htmlFor="new-password">New password</label>
-                  <input
-                    id="new-password"
-                    className="auth-input"
-                    type="password"
-                    placeholder="Create a strong password"
-                    value={newPw}
-                    onChange={(e) => setNewPw(e.target.value)}
-                  />
+                  <section className="auth-input-wrap">
+                    <input
+                      id="new-password"
+                      className="auth-input auth-input--icon"
+                      type={showNewPw ? "text" : "password"}
+                      placeholder="Create a strong password"
+                      value={newPw}
+                      onChange={(e) => setNewPw(e.target.value)}
+                    />
+                    <button type="button" className="auth-eye-btn" onClick={() => setShowNewPw(p => !p)} aria-label={showNewPw ? "Hide password" : "Show password"}>
+                      {showNewPw ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </section>
                   <StrengthMeter score={strengthScore(newPw)} />
+
                   <label className="auth-label" htmlFor="confirm-password">Confirm password</label>
-                  <input
-                    id="confirm-password"
-                    className="auth-input"
-                    type="password"
-                    placeholder="Repeat your password"
-                    value={confirmPw}
-                    onChange={(e) => setConfirmPw(e.target.value)}
-                  />
+                  <section className="auth-input-wrap">
+                    <input
+                      id="confirm-password"
+                      className="auth-input auth-input--icon"
+                      type={showConfirmPw ? "text" : "password"}
+                      placeholder="Repeat your password"
+                      value={confirmPw}
+                      onChange={(e) => setConfirmPw(e.target.value)}
+                    />
+                    <button type="button" className="auth-eye-btn" onClick={() => setShowConfirmPw(p => !p)} aria-label={showConfirmPw ? "Hide password" : "Show password"}>
+                      {showConfirmPw ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </section>
                 </>
               )}
 
@@ -639,5 +659,20 @@ const GoogleIcon = () => (
 const FacebookIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+  </svg>
+);
+
+const EyeIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+
+const EyeOffIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+    <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
   </svg>
 );
