@@ -100,16 +100,20 @@ export default function WalkIn({
     setSubmitMsg({ type: "", text: "" });
 
     setSearching(true);
-
+    const raw = contact.trim();
+    let altContact = raw;
+    if (raw.startsWith("+27")) {
+      altContact = "0" + raw.slice(3);
+    } else if (raw.startsWith("0") && raw.length === 10) {
+      altContact = "+27" + raw.slice(1);
+    }
     const { data: found, error } = await supabase
-      .from("profiles")
-      .select(
-        "id, name, surname, email, phone_number, sex, dob"
-      )
-      .or(
-        `email.eq.${contact},phone_number.eq.${contact}`
-      )
-      .maybeSingle();
+    .from("profiles")
+    .select("id, name, surname, email, phone_number, sex, dob")
+    .or(
+      `email.eq.${raw},phone_number.eq.${raw},phone_number.eq.${altContact}`
+    )
+    .maybeSingle();
 
     setSearching(false);
 
